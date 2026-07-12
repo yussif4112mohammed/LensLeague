@@ -1,6 +1,6 @@
-/* ============================================================
-   LensLeague Global Styles
-   ============================================================ */
+/* ================================================================
+   LensLeague Global Styles — v2 (High-Contrast Redesign)
+   ================================================================ */
 @import './tokens.css';
 
 *, *::before, *::after {
@@ -64,24 +64,24 @@ ul, ol {
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-full); }
 
 /* ── Typography utilities ── */
-.display-xl { font-family: var(--font-display); font-size: var(--text-display-xl); font-weight: 700; line-height: 1.1; }
-.display-lg { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 700; line-height: 1.15; }
-.heading-1  { font-size: var(--text-heading-1); font-weight: 600; line-height: 1.3; }
-.heading-2  { font-size: var(--text-heading-2); font-weight: 600; line-height: 1.3; }
-.body-lg    { font-size: var(--text-body-lg); font-weight: 400; }
-.body-md    { font-size: var(--text-body-md); font-weight: 400; }
-.body-sm    { font-size: var(--text-body-sm); font-weight: 500; }
-.label      { font-size: var(--text-body-sm); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.display-xl { font-family: var(--font-display); font-size: var(--text-display-xl); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: var(--text-primary); }
+.display-lg { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--text-primary); }
+.heading-1  { font-size: var(--text-heading-1); font-weight: 700; line-height: 1.25; color: var(--text-primary); }
+.heading-2  { font-size: var(--text-heading-2); font-weight: 600; line-height: 1.3; color: var(--text-primary); }
+.body-lg    { font-size: var(--text-body-lg); font-weight: 400; color: var(--text-primary); }
+.body-md    { font-size: var(--text-body-md); font-weight: 400; color: var(--text-primary); }
+.body-sm    { font-size: var(--text-body-sm); font-weight: 500; color: var(--text-secondary); }
+.label      { font-size: var(--text-body-sm); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); }
 
 /* ── Color utilities ── */
-.text-primary   { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-tertiary  { color: var(--text-tertiary); }
-.text-accent    { color: var(--accent-primary); }
-.text-violet    { color: var(--accent-secondary); }
-.text-gold      { color: var(--accent-gold); }
-.text-success   { color: var(--success); }
-.text-error     { color: var(--error); }
+.text-primary   { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-tertiary  { color: var(--text-tertiary) !important; }
+.text-accent    { color: var(--accent-primary) !important; }
+.text-violet    { color: var(--accent-secondary) !important; }
+.text-gold      { color: var(--accent-gold) !important; }
+.text-success   { color: var(--success) !important; }
+.text-error     { color: var(--error) !important; }
 
 /* ── Layout utilities ── */
 .container {
@@ -91,9 +91,7 @@ ul, ol {
   padding: 0 var(--screen-px);
 }
 
-.container--wide {
-  max-width: 1200px;
-}
+.container--wide { max-width: 1200px; }
 
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
@@ -140,7 +138,7 @@ ul, ol {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10,10,12,0.85) 0%, rgba(10,10,12,0.2) 50%, transparent 100%);
+  background: linear-gradient(to top, rgba(10,10,12,0.92) 0%, rgba(10,10,12,0.3) 50%, transparent 100%);
   pointer-events: none;
 }
 
@@ -184,11 +182,6 @@ ul, ol {
   100% { transform: scale(1); }
 }
 
-@keyframes rankCount {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 .animate-fade-in  { animation: fadeIn var(--transition-normal) ease-out both; }
 .animate-scale-in { animation: scaleIn var(--transition-fast) ease-out both; }
 
@@ -213,10 +206,10 @@ ul, ol {
   min-height: 100dvh;
 }
 
+/* Mobile: page needs padding for bottom nav */
 .page-content {
   flex: 1;
-  padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
-  overflow-y: auto;
+  padding-bottom: calc(var(--bottom-nav-height) + 16px);
 }
 
 /* Desktop: sidebar layout */
@@ -228,4 +221,49 @@ ul, ol {
     padding-bottom: var(--space-8);
     margin-left: 240px;
   }
+}
+
+/* ── Form inputs (global baseline — higher contrast) ── */
+.form-input, .form-textarea {
+  background: #1C1C22;
+  border: 1.5px solid #3A3A44;
+  color: #F5F5F7;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 15px;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.form-input:focus, .form-textarea:focus {
+  border-color: var(--accent-primary);
+  background: #22222A;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,77,109,0.1);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: #52525A;
+}
+
+/* ── Section page wrapper (consistent padding for all inner pages) ── */
+.page-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
 }

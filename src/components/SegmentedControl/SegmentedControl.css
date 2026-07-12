@@ -1,29 +1,39 @@
-.seg-control {
-  display: flex;
-  background: var(--bg-elevated-2);
-  border-radius: var(--radius-md);
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background: #1C1C22;
+  border-radius: 12px;
   padding: 3px;
   gap: 2px;
+  border: 1px solid #2A2A2E;
 }
 
-.seg-control__btn {
+.segmented-control__btn {
   flex: 1;
-  padding: var(--space-2) var(--space-3);
-  border-radius: calc(var(--radius-md) - 3px);
+  padding: 8px 18px;
+  border-radius: 10px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  font-weight: 700;
+  color: #6E6E76;
+  transition: background 0.18s, color 0.18s;
   white-space: nowrap;
 }
 
-.seg-control__btn:hover:not(.seg-control__btn--active) {
-  color: var(--text-primary);
-  background: var(--bg-elevated-3);
+.segmented-control__btn:hover:not(.segmented-control__btn--active) {
+  color: #A1A1AA;
 }
 
-.seg-control__btn--active {
-  background: var(--bg-elevated-3);
-  color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+.segmented-control__btn--active {
+  background: #FF4D6D;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255,77,109,0.35);
+}
+
+/* Full-width variant */
+.segmented-control--full {
+  width: 100%;
+}
+
+.segmented-control--full .segmented-control__btn {
+  text-align: center;
 }

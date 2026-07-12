@@ -9,21 +9,25 @@ import './FeedPage.css';
 function BattleSpotlightCard({ battle }) {
   const navigate = useNavigate();
   return (
-    <div className="battle-spotlight" onClick={() => navigate('/compete/vote')}>
+    <div className="battle-spotlight" onClick={() => navigate('/compete/vote')} id={`spotlight-${battle.id}`}>
       <div className="battle-spotlight__header">
-        <span className="label text-accent">⚡ Live Battle</span>
+        <span className="label text-accent">⚡ Live Battle — {battle.category}</span>
         <span className="body-sm text-tertiary">{battle.totalVotes.toLocaleString()} votes · {battle.endsIn}</span>
       </div>
       <div className="battle-spotlight__photos">
-        <img src={battle.photoA.url} alt={battle.photoA.photographerName} className="battle-spotlight__img" />
+        {/* Cinema box A */}
+        <div className="battle-spotlight__cinema">
+          <img src={battle.photoA.url} alt={battle.photoA.photographerName} className="battle-spotlight__img" />
+          <div className="battle-spotlight__name">{battle.photoA.photographerName}</div>
+        </div>
         <div className="battle-spotlight__vs">VS</div>
-        <img src={battle.photoB.url} alt={battle.photoB.photographerName} className="battle-spotlight__img" />
+        {/* Cinema box B */}
+        <div className="battle-spotlight__cinema">
+          <img src={battle.photoB.url} alt={battle.photoB.photographerName} className="battle-spotlight__img" />
+          <div className="battle-spotlight__name">{battle.photoB.photographerName}</div>
+        </div>
       </div>
-      <div className="battle-spotlight__names">
-        <span className="body-sm">{battle.photoA.photographerName}</span>
-        <span className="body-sm">{battle.photoB.photographerName}</span>
-      </div>
-      <button className="battle-spotlight__cta label">Vote now →</button>
+      <button className="battle-spotlight__cta label">Tap to vote →</button>
     </div>
   );
 }

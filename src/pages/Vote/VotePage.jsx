@@ -4,23 +4,35 @@ import ProgressRing from '../../components/ProgressRing/ProgressRing';
 import { battles } from '../../data/battles';
 import './VotePage.css';
 
+const TOTAL_DAILY = 20;
+
+function formatAspectRatio(ratio) {
+  if (!ratio) return null;
+  const labels = { '9/16': '9:16 Portrait', '16/9': '16:9 Landscape', '1/1': '1:1 Square', '4/5': '4:5 Portrait' };
+  return labels[ratio] || ratio;
+}
+
 export default function VotePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [votedCount, setVotedCount] = useState(0);
-  const [skipped, setSkipped] = useState([]);
+  const [votedCount, setVotedCount]     = useState(0);
+  const [skipped, setSkipped]           = useState([]);
 
-  const totalVotes = 20;
   const remaining = battles.filter((_, i) => !skipped.includes(i));
 
+  // Victory screen
   if (currentIndex >= remaining.length) {
     return (
-      <div className="vote-done">
-        <div style={{ fontSize: 64 }}>🏆</div>
+      <div className="vote-done animate-fade-in">
+        <div style={{ fontSize: 72 }}>🏆</div>
         <h2 className="display-lg">You're on fire!</h2>
-        <p className="body-lg text-secondary">You voted on {votedCount} battles today.</p>
-        <p className="body-md text-tertiary">Come back tomorrow for more matchups.</p>
-        <button className="vote-done__restart" onClick={() => { setCurrentIndex(0); setVotedCount(0); setSkipped([]); }} id="restart-voting-btn">
-          Start over
+        <p className="body-lg">You voted on <strong style={{ color: '#FF4D6D' }}>{votedCount}</strong> battles today.</p>
+        <p className="body-md">Come back tomorrow for fresh matchups.</p>
+        <button
+          className="vote-done__restart"
+          onClick={() => { setCurrentIndex(0); setVotedCount(0); setSkipped([]); }}
+          id="restart-voting-btn"
+        >
+          Vote again →
         </button>
       </div>
     );
@@ -30,7 +42,7 @@ export default function VotePage() {
 
   const handleVote = () => {
     setVotedCount(c => c + 1);
-    setTimeout(() => setCurrentIndex(i => i + 1), 800);
+    setTimeout(() => setCurrentIndex(i => i + 1), 900);
   };
 
   const handleSkip = () => {
@@ -38,38 +50,65 @@ export default function VotePage() {
     setCurrentIndex(i => i + 1);
   };
 
+  const ratioA = formatAspectRatio(battle.photoA.aspectRatio);
+  const ratioB = formatAspectRatio(battle.photoB.aspectRatio);
+
   return (
     <div className="vote-page">
+
+      {/* Header + progress ring */}
       <div className="vote-header">
         <div>
-          <h1 className="heading-1">Compete</h1>
-          <p className="body-sm text-secondary">Vote on today's battles</p>
+          <h1 className="heading-1">Vote</h1>
+          <p className="body-sm">Battle {currentIndex + 1} of {remaining.length}</p>
         </div>
         <ProgressRing
-          progress={votedCount / totalVotes}
-          size={64}
+          progress={votedCount / TOTAL_DAILY}
+          size={60}
           strokeWidth={5}
           label={`${votedCount}`}
-          sublabel={`/ ${totalVotes}`}
+          sublabel={`/ ${TOTAL_DAILY}`}
         />
       </div>
 
       <div className="vote-battle-wrap animate-fade-in" key={battle.id}>
+
+        {/* Battle meta */}
         <div className="vote-battle-meta">
-          <span className="label text-secondary">Category</span>
-          <span className="body-md" style={{ color: 'var(--accent-primary)' }}>{battle.category}</span>
-          <span className="body-sm text-tertiary">Ends in {battle.endsIn}</span>
+          <span className="label">Category</span>
+          <span className="vote-battle-meta__dot" />
+          <span className="body-md" style={{ color: '#FF4D6D', fontWeight: 700 }}>{battle.category}</span>
+          <div className="vote-meta-timer">
+            ⏱ {battle.endsIn}
+          </div>
         </div>
 
+        {/* Aspect ratio labels — transparent info so voters know both photos are shown in full */}
+        {(ratioA || ratioB) && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {ratioA && <span className="vote-aspect-chip">📷 A: {ratioA}</span>}
+            {ratioB && <span className="vote-aspect-chip">📷 B: {ratioB}</span>}
+            <span className="vote-aspect-chip" style={{ color: '#34D399', borderColor: 'rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.06)' }}>
+              ✓ Full photos shown
+            </span>
+          </div>
+        )}
+
+        {/* The battle card */}
         <BattleCard battle={battle} onVote={handleVote} />
 
+        {/* Skip */}
         <button className="vote-skip" onClick={handleSkip} id="skip-battle-btn">
           Skip this one
         </button>
       </div>
 
+      {/* Progress bar at bottom of screen */}
       <div className="vote-progress-bar">
-        <div className="vote-progress-bar__fill" style={{ width: `${(currentIndex / remaining.length) * 100}%` }} />
+        <div
+          className="vote-progress-bar__fill"
+          style={{ width: `${(currentIndex / remaining.length) * 100}%` }}
+        />
       </div>
     </div>
   );

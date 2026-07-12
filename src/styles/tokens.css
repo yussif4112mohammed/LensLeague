@@ -1,0 +1,86 @@
+/* ============================================================
+   LensLeague Design Tokens — Section 4 of Blueprint
+   ============================================================ */
+
+:root {
+  /* ── Background layers ── */
+  --bg-base:        #0A0A0C;
+  --bg-elevated-1:  #131316;
+  --bg-elevated-2:  #1C1C20;
+  --bg-elevated-3:  #26262B;
+
+  /* ── Borders / dividers ── */
+  --border-subtle:  #2A2A2E;
+  --border-strong:  #3A3A40;
+
+  /* ── Text ── */
+  --text-primary:   #F5F5F7;
+  --text-secondary: #A1A1AA;
+  --text-tertiary:  #6E6E76;
+  --text-disabled:  #4A4A50;
+
+  /* ── Brand / Accent ── */
+  --accent-primary:   #FF4D6D;
+  --accent-secondary: #6E5BFF;
+  --accent-gold:      #FFC24B;
+  --accent-silver:    #C8CCD4;
+  --accent-bronze:    #D98C5F;
+
+  /* ── Semantic ── */
+  --success:  #34D399;
+  --warning:  #FBBF24;
+  --error:    #F87171;
+  --info:     #60A5FA;
+
+  /* ── Vote / Battle specific ── */
+  --vote-a:   #FF4D6D;
+  --vote-b:   #6E5BFF;
+
+  /* ── Typography ── */
+  --font-ui:      'Inter', system-ui, sans-serif;
+  --font-display: 'Syne', 'Inter', sans-serif;
+
+  --text-display-xl:  clamp(28px, 5vw, 34px);
+  --text-display-lg:  clamp(22px, 4vw, 28px);
+  --text-heading-1:   22px;
+  --text-heading-2:   18px;
+  --text-body-lg:     16px;
+  --text-body-md:     14px;
+  --text-body-sm:     12px;
+
+  /* ── Spacing (4px base unit) ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Border radius ── */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* ── Screen padding ── */
+  --screen-px: 16px;
+
+  /* ── Nav heights ── */
+  --bottom-nav-height: 64px;
+  --top-bar-height:    56px;
+
+  /* ── Transitions ── */
+  --transition-micro:  120ms ease-out;
+  --transition-fast:   180ms ease-out;
+  --transition-normal: 250ms ease-out;
+  --transition-slow:   300ms ease-out;
+
+  /* ── Shadows / Glows ── */
+  --glow-primary:   0 0 24px rgba(255, 77, 109, 0.2);
+  --glow-secondary: 0 0 24px rgba(110, 91, 255, 0.2);
+  --glow-gold:      0 0 24px rgba(255, 194, 75, 0.25);
+}

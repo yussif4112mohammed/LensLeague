@@ -1,0 +1,160 @@
+.challenges-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-bottom: var(--space-12);
+}
+
+.challenges-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-6) var(--screen-px) var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Featured hero */
+.challenge-hero {
+  margin: 0 var(--screen-px) var(--space-4);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  min-height: 320px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+}
+
+.challenge-hero__overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(10,10,12,0.95) 0%, rgba(10,10,12,0.3) 60%, transparent 100%);
+}
+
+.challenge-hero__content {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-6);
+  display: flex; flex-direction: column; gap: var(--space-3);
+}
+
+.challenge-hero__badge {
+  background: rgba(255,194,75,0.15);
+  border: 1px solid rgba(255,194,75,0.3);
+  color: var(--accent-gold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  display: inline-flex; align-items: center; width: fit-content;
+  font-size: 11px;
+}
+
+.challenge-hero__meta {
+  display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap;
+}
+
+.challenge-hero__enter {
+  display: inline-flex; align-items: center;
+  background: var(--accent-primary);
+  color: white;
+  font-size: 14px; font-weight: 700;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  transition: filter var(--transition-fast), box-shadow var(--transition-fast);
+  margin-top: var(--space-2);
+  width: fit-content;
+}
+.challenge-hero__enter:hover {
+  filter: brightness(1.1);
+  box-shadow: var(--glow-primary);
+}
+
+/* Countdown */
+.countdown {
+  display: flex; align-items: baseline; gap: 3px;
+  font-family: var(--font-display);
+}
+.countdown__val {
+  font-size: 20px; font-weight: 700; color: var(--text-primary);
+}
+.countdown__unit {
+  font-size: 11px; font-weight: 500; color: var(--text-tertiary); margin-right: 4px;
+}
+
+/* Mini challenge cards */
+.challenge-mini-list {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-3) var(--screen-px);
+}
+
+.challenge-mini-card {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--bg-elevated-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  transition: border-color var(--transition-fast);
+}
+.challenge-mini-card:hover { border-color: var(--border-strong); }
+
+.challenge-mini-card__img {
+  width: 80px; height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.challenge-mini-card__btn {
+  background: var(--accent-primary);
+  color: white;
+  font-size: 12px; font-weight: 700;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transition: filter var(--transition-fast);
+}
+.challenge-mini-card__btn:hover { filter: brightness(1.1); }
+
+/* Past winners */
+.past-winners {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  padding: var(--space-4) 0;
+}
+
+.past-challenge { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.winners-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  padding: 0 var(--screen-px);
+}
+
+.winner-card {
+  cursor: pointer; position: relative;
+  border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+.winner-card:hover { transform: scale(1.02); border-color: var(--border-strong); }
+.winner-card--rank-1 { border-color: rgba(255,194,75,0.4); box-shadow: var(--glow-gold); }
+
+.winner-card__rank {
+  position: absolute; top: var(--space-2); left: var(--space-2);
+  font-size: 20px; z-index: 2;
+}
+
+.winner-card__photo {
+  width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block;
+}
+
+.winner-card__info {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: var(--space-2);
+  background: linear-gradient(to top, rgba(10,10,12,0.9), transparent);
+  display: flex; align-items: center; gap: var(--space-1);
+}
+
+.winner-card__avatar {
+  width: 20px; height: 20px; border-radius: var(--radius-full); object-fit: cover;
+}

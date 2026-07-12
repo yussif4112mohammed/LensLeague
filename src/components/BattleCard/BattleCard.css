@@ -1,0 +1,166 @@
+.battle-card {
+  background: var(--bg-elevated-1);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.battle-card__photos {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2px;
+  min-height: 320px;
+}
+
+.battle-card__photo {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  background: var(--bg-elevated-2);
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.battle-card__photo--unchosen {
+  filter: brightness(0.5) saturate(0.3);
+}
+
+.battle-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  min-height: 280px;
+  transition: transform var(--transition-slow);
+}
+
+.battle-card__photo:hover:not([disabled]) .battle-card__img {
+  transform: scale(1.04);
+}
+
+.battle-card__photo-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: var(--space-3);
+  background: linear-gradient(to top, rgba(10,10,12,0.9), transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.battle-card__photographer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.battle-card__photographer img {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.battle-card__pct {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  animation: rankCount 0.3s ease-out both;
+}
+
+.battle-card__chosen-badge {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  background: var(--vote-a);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: scaleIn var(--transition-fast) both;
+  box-shadow: var(--glow-primary);
+}
+
+.battle-card__chosen-badge--b {
+  background: var(--vote-b);
+  box-shadow: var(--glow-secondary);
+}
+
+.battle-card__vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  background: var(--bg-base);
+  letter-spacing: 0.05em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Vote bars */
+.battle-card__bars {
+  padding: var(--space-3) var(--space-4);
+}
+
+.battle-card__bar-track {
+  display: flex;
+  height: 6px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+}
+
+.battle-card__bar-fill {
+  height: 100%;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: var(--radius-full);
+}
+
+.battle-card__bar-fill--a {
+  background: var(--vote-a);
+  box-shadow: 0 0 8px rgba(255, 77, 109, 0.4);
+}
+
+.battle-card__bar-fill--b {
+  background: var(--vote-b);
+  box-shadow: 0 0 8px rgba(110, 91, 255, 0.4);
+}
+
+.battle-card__bar-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.battle-card__hint {
+  text-align: center;
+  padding-bottom: var(--space-3);
+}
+
+/* Impact animation */
+@keyframes battleImpact {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.03); }
+  70%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.battle-impact {
+  animation: battleImpact 0.5s ease-out;
+}

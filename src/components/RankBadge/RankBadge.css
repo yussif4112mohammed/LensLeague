@@ -1,0 +1,53 @@
+.rank-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+  line-height: 1;
+  gap: 2px;
+}
+
+/* Sizes */
+.rank-badge--sm { width: 32px; height: 32px; font-size: 11px; }
+.rank-badge--md { width: 44px; height: 44px; font-size: 13px; }
+.rank-badge--lg { width: 56px; height: 56px; font-size: 16px; }
+
+/* Colors */
+.rank-badge--gold {
+  background: linear-gradient(135deg, #FFC24B, #FF9500);
+  color: #0A0A0C;
+  border-color: rgba(255, 194, 75, 0.4);
+}
+.rank-badge--silver {
+  background: linear-gradient(135deg, #C8CCD4, #9EA3AA);
+  color: #0A0A0C;
+  border-color: rgba(200, 204, 212, 0.3);
+}
+.rank-badge--bronze {
+  background: linear-gradient(135deg, #D98C5F, #B36B3F);
+  color: #fff;
+  border-color: rgba(217, 140, 95, 0.3);
+}
+.rank-badge--neutral {
+  background: var(--bg-elevated-3);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+.rank-badge--glow {
+  box-shadow: var(--glow-gold);
+}
+
+.rank-badge__crown {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.rank-badge__number {
+  letter-spacing: -0.02em;
+}

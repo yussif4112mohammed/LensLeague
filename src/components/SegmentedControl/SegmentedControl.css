@@ -1,0 +1,29 @@
+.seg-control {
+  display: flex;
+  background: var(--bg-elevated-2);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.seg-control__btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: calc(var(--radius-md) - 3px);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.seg-control__btn:hover:not(.seg-control__btn--active) {
+  color: var(--text-primary);
+  background: var(--bg-elevated-3);
+}
+
+.seg-control__btn--active {
+  background: var(--bg-elevated-3);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}

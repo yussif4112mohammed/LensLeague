@@ -1,0 +1,126 @@
+.photo-card {
+  background: var(--bg-elevated-1);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  transition: transform var(--transition-fast);
+}
+
+.photo-card:hover {
+  transform: translateY(-2px);
+}
+
+.photo-card__image-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-card__image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-slow);
+}
+
+.photo-card:hover .photo-card__image {
+  transform: scale(1.02);
+}
+
+.photo-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10,10,12,0.9) 0%, rgba(10,10,12,0.1) 55%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-3);
+  gap: var(--space-2);
+}
+
+.photo-card__author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.photo-card__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.photo-card__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.photo-card__category {
+  color: var(--accent-primary);
+  font-size: 10px;
+}
+
+.photo-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.photo-card__action {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  background: rgba(10,10,12,0.5);
+  backdrop-filter: blur(8px);
+  transition: color var(--transition-micro), transform var(--transition-micro);
+}
+
+.photo-card__action:hover {
+  transform: scale(1.1);
+}
+
+.photo-card__action--liked {
+  color: var(--accent-primary);
+}
+
+.photo-card__action--saved {
+  color: var(--accent-secondary);
+}
+
+@keyframes heartBurstAnim {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.5); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.heart-burst svg {
+  animation: heartBurstAnim 0.5s ease-out;
+}
+
+.photo-card__caption {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Compact variant */
+.photo-card--compact {
+  border: none;
+  border-radius: var(--radius-md);
+}
+
+.photo-card--compact .photo-card__image {
+  border-radius: var(--radius-md);
+  aspect-ratio: 4/3;
+}

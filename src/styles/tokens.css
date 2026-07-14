@@ -1,42 +1,109 @@
 /* ============================================================
-   LensLeague Design Tokens — Section 4 of Blueprint
+   LensLeague Design Tokens — Dark mode (default) + Light mode
    ============================================================ */
 
-:root {
-  /* ── Background layers ── */
+/* ── DARK MODE (default) ── */
+:root,
+[data-theme="dark"] {
+  /* Background layers */
   --bg-base:        #0A0A0C;
   --bg-elevated-1:  #131316;
   --bg-elevated-2:  #1C1C20;
   --bg-elevated-3:  #26262B;
 
-  /* ── Borders / dividers ── */
+  /* Borders */
   --border-subtle:  #2A2A2E;
   --border-strong:  #3A3A40;
 
-  /* ── Text ── */
+  /* Text */
   --text-primary:   #F5F5F7;
   --text-secondary: #A1A1AA;
   --text-tertiary:  #6E6E76;
   --text-disabled:  #4A4A50;
 
-  /* ── Brand / Accent ── */
+  /* Nav & shell */
+  --nav-bg:         #0D0D10;
+  --nav-border:     #2A2A2E;
+
+  /* Input */
+  --input-bg:       #1C1C22;
+  --input-border:   #3A3A44;
+  --input-focus-bg: #22222A;
+
+  /* Card */
+  --card-bg:        #131316;
+  --card-border:    #2A2A2E;
+
+  /* Button Secondary */
+  --btn-secondary-bg:           rgba(255, 255, 255, 0.06);
+  --btn-secondary-border:       rgba(255, 255, 255, 0.18);
+  --btn-secondary-hover-bg:     rgba(255, 255, 255, 0.1);
+  --btn-secondary-hover-border: rgba(255, 255, 255, 0.3);
+
+  /* Shadows */
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.4);
+}
+
+/* ── LIGHT MODE ── */
+[data-theme="light"] {
+  /* Background layers */
+  --bg-base:        #F8F8FA;
+  --bg-elevated-1:  #FFFFFF;
+  --bg-elevated-2:  #F2F2F5;
+  --bg-elevated-3:  #E8E8EE;
+
+  /* Borders */
+  --border-subtle:  #E4E4E8;
+  --border-strong:  #C8C8D0;
+
+  /* Text */
+  --text-primary:   #111114;
+  --text-secondary: #52525B;
+  --text-tertiary:  #8A8A94;
+  --text-disabled:  #BBBBC4;
+
+  /* Nav & shell */
+  --nav-bg:         #FFFFFF;
+  --nav-border:     #E4E4E8;
+
+  /* Input */
+  --input-bg:       #F2F2F5;
+  --input-border:   #D4D4DC;
+  --input-focus-bg: #FFFFFF;
+
+  /* Card */
+  --card-bg:        #FFFFFF;
+  --card-border:    #E4E4E8;
+
+  /* Button Secondary */
+  --btn-secondary-bg:           rgba(0, 0, 0, 0.05);
+  --btn-secondary-border:       rgba(0, 0, 0, 0.15);
+  --btn-secondary-hover-bg:     rgba(0, 0, 0, 0.08);
+  --btn-secondary-hover-border: rgba(0, 0, 0, 0.25);
+
+  /* Shadows */
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.08);
+}
+
+/* ── Brand / Accent (same in both modes) ── */
+:root {
   --accent-primary:   #FF4D6D;
   --accent-secondary: #6E5BFF;
   --accent-gold:      #FFC24B;
   --accent-silver:    #C8CCD4;
   --accent-bronze:    #D98C5F;
 
-  /* ── Semantic ── */
+  /* Semantic */
   --success:  #34D399;
   --warning:  #FBBF24;
   --error:    #F87171;
   --info:     #60A5FA;
 
-  /* ── Vote / Battle specific ── */
+  /* Vote / Battle */
   --vote-a:   #FF4D6D;
   --vote-b:   #6E5BFF;
 
-  /* ── Typography ── */
+  /* Typography — overridden by ThemeContext JS */
   --font-ui:      'Inter', system-ui, sans-serif;
   --font-display: 'Syne', 'Inter', sans-serif;
 
@@ -48,7 +115,7 @@
   --text-body-md:     14px;
   --text-body-sm:     12px;
 
-  /* ── Spacing (4px base unit) ── */
+  /* Spacing */
   --space-1:  4px;
   --space-2:  8px;
   --space-3:  12px;
@@ -59,28 +126,33 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* ── Border radius ── */
+  /* Border radius */
   --radius-sm:   8px;
   --radius-md:   12px;
   --radius-lg:   16px;
   --radius-xl:   24px;
   --radius-full: 9999px;
 
-  /* ── Screen padding ── */
+  /* Screen padding */
   --screen-px: 16px;
 
-  /* ── Nav heights ── */
+  /* Nav heights */
   --bottom-nav-height: 64px;
   --top-bar-height:    56px;
 
-  /* ── Transitions ── */
+  /* Transitions */
   --transition-micro:  120ms ease-out;
   --transition-fast:   180ms ease-out;
   --transition-normal: 250ms ease-out;
   --transition-slow:   300ms ease-out;
 
-  /* ── Shadows / Glows ── */
+  /* Glows */
   --glow-primary:   0 0 24px rgba(255, 77, 109, 0.2);
   --glow-secondary: 0 0 24px rgba(110, 91, 255, 0.2);
   --glow-gold:      0 0 24px rgba(255, 194, 75, 0.25);
+}
+
+/* Smooth theme transition */
+*, *::before, *::after {
+  transition: background-color 0.25s ease, border-color 0.2s ease, color 0.15s ease;
 }

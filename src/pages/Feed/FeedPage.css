@@ -9,8 +9,8 @@
   position: fixed;
   top: 0; left: 0; right: 0;
   height: var(--top-bar-height);
-  background: #0A0A0C;
-  border-bottom: 1px solid #2A2A2E;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,7 +29,7 @@
 .feed-header__logo .heading-2 {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  color: #F5F5F7;
+  color: var(--text-primary);
 }
 
 .feed-header__actions {
@@ -48,15 +48,15 @@
 
 .feed-header__bell {
   position: relative;
-  color: #A1A1AA;
+  color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
   width: 36px; height: 36px;
   border-radius: 100px;
-  background: #1C1C20;
-  border: 1px solid #2A2A2E;
+  background: var(--bg-elevated-2);
+  border: 1px solid var(--border-subtle);
   transition: background 0.18s;
 }
-.feed-header__bell:hover { background: #26262B; color: #F5F5F7; }
+.feed-header__bell:hover { background: var(--bg-elevated-3); color: var(--text-primary); }
 
 .feed-header__badge {
   position: absolute;
@@ -66,7 +66,7 @@
   border-radius: 100px;
   font-size: 10px; font-weight: 800; color: white;
   display: flex; align-items: center; justify-content: center;
-  border: 2px solid #0A0A0C;
+  border: 2px solid var(--bg-base);
 }
 
 /* ── Segment bar ── */
@@ -74,9 +74,9 @@
   padding: 10px 16px;
   position: sticky;
   top: var(--top-bar-height);
-  background: #0A0A0C;
+  background: var(--bg-base);
   z-index: 50;
-  border-bottom: 1px solid #2A2A2E;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 /* ── Post list ── */
@@ -89,21 +89,21 @@
 
 /* Each card gets a separator */
 .feed-list > * {
-  border-bottom: 1px solid #1C1C20;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 /* ── Battle spotlight card (inline in feed) ── */
 .battle-spotlight {
-  background: #131316;
+  background: var(--bg-elevated-1);
   border: none;
   border-radius: 0;
   padding: 14px 16px;
   cursor: pointer;
   transition: background 0.18s;
   display: flex; flex-direction: column; gap: 10px;
-  border-bottom: 1px solid #1C1C20;
+  border-bottom: 1px solid var(--border-subtle);
 }
-.battle-spotlight:hover { background: #1a1a1e; }
+.battle-spotlight:hover { background: var(--bg-elevated-2); }
 
 .battle-spotlight__header {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;

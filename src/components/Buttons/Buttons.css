@@ -36,13 +36,13 @@
 
 /* Secondary */
 .btn--secondary {
-  background: rgba(255,255,255,0.06);
+  background: var(--btn-secondary-bg);
   color: var(--text-primary);
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid var(--btn-secondary-border);
 }
 .btn--secondary:hover:not(:disabled) {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.3);
+  background: var(--btn-secondary-hover-bg);
+  border-color: var(--btn-secondary-hover-border);
 }
 
 /* Modifiers */

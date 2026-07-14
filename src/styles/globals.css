@@ -225,9 +225,9 @@ ul, ol {
 
 /* ── Form inputs (global baseline — higher contrast) ── */
 .form-input, .form-textarea {
-  background: #1C1C22;
-  border: 1.5px solid #3A3A44;
-  color: #F5F5F7;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  color: var(--text-primary);
   border-radius: 12px;
   padding: 0 16px;
   font-size: 15px;
@@ -236,14 +236,14 @@ ul, ol {
 
 .form-input:focus, .form-textarea:focus {
   border-color: var(--accent-primary);
-  background: #22222A;
+  background: var(--input-focus-bg);
   outline: none;
   box-shadow: 0 0 0 3px rgba(255,77,109,0.1);
 }
 
 .form-input::placeholder,
 .form-textarea::placeholder {
-  color: #52525A;
+  color: var(--text-tertiary);
 }
 
 /* ── Section page wrapper (consistent padding for all inner pages) ── */

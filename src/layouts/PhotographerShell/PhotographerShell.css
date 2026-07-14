@@ -8,8 +8,8 @@
   position: fixed;
   bottom: 0; left: 0; right: 0;
   height: var(--bottom-nav-height);
-  background: #0D0D10;
-  border-top: 1px solid #2A2A2E;
+  background: var(--nav-bg);
+  border-top: 1px solid var(--nav-border);
   display: flex;
   align-items: center;
   z-index: 100;
@@ -25,17 +25,17 @@
   justify-content: center;
   gap: 4px;
   padding: 6px 4px;
-  color: #6E6E76;
+  color: var(--text-tertiary);
   transition: color 0.18s;
   text-decoration: none;
   border-radius: 12px;
   min-width: 0;
 }
 
-.bottom-nav__item:hover { color: #A1A1AA; }
+.bottom-nav__item:hover { color: var(--text-secondary); }
 
 .bottom-nav__item--active {
-  color: #F5F5F7;
+  color: var(--text-primary);
 }
 
 .bottom-nav__item--active .bottom-nav__icon svg {
@@ -84,8 +84,8 @@
     position: fixed;
     left: 0; top: 0; bottom: 0;
     width: 240px;
-    background: #0D0D10;
-    border-right: 1px solid #2A2A2E;
+    background: var(--nav-bg);
+    border-right: 1px solid var(--nav-border);
     padding: 24px 16px;
     z-index: 200;
     gap: 8px;
@@ -101,13 +101,13 @@
     border-radius: 12px;
     transition: background 0.18s;
   }
-  .sidebar__logo:hover { background: #1C1C20; }
+  .sidebar__logo:hover { background: var(--bg-elevated-2); }
 
   .sidebar__brand {
     font-family: 'Syne', sans-serif;
     font-size: 19px;
     font-weight: 800;
-    color: #F5F5F7;
+    color: var(--text-primary);
     letter-spacing: -0.02em;
   }
 
@@ -124,7 +124,7 @@
     gap: 12px;
     padding: 11px 14px;
     border-radius: 12px;
-    color: #A1A1AA;
+    color: var(--text-secondary);
     font-size: 15px;
     font-weight: 600;
     transition: background 0.18s, color 0.18s;
@@ -132,13 +132,13 @@
   }
 
   .sidebar__link:hover {
-    background: #1C1C22;
-    color: #F5F5F7;
+    background: var(--bg-elevated-2);
+    color: var(--text-primary);
   }
 
   .sidebar__link--active {
-    background: #1C1C22;
-    color: #F5F5F7;
+    background: var(--bg-elevated-2);
+    color: var(--text-primary);
   }
 
   .sidebar__link--active .sidebar__icon {
@@ -176,7 +176,7 @@
   }
 
   .sidebar__footer {
-    border-top: 1px solid #2A2A2E;
+    border-top: 1px solid var(--nav-border);
     padding-top: 16px;
     margin-top: auto;
   }
@@ -187,15 +187,15 @@
     gap: 12px;
     padding: 11px 14px;
     border-radius: 12px;
-    color: #6E6E76;
+    color: var(--text-tertiary);
     font-size: 14px;
     font-weight: 600;
     transition: background 0.18s, color 0.18s;
     text-decoration: none;
   }
   .sidebar__settings-link:hover {
-    background: #1C1C22;
-    color: #A1A1AA;
+    background: var(--bg-elevated-2);
+    color: var(--text-secondary);
   }
 
   .page-content {

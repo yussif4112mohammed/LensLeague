@@ -23,6 +23,8 @@ import ClientSearch from './pages/Client/ClientSearch';
 import ClientSaved from './pages/Client/ClientSaved';
 import ClientBookings from './pages/Client/ClientBookings';
 
+import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
+
 const router = createBrowserRouter([
   // ────── Public routes ──────
   { path: '/', element: <LandingPage /> },
@@ -72,5 +74,10 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <ThemeSwitcher />
+    </>
+  );
 }

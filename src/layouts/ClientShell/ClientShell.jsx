@@ -44,6 +44,8 @@ const CLIENT_NAV = [
   },
 ];
 
+import RoleSwitcher from '../../components/RoleSwitcher/RoleSwitcher';
+
 export default function ClientShell() {
   return (
     <div className="app-shell">
@@ -90,6 +92,8 @@ export default function ClientShell() {
           </NavLink>
         ))}
       </nav>
+
+      <RoleSwitcher />
     </div>
   );
 }

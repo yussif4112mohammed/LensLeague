@@ -31,18 +31,41 @@ const TIMELINE_EVENTS = [
   { date: 'Sep 2025', icon: '🌍', title: 'Featured by National Geographic', desc: 'The Shinjuku shot was used in NG\'s "Faces of the City" spread.' },
 ];
 
+import { useApp } from '../../context/AppContext';
+
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentRole, addBookingRequest } = useApp();
   const [activeTab, setActiveTab] = useState('Portfolio');
   const [following, setFollowing] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    date: '',
+    budget: '',
+    location: '',
+    message: ''
+  });
 
   const photographer = photographers.find(p => p.id === id) || photographers[0];
-  const isOwnProfile = id === '1';
+  const isOwnProfile = id === '1' && currentRole === 'photographer';
 
   const portfolioPhotos = PHOTO_URLS.slice(0, 9).map((url, i) => ({
     id: `port-${i}`, url, aspectRatio: i % 3 === 0 ? '3/4' : '4/3',
   }));
+
+  const handleBookingSubmit = (e) => {
+    e.preventDefault();
+    addBookingRequest(photographer.id, bookingForm);
+    setBookingSuccess(true);
+    setTimeout(() => {
+      setBookingModalOpen(false);
+      setBookingSuccess(false);
+      // Reset form
+      setBookingForm({ date: '', budget: '', location: '', message: '' });
+    }, 2000);
+  };
 
   return (
     <div className="profile-page">
@@ -76,7 +99,7 @@ export default function ProfilePage() {
                 <SecondaryButton small onClick={() => setFollowing(f => !f)} id="follow-btn">
                   {following ? '✓ Following' : 'Follow'}
                 </SecondaryButton>
-                <PrimaryButton small id="book-photographer-btn">Request Booking</PrimaryButton>
+                <PrimaryButton small onClick={() => setBookingModalOpen(true)} id="book-photographer-btn">Request Booking</PrimaryButton>
               </>
             )}
           </div>
@@ -173,6 +196,89 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Booking request modal */}
+      {bookingModalOpen && (
+        <div className="photo-modal-backdrop" onClick={() => setBookingModalOpen(false)}>
+          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <button className="photo-modal__close" onClick={() => setBookingModalOpen(false)}>✕</button>
+            <div className="photo-modal__info">
+              <h2 className="heading-1" style={{ marginBottom: 'var(--space-2)' }}>Book {photographer.name}</h2>
+              <p className="body-sm text-secondary" style={{ marginBottom: 'var(--space-4)' }}>
+                Submit details below to send an direct booking request and open a chat thread.
+              </p>
+
+              {bookingSuccess ? (
+                <div style={{ textAlign: 'center', padding: 'var(--space-6) 0', color: 'var(--success)' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '8px' }}>🎉</div>
+                  <p className="heading-2">Booking Request Sent!</p>
+                  <p className="body-sm text-secondary">Opening conversation...</p>
+                </div>
+              ) : (
+                <form onSubmit={handleBookingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  <div>
+                    <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Shoot Date</label>
+                    <input 
+                      type="date" 
+                      required 
+                      className="form-input" 
+                      style={{ width: '100%', height: '44px' }}
+                      value={bookingForm.date}
+                      onChange={e => setBookingForm(prev => ({ ...prev, date: e.target.value }))}
+                      id="booking-date-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Approx Budget</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. $800" 
+                      className="form-input" 
+                      style={{ width: '100%', height: '44px' }}
+                      value={bookingForm.budget}
+                      onChange={e => setBookingForm(prev => ({ ...prev, budget: e.target.value }))}
+                      id="booking-budget-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Location</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="e.g. Shibuya Studio, Tokyo" 
+                      className="form-input" 
+                      style={{ width: '100%', height: '44px' }}
+                      value={bookingForm.location}
+                      onChange={e => setBookingForm(prev => ({ ...prev, location: e.target.value }))}
+                      id="booking-location-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Shoot Details & Requirements</label>
+                    <textarea 
+                      required 
+                      placeholder="Describe what kind of photos you need..." 
+                      className="form-textarea" 
+                      style={{ width: '100%', height: '100px', padding: '12px' }}
+                      value={bookingForm.message}
+                      onChange={e => setBookingForm(prev => ({ ...prev, message: e.target.value }))}
+                      id="booking-message-input"
+                    />
+                  </div>
+
+                  <button type="submit" className="btn btn--primary btn--full" style={{ marginTop: 'var(--space-2)' }} id="submit-booking-request">
+                    Submit Request
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,398 @@
+.inbox-page {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--bottom-nav-height));
+}
+
+@media (min-width: 1024px) {
+  .inbox-page {
+    height: 100vh;
+    padding: var(--space-6) var(--space-6) var(--space-6) 0;
+  }
+}
+
+.inbox-header {
+  padding: var(--space-4) var(--screen-px) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* ── Container ── */
+.inbox-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-base);
+  position: relative;
+}
+
+/* ── Sidebar Pane (Conversations List) ── */
+.inbox-sidebar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  transition: transform 0.25s ease;
+}
+
+@media (min-width: 768px) {
+  .inbox-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+  }
+  .inbox-sidebar--hidden {
+    display: flex !important; /* Keep visible on desktop/tablet */
+  }
+}
+
+@media (max-width: 767px) {
+  .inbox-sidebar--hidden {
+    display: none !important;
+  }
+}
+
+/* ── Thread Rows ── */
+.thread-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--screen-px);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.thread-row:hover {
+  background: var(--bg-elevated-1);
+}
+
+.thread-row--active {
+  background: var(--bg-elevated-2);
+  border-left: 3px solid var(--accent-primary);
+}
+
+.thread-row__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+}
+
+.thread-row__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.thread-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.thread-row__snippet {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Booking Inbox Card ── */
+.booking-inbox-card {
+  background: var(--bg-elevated-1);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin: var(--space-3) var(--screen-px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.booking-inbox-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.booking-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
+}
+.booking-badge--requested { color: var(--warning); background: rgba(251,191,36,0.12); }
+.booking-badge--accepted { color: var(--success); background: rgba(52,211,153,0.12); }
+.booking-badge--declined { color: var(--error); background: rgba(248,113,113,0.12); }
+.booking-badge--completed { color: var(--info); background: rgba(96,165,250,0.12); }
+
+.booking-inbox-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.booking-inbox-card__desc {
+  font-style: italic;
+  line-height: 1.4;
+  border-left: 2px solid var(--border-strong);
+  padding-left: var(--space-2);
+}
+
+.booking-inbox-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.booking-btn {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.booking-btn--decline {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+.booking-btn--decline:hover {
+  background: rgba(248,113,113,0.08);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.booking-btn--accept {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+}
+.booking-btn--accept:hover {
+  filter: brightness(1.08);
+}
+
+.booking-btn--complete, .booking-btn--chat {
+  width: 100%;
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
+  color: var(--text-primary);
+  margin-top: var(--space-1);
+}
+.booking-btn--complete:hover {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(52,211,153,0.06);
+}
+.booking-btn--chat:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(255,77,109,0.06);
+}
+
+/* ── Chat Messages Container ── */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-elevated-1);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .chat-container {
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-subtle);
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .chat-container--hidden {
+    display: flex !important; /* Keep visible on desktop */
+  }
+}
+
+@media (max-width: 767px) {
+  .chat-container--hidden {
+    display: none !important;
+  }
+}
+
+/* Chat Header */
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated-2);
+}
+
+.chat-header__back {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-primary);
+  padding: 0 var(--space-2);
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .chat-header__back {
+    display: none;
+  }
+}
+
+.chat-header__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+/* Messages log */
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--bg-base);
+}
+
+.chat-msg {
+  display: flex;
+  width: 100%;
+}
+
+.chat-msg--me {
+  justify-content: flex-end;
+}
+
+.chat-msg--other {
+  justify-content: flex-start;
+}
+
+.chat-msg--system {
+  justify-content: center;
+  margin: var(--space-2) 0;
+}
+
+.chat-msg__sys-body {
+  background: var(--bg-elevated-2);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.chat-msg__bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.chat-msg--me .chat-msg__bubble {
+  background: var(--accent-primary);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-msg--other .chat-msg__bubble {
+  background: var(--bg-elevated-3);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg__time {
+  font-size: 9px;
+  align-self: flex-end;
+  opacity: 0.7;
+}
+
+/* Chat Input form */
+.chat-input-row {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated-2);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  height: 44px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-4);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+.chat-input:focus {
+  border-color: var(--accent-primary);
+  background: var(--input-focus-bg);
+}
+
+.chat-send-btn {
+  background: var(--accent-primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.chat-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--text-tertiary);
+  background: var(--bg-elevated-1);
+}
+
+.chat-placeholder span {
+  font-size: 48px;
+}
+
+.inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-12) var(--screen-px);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.inbox-empty span {
+  font-size: 40px;
+}

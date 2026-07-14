@@ -1,0 +1,47 @@
+/* ── Floating Role Switcher FAB ── */
+.role-switcher-fab {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 68px);
+  right: 16px;
+  z-index: 300;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated-2);
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s, background-color 0.25s, border-color 0.2s;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.role-switcher-fab:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  border-color: var(--accent-primary);
+}
+
+.role-switcher-fab:active {
+  transform: scale(0.96);
+}
+
+.role-switcher-icon {
+  font-size: 16px;
+}
+
+.role-switcher-text strong {
+  color: var(--accent-primary);
+}
+
+@media (min-width: 1024px) {
+  .role-switcher-fab {
+    bottom: 76px;
+    right: 24px;
+  }
+}

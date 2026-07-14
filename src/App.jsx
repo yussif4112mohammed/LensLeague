@@ -23,6 +23,9 @@ import ClientSearch from './pages/Client/ClientSearch';
 import ClientSaved from './pages/Client/ClientSaved';
 import ClientBookings from './pages/Client/ClientBookings';
 
+// Pages — Inbox (Shared)
+import InboxPage from './pages/Inbox/InboxPage';
+
 import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
 
 const router = createBrowserRouter([
@@ -53,6 +56,8 @@ const router = createBrowserRouter([
       { path: '/upload', element: <UploadPage /> },
       // Settings
       { path: '/settings', element: <SettingsPage /> },
+      // Inbox
+      { path: '/inbox', element: <InboxPage /> },
     ]
   },
 
@@ -66,6 +71,8 @@ const router = createBrowserRouter([
       { path: '/client/bookings', element: <ClientBookings /> },
       // Clients can also view photographer profiles
       { path: '/client/profile', element: <ProfilePage /> },
+      // Inbox
+      { path: '/client/inbox', element: <InboxPage /> },
     ]
   },
 

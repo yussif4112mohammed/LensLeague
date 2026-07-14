@@ -48,7 +48,8 @@ export default function DiscoverPage() {
 
   return (
     <div className="discover-page">
-      <div className="discover-header">
+      {/* Search Input Row */}
+      <div className="discover-search-row">
         <div className="discover-search-wrap">
           <svg className="discover-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -62,54 +63,64 @@ export default function DiscoverPage() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-
-        <div className="discover-categories">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`discover-cat ${activeCategory === cat ? 'discover-cat--active' : ''}`}
-              onClick={() => setActiveCategory(cat)}
-              id={`cat-filter-${cat.toLowerCase()}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="discover-empty">
-          <div style={{ fontSize: 48 }}>🔍</div>
-          <p className="heading-2">No results found</p>
-          <p className="body-md text-secondary">Try a different search or filter.</p>
-        </div>
-      ) : (
-        <div className="masonry-grid">
-          {filtered.map(photo => (
-            <div
-              key={photo.id}
-              className="masonry-item"
-              onClick={() => setSelectedPhoto(photo)}
-              id={`discover-photo-${photo.id}`}
-            >
-              <img
-                src={photo.url}
-                alt={photo.caption}
-                className="masonry-img"
-                style={{ aspectRatio: photo.aspectRatio || '3/4' }}
-                loading="lazy"
-              />
-              <div className="masonry-overlay">
-                <img src={photo.ownerAvatar} alt={photo.ownerName} className="masonry-avatar" />
-                <div>
-                  <div className="masonry-name">{photo.ownerName}</div>
-                  <div className="masonry-cat label">{photo.category}</div>
-                </div>
-              </div>
+      {/* Main Responsive Grid Layout */}
+      <div className="discover-content">
+        {/* Categories Rail (Left sidebar on desktop, horizontal scroll on mobile) */}
+        <aside className="discover-sidebar-filters">
+          <span className="discover-sidebar-label label">Categories</span>
+          <div className="discover-categories">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                className={`discover-cat ${activeCategory === cat ? 'discover-cat--active' : ''}`}
+                onClick={() => setActiveCategory(cat)}
+                id={`cat-filter-${cat.toLowerCase()}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {/* Results column */}
+        <div className="discover-results">
+          {filtered.length === 0 ? (
+            <div className="discover-empty animate-fade-in">
+              <div style={{ fontSize: 48 }}>🔍</div>
+              <p className="heading-2">No results found</p>
+              <p className="body-md text-secondary">Try a different search or filter.</p>
             </div>
-          ))}
+          ) : (
+            <div className="masonry-grid animate-fade-in">
+              {filtered.map(photo => (
+                <div
+                  key={photo.id}
+                  className="masonry-item"
+                  onClick={() => setSelectedPhoto(photo)}
+                  id={`discover-photo-${photo.id}`}
+                >
+                  <img
+                    src={photo.url}
+                    alt={photo.caption}
+                    className="masonry-img"
+                    style={{ aspectRatio: photo.aspectRatio || '3/4' }}
+                    loading="lazy"
+                  />
+                  <div className="masonry-overlay">
+                    <img src={photo.ownerAvatar} alt={photo.ownerName} className="masonry-avatar" />
+                    <div>
+                      <div className="masonry-name">{photo.ownerName}</div>
+                      <div className="masonry-cat label">{photo.category}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {selectedPhoto && (
         <PhotoDetailModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />

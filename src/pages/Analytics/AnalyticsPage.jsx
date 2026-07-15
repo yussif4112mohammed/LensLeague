@@ -42,6 +42,50 @@ function MiniSparkline({ data }) {
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState('30d');
   const [showWrapped, setShowWrapped] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [scorecardShared, setScorecardShared] = useState(false);
+
+  // Auto-advance logic for story slides
+  useEffect(() => {
+    if (!showWrapped) return;
+
+    if (currentSlide < 4) {
+      const timer = setTimeout(() => {
+        setCurrentSlide(prev => prev + 1);
+      }, 4000); // 4 seconds per slide
+      return () => clearTimeout(timer);
+    }
+  }, [showWrapped, currentSlide]);
+
+  const handleOpenWrapped = () => {
+    setCurrentSlide(0);
+    setScorecardShared(false);
+    setShowWrapped(true);
+  };
+
+  const handleCloseWrapped = () => {
+    setShowWrapped(false);
+    setCurrentSlide(0);
+  };
+
+  const handleNextSlide = () => {
+    if (currentSlide < 4) {
+      setCurrentSlide(prev => prev + 1);
+    }
+  };
+
+  const handlePrevSlide = () => {
+    if (currentSlide > 0) {
+      setCurrentSlide(prev => prev - 1);
+    }
+  };
+
+  const handleShareScorecard = () => {
+    setScorecardShared(true);
+    setTimeout(() => {
+      setScorecardShared(false);
+    }, 2500);
+  };
 
   return (
     <div className="analytics-page">
@@ -50,7 +94,7 @@ export default function AnalyticsPage() {
           <h1 className="display-lg">Your Analytics</h1>
           <p className="body-md text-secondary">Track your growth and performance.</p>
         </div>
-        <button className="wrapped-btn" onClick={() => setShowWrapped(true)} id="wrapped-btn">
+        <button className="wrapped-btn" onClick={handleOpenWrapped} id="wrapped-btn">
           <span>📊</span>
           <div>
             <div className="body-sm" style={{ fontWeight: 700 }}>July Wrapped</div>
@@ -124,22 +168,108 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Wrapped modal */}
+      {/* Interactive Story-style Wrapped Modal */}
       {showWrapped && (
-        <div className="wrapped-modal-backdrop" onClick={() => setShowWrapped(false)}>
+        <div className="wrapped-modal-backdrop" onClick={handleCloseWrapped}>
           <div className="wrapped-modal" onClick={e => e.stopPropagation()}>
-            <button className="wrapped-modal__close" onClick={() => setShowWrapped(false)} id="close-wrapped-btn">✕</button>
-            <div className="wrapped-slide">
-              <div style={{ fontSize: 64 }}>📷</div>
-              <div className="display-lg">Your July</div>
-              <div className="display-xl gradient-text">Wrapped</div>
-              <div className="wrapped-stats">
-                <div className="wrapped-stat"><div className="display-lg">87</div><div className="body-sm text-secondary">Battle Wins</div></div>
-                <div className="wrapped-stat"><div className="display-lg">3.2k</div><div className="body-sm text-secondary">Votes Received</div></div>
-                <div className="wrapped-stat"><div className="display-lg">#1</div><div className="body-sm text-gold">Global Rank</div></div>
-              </div>
-              <button className="wrapped-share-btn" id="share-wrapped-btn">Share to Instagram →</button>
+            <button className="wrapped-modal__close" onClick={handleCloseWrapped} id="close-wrapped-btn">✕</button>
+            
+            {/* Horizontal Story Progress Bars */}
+            <div className="wrapped-progress-container">
+              {[0, 1, 2, 3, 4].map(idx => {
+                let fillClass = '';
+                if (idx < currentSlide) fillClass = 'wrapped-progress-bar__fill--completed';
+                else if (idx === currentSlide) fillClass = 'wrapped-progress-bar__fill--active';
+                return (
+                  <div key={idx} className="wrapped-progress-bar">
+                    <div className={`wrapped-progress-bar__fill ${fillClass}`} />
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Tap zones for left/right navigation */}
+            <div className="wrapped-nav-overlay">
+              <div className="wrapped-nav-zone" onClick={handlePrevSlide} />
+              <div className="wrapped-nav-zone" onClick={handleNextSlide} />
+            </div>
+
+            {/* Slide 0: Intro */}
+            {currentSlide === 0 && (
+              <div className="wrapped-slide">
+                <span className="wrapped-slide__icon">📸</span>
+                <h2 className="wrapped-slide__title text-primary">Your July<br/><span className="gradient-text" style={{ background: 'linear-gradient(135deg, #ff4d6d, #ff8fa3)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Wrapped</span></h2>
+                <p className="wrapped-slide__desc text-secondary">Let's look back at your creative achievements this month on LensLeague.</p>
+              </div>
+            )}
+
+            {/* Slide 1: Votes */}
+            {currentSlide === 1 && (
+              <div className="wrapped-slide">
+                <span className="wrapped-slide__icon">❤️</span>
+                <p className="body-sm text-tertiary" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Total Love</p>
+                <h2 className="display-xl text-primary font-black" style={{ fontSize: '44px', margin: '8px 0' }}>3,241</h2>
+                <h2 className="wrapped-slide__title text-primary">Votes Received</h2>
+                <p className="wrapped-slide__desc text-secondary">Your photos inspired the global community, racking up thousands of visual reactions!</p>
+              </div>
+            )}
+
+            {/* Slide 2: Wins */}
+            {currentSlide === 2 && (
+              <div className="wrapped-slide">
+                <span className="wrapped-slide__icon">🏆</span>
+                <p className="body-sm text-tertiary" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>Victory Lap</p>
+                <h2 className="wrapped-slide__title text-primary" style={{ margin: '8px 0', fontSize: '32px' }}>87 Wins</h2>
+                <p className="wrapped-slide__desc text-secondary">You dominated head-to-head vote battles with a max 12-day upload streak.</p>
+              </div>
+            )}
+
+            {/* Slide 3: Top Photo */}
+            {currentSlide === 3 && (
+              <div className="wrapped-slide">
+                <span className="wrapped-slide__icon">🌟</span>
+                <p className="body-sm text-tertiary" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, marginBottom: '4px' }}>Your Masterpiece</p>
+                <img src={TOP_PHOTOS[0].url} alt="Masterpiece" className="wrapped-highlight-thumb" />
+                <p className="body-md text-primary" style={{ fontWeight: 600 }}>Portrait Session</p>
+                <p className="body-sm text-secondary">❤️ {TOP_PHOTOS[0].votes.toLocaleString()} votes</p>
+              </div>
+            )}
+
+            {/* Slide 4: Final Scorecard */}
+            {currentSlide === 4 && (
+              <div className="wrapped-slide">
+                <span className="wrapped-slide__icon">👑</span>
+                <h2 className="wrapped-slide__title text-primary" style={{ fontSize: '20px' }}>Your July Scorecard</h2>
+                
+                <div className="wrapped-scorecard">
+                  <img src={ME.avatar} alt={ME.name} className="wrapped-scorecard__avatar" />
+                  <div>
+                    <div className="body-md font-bold text-primary">{ME.name}</div>
+                    <div className="body-sm text-secondary">Rank #{ME.globalRank} Globally</div>
+                  </div>
+                  
+                  <div className="wrapped-scorecard__row">
+                    <div className="wrapped-scorecard__stat">
+                      <span className="wrapped-scorecard__val">3.2k</span>
+                      <span className="wrapped-scorecard__lbl">Votes</span>
+                    </div>
+                    <div className="wrapped-scorecard__stat">
+                      <span className="wrapped-scorecard__val">87</span>
+                      <span className="wrapped-scorecard__lbl">Wins</span>
+                    </div>
+                    <div className="wrapped-scorecard__stat">
+                      <span className="wrapped-scorecard__val">4.97</span>
+                      <span className="wrapped-scorecard__lbl">Rating</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Footer action button */}
+            <button className="wrapped-share-btn" onClick={handleShareScorecard} id="share-wrapped-btn">
+              {scorecardShared ? '✓ Scorecard Saved!' : 'Download Scorecard'}
+            </button>
           </div>
         </div>
       )}

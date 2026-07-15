@@ -7,6 +7,7 @@ const SECTIONS = [
     title: 'Account',
     items: [
       { id: 'email', label: 'Email', value: 'aria@lensleague.com', type: 'row' },
+      { id: 'analytics-link', label: 'View My Analytics 📈', value: 'Tap to view', type: 'row' },
       { id: 'password', label: 'Password', value: '••••••••••••', type: 'row' },
       { id: 'oauth', label: 'Linked Accounts', value: 'Google', type: 'row' },
     ]
@@ -80,12 +81,27 @@ export default function SettingsPage() {
             <div className="settings-section__title label">{section.title}</div>
             <div className="settings-section__items">
               {section.items.map(item => (
-                <div key={item.id} className="settings-row" id={`settings-${item.id}`}>
+                <div 
+                  key={item.id} 
+                  className={`settings-row ${item.type !== 'toggle' ? 'settings-row--clickable' : ''}`} 
+                  id={`settings-${item.id}`}
+                  style={item.type !== 'toggle' ? { cursor: 'pointer' } : {}}
+                  onClick={() => {
+                    if (item.type !== 'toggle') {
+                      if (item.id === 'analytics-link') {
+                        navigate('/analytics');
+                      }
+                    }
+                  }}
+                >
                   <span className="settings-row__label body-md">{item.label}</span>
                   {item.type === 'toggle' ? (
                     <button
                       className={`toggle-switch ${toggles[item.id] ? 'toggle-switch--on' : ''}`}
-                      onClick={() => handleToggle(item.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggle(item.id);
+                      }}
                       aria-checked={toggles[item.id]}
                       role="switch"
                     >

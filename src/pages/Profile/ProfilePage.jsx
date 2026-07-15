@@ -33,14 +33,52 @@ const TIMELINE_EVENTS = [
 
 import { useApp } from '../../context/AppContext';
 
+function PhotoDetailModal({ photo, onClose }) {
+  const navigate = useNavigate();
+  if (!photo) return null;
+  return (
+    <div className="photo-modal-backdrop" onClick={onClose}>
+      <div className="photo-modal" onClick={e => e.stopPropagation()}>
+        <button className="photo-modal__close" onClick={onClose} id="photo-modal-close" aria-label="Close">✕</button>
+        <img src={photo.url} alt={photo.caption} className="photo-modal__img" />
+        <div className="photo-modal__info">
+          <div className="photo-modal__author">
+            <img src={photo.ownerAvatar} alt={photo.ownerName} className="photo-modal__avatar" />
+            <div>
+              <div className="heading-2">{photo.ownerName}</div>
+              <div className="body-sm text-secondary">{photo.category} · {photo.location}</div>
+            </div>
+          </div>
+          <p className="body-md" style={{ marginTop: 'var(--space-3)' }}>{photo.caption}</p>
+          {photo.gear && <p className="body-sm text-tertiary" style={{ marginTop: 'var(--space-2)' }}>📷 {photo.gear}</p>}
+          <div className="photo-modal__actions">
+            <button className="photo-modal__stat">❤️ {photo.likes.toLocaleString()}</button>
+            <button className="photo-modal__stat">💬 {photo.comments}</button>
+            <button className="photo-modal__view-btn" onClick={onClose}>
+              Back to Gallery
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentRole, addBookingRequest } = useApp();
+  const { currentRole, addBookingRequest, users, updateProfile } = useApp();
+  
   const [activeTab, setActiveTab] = useState('Portfolio');
   const [following, setFollowing] = useState(false);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const photographer = users.find(p => p.id === id) || users[0];
+  const isOwnProfile = id === '1' && currentRole === 'photographer';
+
   const [bookingForm, setBookingForm] = useState({
     date: '',
     budget: '',
@@ -48,11 +86,26 @@ export default function ProfilePage() {
     message: ''
   });
 
-  const photographer = photographers.find(p => p.id === id) || photographers[0];
-  const isOwnProfile = id === '1' && currentRole === 'photographer';
+  const [editForm, setEditForm] = useState({
+    name: photographer.name,
+    username: photographer.username,
+    bio: photographer.bio,
+    location: photographer.location
+  });
 
   const portfolioPhotos = PHOTO_URLS.slice(0, 9).map((url, i) => ({
-    id: `port-${i}`, url, aspectRatio: i % 3 === 0 ? '3/4' : '4/3',
+    id: `port-${i}`,
+    url,
+    aspectRatio: i % 3 === 0 ? '3/4' : '4/3',
+    ownerId: photographer.id,
+    ownerName: photographer.name,
+    ownerAvatar: photographer.avatar,
+    category: photographer.specialty || 'Creative',
+    location: photographer.location,
+    caption: `Sensing geometry in nature. Composition study #${i + 1}.`,
+    likes: 1240 + i * 85,
+    comments: 18 + i * 3,
+    gear: 'Leica M11 · 35mm f/1.4 Summilux'
   }));
 
   const handleBookingSubmit = (e) => {
@@ -65,6 +118,16 @@ export default function ProfilePage() {
       // Reset form
       setBookingForm({ date: '', budget: '', location: '', message: '' });
     }, 2000);
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    updateProfile(photographer.id, editForm);
+    setEditModalOpen(false);
+  };
+
+  const handleStartChat = () => {
+    navigate(`/inbox?chat=${photographer.id}`);
   };
 
   return (
@@ -95,10 +158,11 @@ export default function ProfilePage() {
             {isOwnProfile ? (
               <div style={{ display: 'flex', gap: '8px' }}>
                 <SecondaryButton small onClick={() => navigate('/analytics')} id="profile-analytics-btn">📈 Analytics</SecondaryButton>
-                <SecondaryButton small id="edit-profile-btn">Edit Profile</SecondaryButton>
+                <SecondaryButton small onClick={() => setEditModalOpen(true)} id="edit-profile-btn">Edit Profile</SecondaryButton>
               </div>
             ) : (
               <>
+                <SecondaryButton small onClick={handleStartChat} id="message-photographer-btn">💬 Message</SecondaryButton>
                 <SecondaryButton small onClick={() => setFollowing(f => !f)} id="follow-btn">
                   {following ? '✓ Following' : 'Follow'}
                 </SecondaryButton>
@@ -143,7 +207,7 @@ export default function ProfilePage() {
         {activeTab === 'Portfolio' && (
           <div className="portfolio-grid">
             {portfolioPhotos.map(p => (
-              <div key={p.id} className="portfolio-item">
+              <div key={p.id} className="portfolio-item" onClick={() => setSelectedPhoto(p)} style={{ cursor: 'pointer' }}>
                 <img src={p.url} alt="Portfolio piece" style={{ aspectRatio: p.aspectRatio }} className="portfolio-img" loading="lazy" />
               </div>
             ))}
@@ -279,6 +343,67 @@ export default function ProfilePage() {
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedPhoto && (
+        <PhotoDetailModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      )}
+
+      {editModalOpen && (
+        <div className="photo-modal-backdrop" onClick={() => setEditModalOpen(false)}>
+          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: 'var(--space-6)' }}>
+            <button className="photo-modal__close" onClick={() => setEditModalOpen(false)}>✕</button>
+            <h2 className="heading-1" style={{ marginBottom: 'var(--space-4)' }}>Edit Profile</h2>
+            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Display Name</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', height: '44px' }}
+                  value={editForm.name} 
+                  onChange={e => setEditForm({ ...editForm, name: e.target.value })} 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Username</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', height: '44px' }}
+                  value={editForm.username} 
+                  onChange={e => setEditForm({ ...editForm, username: e.target.value })} 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Location</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', height: '44px' }}
+                  value={editForm.location} 
+                  onChange={e => setEditForm({ ...editForm, location: e.target.value })} 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Bio</label>
+                <textarea 
+                  className="form-textarea" 
+                  style={{ width: '100%', height: '100px', padding: '12px' }}
+                  value={editForm.bio} 
+                  onChange={e => setEditForm({ ...editForm, bio: e.target.value })} 
+                  required 
+                />
+              </div>
+              <button type="submit" className="btn btn--primary btn--full" style={{ marginTop: 'var(--space-2)' }}>
+                Save Changes
+              </button>
+            </form>
           </div>
         </div>
       )}

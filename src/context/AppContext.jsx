@@ -498,6 +498,13 @@ export function AppProvider({ children }) {
     setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
   };
 
+  const updateProfile = async (userId, data) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
+    if (isSupabaseConfigured) {
+      await supabase.from('profiles').update(data).eq('id', userId);
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentRole,
@@ -521,7 +528,8 @@ export function AppProvider({ children }) {
       removeReportedPhoto,
       verifyPhotographer,
       banPhotographer,
-      resolveDispute
+      resolveDispute,
+      updateProfile
     }}>
       {children}
     </AppContext.Provider>

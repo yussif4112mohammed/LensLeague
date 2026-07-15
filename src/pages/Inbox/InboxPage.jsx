@@ -1,16 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SegmentedControl from '../../components/SegmentedControl/SegmentedControl';
 import './InboxPage.css';
 
 export default function InboxPage() {
   const { currentRole, bookings, threads, acceptBooking, declineBooking, sendMessage, completeBooking } = useApp();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState('chats'); // 'chats' or 'bookings'
   const [selectedThreadId, setSelectedThreadId] = useState(null);
   const [messageText, setMessageText] = useState('');
+
+  // Auto-select chat thread if URL contains a query (e.g. ?chat=2)
+  useEffect(() => {
+    const chatPartnerId = searchParams.get('chat');
+    if (chatPartnerId) {
+      const isPhotographer = currentRole === 'photographer';
+      const roleThreads = isPhotographer
+        ? threads.filter(t => t.photographerId === '1')
+        : threads.filter(t => t.clientId === 'client_1');
+
+      const targetThread = roleThreads.find(t => t.clientId === chatPartnerId || t.photographerId === chatPartnerId);
+      if (targetThread) {
+        setSelectedThreadId(targetThread.id);
+        setActiveTab('chats');
+      }
+    }
+  }, [searchParams, threads, currentRole]);
 
   // Filter bookings and threads based on active role
   const isPhotographer = currentRole === 'photographer';

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { photographers } from '../data/photographers';
+import { challenges as initialChallenges } from '../data/challenges';
 
 const AppContext = createContext(null);
 
@@ -77,6 +78,18 @@ export function AppProvider({ children }) {
     return saved ? JSON.parse(saved) : DEFAULT_THREADS;
   });
 
+  // Challenges active list state
+  const [challenges, setChallenges] = useState(() => {
+    const saved = localStorage.getItem('ll-challenges');
+    return saved ? JSON.parse(saved) : initialChallenges;
+  });
+
+  // User submissions to challenges
+  const [submissions, setSubmissions] = useState(() => {
+    const saved = localStorage.getItem('ll-submissions');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('ll-current-role', currentRole);
   }, [currentRole]);
@@ -88,6 +101,14 @@ export function AppProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('ll-threads', JSON.stringify(threads));
   }, [threads]);
+
+  useEffect(() => {
+    localStorage.setItem('ll-challenges', JSON.stringify(challenges));
+  }, [challenges]);
+
+  useEffect(() => {
+    localStorage.setItem('ll-submissions', JSON.stringify(submissions));
+  }, [submissions]);
 
   // Switch role helper
   const switchRole = (role) => {
@@ -226,17 +247,39 @@ export function AppProvider({ children }) {
     }));
   };
 
+  // Submit entry to a challenge
+  const submitChallengeEntry = (challengeId, photoUrl) => {
+    const newSubmission = {
+      challengeId,
+      photoUrl,
+      submittedAt: new Date().toISOString()
+    };
+    setSubmissions(prev => [...prev, newSubmission]);
+    setChallenges(prev => prev.map(ch => {
+      if (ch.id === challengeId) {
+        return {
+          ...ch,
+          entries: ch.entries + 1
+        };
+      }
+      return ch;
+    }));
+  };
+
   return (
     <AppContext.Provider value={{
       currentRole,
       switchRole,
       bookings,
       threads,
+      challenges,
+      submissions,
       addBookingRequest,
       acceptBooking,
       declineBooking,
       completeBooking,
-      sendMessage
+      sendMessage,
+      submitChallengeEntry
     }}>
       {children}
     </AppContext.Provider>

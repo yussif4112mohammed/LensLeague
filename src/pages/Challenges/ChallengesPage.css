@@ -158,3 +158,53 @@
 .winner-card__avatar {
   width: 20px; height: 20px; border-radius: var(--radius-full); object-fit: cover;
 }
+
+/* ── Challenge Submissions UI ── */
+.submitted-status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.submitted-status-thumb {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.submitted-badge {
+  background: rgba(52,211,153,0.15);
+  border: 1px solid rgba(52,211,153,0.35);
+  color: #34d399;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini-submitted-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-submitted-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-strong);
+}
+
+.mini-submitted-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #34d399;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+

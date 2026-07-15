@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SegmentedControl from '../../components/SegmentedControl/SegmentedControl';
 import { photographers, PHOTO_URLS } from '../../data/photographers';
 import './AnalyticsPage.css';

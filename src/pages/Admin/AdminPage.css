@@ -1,0 +1,311 @@
+.admin-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--screen-px) var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.admin-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-bottom: 1.5px solid var(--border-subtle);
+  padding-bottom: var(--space-4);
+}
+
+.admin-header__brand-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.admin-back-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-back-btn:hover {
+  background: var(--bg-elevated-2);
+  color: var(--text-primary);
+}
+
+.admin-badge {
+  background: rgba(255, 77, 109, 0.12);
+  border: 1px solid rgba(255, 77, 109, 0.3);
+  color: var(--accent-primary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+/* ── Stats Grid ── */
+.admin-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.admin-stat-card {
+  background: var(--bg-elevated-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.admin-stat-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.admin-stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--text-primary);
+}
+
+.admin-stat-value.text-red { color: #f87171; }
+.admin-stat-value.text-yellow { color: #fbbf24; }
+
+/* ── Tabs Row ── */
+.admin-tabs-row {
+  display: flex;
+  margin: var(--space-2) 0;
+}
+
+/* ── Content area list items ── */
+.admin-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admin-row {
+  background: var(--bg-elevated-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .admin-row {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.admin-row-thumb {
+  width: 100px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.admin-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.status-pill {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+.status-pill--pending { background: rgba(251,191,36,0.12); color: #fbbf24; }
+.status-pill--approved { background: rgba(52,211,153,0.12); color: #34d399; }
+.status-pill--removed { background: rgba(248,113,113,0.12); color: #f87171; }
+.status-pill--resolved { background: rgba(52,211,153,0.12); color: #34d399; }
+
+.admin-row-actions {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .admin-row-actions {
+    width: auto;
+    flex-direction: column;
+  }
+}
+
+.admin-action-btn {
+  flex: 1;
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: background var(--transition-fast), filter var(--transition-fast);
+}
+
+.admin-action-btn--approve {
+  background: var(--bg-elevated-3);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-strong);
+}
+.admin-action-btn--approve:hover {
+  background: var(--bg-elevated-2);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.admin-action-btn--danger {
+  background: var(--accent-primary);
+  color: white;
+}
+.admin-action-btn--danger:hover {
+  filter: brightness(1.08);
+}
+
+/* ── User Directory Grid ── */
+.admin-user-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .admin-user-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-user-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.admin-user-card {
+  background: var(--bg-elevated-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.admin-user-card--banned {
+  opacity: 0.6;
+  border-color: rgba(248,113,113,0.3);
+}
+
+.admin-user-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.admin-user-card__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 1.5px solid var(--border-subtle);
+}
+
+.verified-badge-tick {
+  color: var(--accent-primary);
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+.admin-user-card__meta {
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-2) 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.admin-user-card__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.admin-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-btn--verify {
+  background: var(--bg-elevated-3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+.admin-btn--verify:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.admin-btn--ban {
+  background: rgba(248,113,113,0.1);
+  color: #f87171;
+  border: 1px solid rgba(248,113,113,0.25);
+}
+.admin-btn--ban:hover {
+  background: #f87171;
+  color: white;
+}
+
+.admin-btn--unban {
+  background: var(--bg-elevated-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+}
+.admin-btn--unban:hover {
+  background: var(--bg-elevated-2);
+  color: var(--text-primary);
+}
+
+.empty-msg {
+  text-align: center;
+  padding: var(--space-12) 0;
+  font-style: italic;
+}

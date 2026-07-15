@@ -90,6 +90,29 @@ export function AppProvider({ children }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // User list state (supporting bans and verification updates)
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('ll-users');
+    return saved ? JSON.parse(saved) : photographers;
+  });
+
+  // Flagged reported photos list
+  const [reports, setReports] = useState(() => {
+    const saved = localStorage.getItem('ll-reports');
+    return saved ? JSON.parse(saved) : [
+      { id: 'rep_1', photoId: 'port-0', photographerId: '2', photographerName: 'Marcus Osei', photoUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&q=80', reason: 'Unlicensed commercial reuse', reporter: 'GettyImages Inc.', status: 'pending' },
+      { id: 'rep_2', photoId: 'port-1', photographerId: '3', photographerName: 'Sofia Reyes', photoUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=300&q=80', reason: 'Spam / Duplicate Upload', reporter: 'user_881', status: 'pending' }
+    ];
+  });
+
+  // Battle dispute cases
+  const [disputes, setDisputes] = useState(() => {
+    const saved = localStorage.getItem('ll-disputes');
+    return saved ? JSON.parse(saved) : [
+      { id: 'dsp_1', title: 'Neon Nights Tokyo vs Golden Sun Kyoto', votesA: 1420, votesB: 1412, reason: 'Sudden spike of 200 votes in last 60 seconds (Bot suspicion)', reporter: 'Aria Nakamura', status: 'pending' }
+    ];
+  });
+
   useEffect(() => {
     localStorage.setItem('ll-current-role', currentRole);
   }, [currentRole]);
@@ -109,6 +132,18 @@ export function AppProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('ll-submissions', JSON.stringify(submissions));
   }, [submissions]);
+
+  useEffect(() => {
+    localStorage.setItem('ll-users', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    localStorage.setItem('ll-reports', JSON.stringify(reports));
+  }, [reports]);
+
+  useEffect(() => {
+    localStorage.setItem('ll-disputes', JSON.stringify(disputes));
+  }, [disputes]);
 
   // Switch role helper
   const switchRole = (role) => {
@@ -266,6 +301,36 @@ export function AppProvider({ children }) {
     }));
   };
 
+  // Approve reported photo (dismiss report)
+  const approvePhotoReport = (reportId) => {
+    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'approved' } : rep));
+  };
+
+  // Remove reported photo (delete photo)
+  const removeReportedPhoto = (reportId) => {
+    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'removed' } : rep));
+  };
+
+  // Verify photographer
+  const verifyPhotographer = (userId) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: true } : u));
+  };
+
+  // Ban/Unban photographer
+  const banPhotographer = (userId) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        return { ...u, banned: !u.banned };
+      }
+      return u;
+    }));
+  };
+
+  // Resolve disputes
+  const resolveDispute = (disputeId, resolution) => {
+    setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
+  };
+
   return (
     <AppContext.Provider value={{
       currentRole,
@@ -274,12 +339,20 @@ export function AppProvider({ children }) {
       threads,
       challenges,
       submissions,
+      users,
+      reports,
+      disputes,
       addBookingRequest,
       acceptBooking,
       declineBooking,
       completeBooking,
       sendMessage,
-      submitChallengeEntry
+      submitChallengeEntry,
+      approvePhotoReport,
+      removeReportedPhoto,
+      verifyPhotographer,
+      banPhotographer,
+      resolveDispute
     }}>
       {children}
     </AppContext.Provider>

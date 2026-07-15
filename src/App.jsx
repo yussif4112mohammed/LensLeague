@@ -26,6 +26,9 @@ import ClientBookings from './pages/Client/ClientBookings';
 // Pages — Inbox (Shared)
 import InboxPage from './pages/Inbox/InboxPage';
 
+// Pages — Admin
+import AdminPage from './pages/Admin/AdminPage';
+
 import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
 
 const router = createBrowserRouter([
@@ -33,6 +36,7 @@ const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignUpPage /> },
+  { path: '/admin', element: <AdminPage /> },
 
   // ────── Photographer SPA ──────
   {

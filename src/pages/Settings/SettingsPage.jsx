@@ -139,6 +139,12 @@ export default function SettingsPage() {
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
+            <button className="settings-row" id="admin-console-btn" onClick={() => navigate('/admin')}>
+              <span className="settings-row__label body-md" style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>🛡️ Admin Console (Mock)</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-primary)' }}>
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>

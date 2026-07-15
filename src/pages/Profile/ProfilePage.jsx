@@ -93,7 +93,10 @@ export default function ProfilePage() {
           <img src={photographer.avatar} alt={photographer.name} className="profile-avatar" />
           <div className="profile-avatar-row__actions">
             {isOwnProfile ? (
-              <SecondaryButton small id="edit-profile-btn">Edit Profile</SecondaryButton>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <SecondaryButton small onClick={() => navigate('/analytics')} id="profile-analytics-btn">📈 Analytics</SecondaryButton>
+                <SecondaryButton small id="edit-profile-btn">Edit Profile</SecondaryButton>
+              </div>
             ) : (
               <>
                 <SecondaryButton small onClick={() => setFollowing(f => !f)} id="follow-btn">

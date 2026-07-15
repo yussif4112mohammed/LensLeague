@@ -1,32 +1,36 @@
 .segmented-control {
   display: inline-flex;
   align-items: center;
-  background: #1C1C22;
-  border-radius: 12px;
+  background: var(--bg-elevated-1);
+  border-radius: var(--radius-lg);
   padding: 3px;
   gap: 2px;
-  border: 1px solid #2A2A2E;
+  border: 1px solid var(--border-subtle);
 }
 
 .segmented-control__btn {
   flex: 1;
   padding: 8px 18px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 700;
-  color: #6E6E76;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
   transition: background 0.18s, color 0.18s;
   white-space: nowrap;
 }
 
 .segmented-control__btn:hover:not(.segmented-control__btn--active) {
-  color: #A1A1AA;
+  color: var(--text-primary);
+  background: var(--bg-elevated-2);
 }
 
 .segmented-control__btn--active {
-  background: #FF4D6D;
+  background: var(--accent-primary);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(255,77,109,0.35);
+  box-shadow: 0 2px 8px rgba(255,77,109,0.25);
 }
 
 /* Full-width variant */

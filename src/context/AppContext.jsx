@@ -1,8 +1,11 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { photographers } from '../data/photographers';
 import { challenges as initialChallenges } from '../data/challenges';
+import { supabase } from '../lib/supabaseClient';
 
 const AppContext = createContext(null);
+
+const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 const DEFAULT_BOOKINGS = [
   {
@@ -63,10 +66,7 @@ const DEFAULT_THREADS = [
 ];
 
 export function AppProvider({ children }) {
-  // Active logged-in user email
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('ll-user-email') || '');
-
-  // Roles switcher: 'photographer' (Aria Nakamura, ID: 1) or 'client' (Sarah Jenkins, ID: client_1)
   const [currentRole, setCurrentRole] = useState(() => localStorage.getItem('ll-current-role') || 'photographer');
 
   // Bookings list state
@@ -116,6 +116,121 @@ export function AppProvider({ children }) {
     ];
   });
 
+  // ── SUPABASE SYNC SYNC ON MOUNT ──
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    const syncFromSupabase = async () => {
+      // 1. Fetch profiles (users list)
+      const { data: profilesData } = await supabase.from('profiles').select('*');
+      if (profilesData && profilesData.length > 0) {
+        setUsers(profilesData);
+      }
+
+      // 2. Fetch bookings
+      const { data: bookingsData } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (bookingsData) {
+        setBookings(bookingsData);
+      }
+
+      // 3. Fetch challenges
+      const { data: challengesData } = await supabase.from('challenges').select('*');
+      if (challengesData && challengesData.length > 0) {
+        setChallenges(challengesData);
+      }
+
+      // 4. Fetch challenge entries (submissions)
+      const { data: submissionsData } = await supabase.from('challenge_entries').select('*');
+      if (submissionsData) {
+        setSubmissions(submissionsData);
+      }
+
+      // 5. Fetch messages and compile into threads client-side
+      const { data: messagesData } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (messagesData) {
+        const compiled = compileSupabaseThreads(messagesData);
+        setThreads(compiled);
+      }
+    };
+
+    syncFromSupabase();
+
+    // Real-time chat messaging subscription channel
+    const msgChannel = supabase
+      .channel('messages_realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+        const newMsg = payload.new;
+        appendRealtimeMessage(newMsg);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(msgChannel);
+    };
+  }, []);
+
+  // Helper: group flat Supabase messages list into structured UI threads
+  const compileSupabaseThreads = (messagesList) => {
+    const threadMap = {};
+    messagesList.forEach(msg => {
+      const partnerId = msg.sender_id === '1' ? msg.recipient_id : msg.sender_id;
+      if (!threadMap[partnerId]) {
+        threadMap[partnerId] = {
+          id: `th_${partnerId}`,
+          photographerId: '1',
+          photographerName: 'Aria Nakamura',
+          photographerAvatar: photographers[0].avatar,
+          clientId: 'client_1',
+          clientName: 'Sarah Jenkins',
+          messages: []
+        };
+      }
+      threadMap[partnerId].messages.push({
+        id: msg.id,
+        senderId: msg.sender_id,
+        senderName: msg.sender_id === '1' ? 'Aria Nakamura' : 'Sarah Jenkins',
+        body: msg.body,
+        timestamp: msg.timestamp
+      });
+    });
+    return Object.values(threadMap);
+  };
+
+  // Helper: push live incoming message from real-time channel to state array
+  const appendRealtimeMessage = (m) => {
+    const partnerId = m.sender_id === '1' ? m.recipient_id : m.sender_id;
+    setThreads(prev => {
+      const exists = prev.find(t => t.clientId === partnerId || t.photographerId === partnerId);
+      if (exists) {
+        return prev.map(t => {
+          if (t.id === exists.id) {
+            // Avoid duplicates
+            if (t.messages.some(msg => msg.id === m.id)) return t;
+            return {
+              ...t,
+              messages: [...t.messages, {
+                id: m.id,
+                senderId: m.sender_id,
+                senderName: m.sender_id === '1' ? 'Aria Nakamura' : 'Sarah Jenkins',
+                body: m.body,
+                timestamp: m.timestamp
+              }]
+            };
+          }
+          return t;
+        });
+      }
+      return prev;
+    });
+  };
+
+  // ── LOCAL STORAGE FALLBACK SYNCS ──
   useEffect(() => {
     localStorage.setItem('ll-current-role', currentRole);
   }, [currentRole]);
@@ -125,19 +240,27 @@ export function AppProvider({ children }) {
   }, [userEmail]);
 
   useEffect(() => {
-    localStorage.setItem('ll-bookings', JSON.stringify(bookings));
+    if (!isSupabaseConfigured) {
+      localStorage.setItem('ll-bookings', JSON.stringify(bookings));
+    }
   }, [bookings]);
 
   useEffect(() => {
-    localStorage.setItem('ll-threads', JSON.stringify(threads));
+    if (!isSupabaseConfigured) {
+      localStorage.setItem('ll-threads', JSON.stringify(threads));
+    }
   }, [threads]);
 
   useEffect(() => {
-    localStorage.setItem('ll-challenges', JSON.stringify(challenges));
+    if (!isSupabaseConfigured) {
+      localStorage.setItem('ll-challenges', JSON.stringify(challenges));
+    }
   }, [challenges]);
 
   useEffect(() => {
-    localStorage.setItem('ll-submissions', JSON.stringify(submissions));
+    if (!isSupabaseConfigured) {
+      localStorage.setItem('ll-submissions', JSON.stringify(submissions));
+    }
   }, [submissions]);
 
   useEffect(() => {
@@ -152,13 +275,14 @@ export function AppProvider({ children }) {
     localStorage.setItem('ll-disputes', JSON.stringify(disputes));
   }, [disputes]);
 
-  // Switch role helper
   const switchRole = (role) => {
     setCurrentRole(role);
   };
 
-  // Submit a new booking request (Client side)
-  const addBookingRequest = (photographerId, details) => {
+  // ── CORE DATA TRANSACTION HANDLERS ──
+
+  // Booking requests
+  const addBookingRequest = async (photographerId, details) => {
     const photographer = photographers.find(p => p.id === photographerId) || photographers[0];
     const newBooking = {
       id: `bk_${Date.now()}`,
@@ -177,7 +301,19 @@ export function AppProvider({ children }) {
 
     setBookings(prev => [newBooking, ...prev]);
 
-    // Automatically seed a message thread for this booking
+    if (isSupabaseConfigured) {
+      await supabase.from('bookings').insert({
+        client_id: 'client_1',
+        photographer_id: photographerId,
+        date: details.date,
+        budget: details.budget,
+        location: details.location,
+        message: details.message,
+        status: 'requested'
+      });
+    }
+
+    // Auto seed default message thread
     const newThread = {
       id: `th_${Date.now()}`,
       photographerId,
@@ -190,81 +326,96 @@ export function AppProvider({ children }) {
           id: `msg_${Date.now()}`,
           senderId: 'client_1',
           senderName: 'Sarah Jenkins',
-          body: `Hi ${photographer.name}! I requested a booking for ${details.date} (budget: ${details.budget}). Here are details: ${details.message}`,
+          body: `Hi ${photographer.name}! I requested a booking for ${details.date} (budget: ${details.budget}). Details: ${details.message}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
       ]
     };
 
     setThreads(prev => {
-      // Check if thread already exists
       const exists = prev.find(t => t.photographerId === photographerId && t.clientId === 'client_1');
       if (exists) {
-        // Just append the message to the existing thread
         return prev.map(t => {
           if (t.id === exists.id) {
-            return {
-              ...t,
-              messages: [...t.messages, newThread.messages[0]]
-            };
+            return { ...t, messages: [...t.messages, newThread.messages[0]] };
           }
           return t;
         });
       }
       return [newThread, ...prev];
     });
+
+    if (isSupabaseConfigured) {
+      await supabase.from('messages').insert({
+        sender_id: 'client_1',
+        recipient_id: photographerId,
+        body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
   };
 
-  // Accept a booking request (Photographer side)
-  const acceptBooking = (bookingId) => {
+  const acceptBooking = async (bookingId) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'accepted' } : b));
     
-    // Add system notification message to the chat
+    if (isSupabaseConfigured) {
+      await supabase.from('bookings').update({ status: 'accepted' }).eq('id', bookingId);
+    }
+
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
       addSystemMessage(booking.photographerId, booking.clientId, 'Aria Nakamura accepted the booking request! Chat is now active.');
     }
   };
 
-  // Decline a booking request (Photographer side)
-  const declineBooking = (bookingId) => {
+  const declineBooking = async (bookingId) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'declined' } : b));
     
+    if (isSupabaseConfigured) {
+      await supabase.from('bookings').update({ status: 'declined' }).eq('id', bookingId);
+    }
+
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
       addSystemMessage(booking.photographerId, booking.clientId, 'Booking request was declined by the photographer.');
     }
   };
 
-  // Complete a shoot (Photographer side)
-  const completeBooking = (bookingId) => {
+  const completeBooking = async (bookingId) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'completed' } : b));
+    
+    if (isSupabaseConfigured) {
+      await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId);
+    }
   };
 
-  // Helper to add system-level message in a chat thread
-  const addSystemMessage = (photographerId, clientId, body) => {
+  const addSystemMessage = async (photographerId, clientId, body) => {
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setThreads(prev => prev.map(t => {
       if (t.photographerId === photographerId && t.clientId === clientId) {
         return {
           ...t,
           messages: [
             ...t.messages,
-            {
-              id: `msg_sys_${Date.now()}`,
-              senderId: 'system',
-              senderName: 'System',
-              body,
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            }
+            { id: `msg_sys_${Date.now()}`, senderId: 'system', senderName: 'System', body, timestamp }
           ]
         };
       }
       return t;
     }));
+
+    if (isSupabaseConfigured) {
+      await supabase.from('messages').insert({
+        sender_id: 'system',
+        recipient_id: clientId,
+        body,
+        timestamp
+      });
+    }
   };
 
-  // Send a custom chat message
-  const sendMessage = (threadId, body) => {
+  // Chats
+  const sendMessage = async (threadId, body) => {
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const senderId = currentRole === 'photographer' ? '1' : 'client_1';
     const senderName = currentRole === 'photographer' ? 'Aria Nakamura' : 'Sarah Jenkins';
@@ -275,55 +426,65 @@ export function AppProvider({ children }) {
           ...t,
           messages: [
             ...t.messages,
-            {
-              id: `msg_${Date.now()}`,
-              senderId,
-              senderName,
-              body,
-              timestamp,
-            }
+            { id: `msg_${Date.now()}`, senderId, senderName, body, timestamp }
           ]
         };
       }
       return t;
     }));
+
+    if (isSupabaseConfigured) {
+      const thread = threads.find(t => t.id === threadId);
+      if (thread) {
+        const recipientId = senderId === '1' ? thread.clientId : '1';
+        await supabase.from('messages').insert({
+          sender_id: senderId,
+          recipient_id: recipientId,
+          body,
+          timestamp
+        });
+      }
+    }
   };
 
-  // Submit entry to a challenge
-  const submitChallengeEntry = (challengeId, photoUrl) => {
+  // Challenges
+  const submitChallengeEntry = async (challengeId, photoUrl) => {
     const newSubmission = {
       challengeId,
       photoUrl,
       submittedAt: new Date().toISOString()
     };
+    
     setSubmissions(prev => [...prev, newSubmission]);
     setChallenges(prev => prev.map(ch => {
       if (ch.id === challengeId) {
-        return {
-          ...ch,
-          entries: ch.entries + 1
-        };
+        return { ...ch, entries: ch.entries + 1 };
       }
       return ch;
     }));
+
+    if (isSupabaseConfigured) {
+      await supabase.from('challenge_entries').insert({
+        challenge_id: challengeId,
+        photo_url: photoUrl,
+        photographer_id: '1'
+      });
+    }
   };
 
-  // Approve reported photo (dismiss report)
+  // Admin actions
   const approvePhotoReport = (reportId) => {
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'approved' } : rep));
   };
 
-  // Remove reported photo (delete photo)
   const removeReportedPhoto = (reportId) => {
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'removed' } : rep));
   };
 
-  // Verify photographer
   const verifyPhotographer = (userId) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: true } : u));
   };
 
-  // Ban/Unban photographer
   const banPhotographer = (userId) => {
     setUsers(prev => prev.map(u => {
       if (u.id === userId) {
@@ -333,7 +494,6 @@ export function AppProvider({ children }) {
     }));
   };
 
-  // Resolve disputes
   const resolveDispute = (disputeId, resolution) => {
     setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
   };

@@ -63,6 +63,9 @@ const DEFAULT_THREADS = [
 ];
 
 export function AppProvider({ children }) {
+  // Active logged-in user email
+  const [userEmail, setUserEmail] = useState(() => localStorage.getItem('ll-user-email') || '');
+
   // Roles switcher: 'photographer' (Aria Nakamura, ID: 1) or 'client' (Sarah Jenkins, ID: client_1)
   const [currentRole, setCurrentRole] = useState(() => localStorage.getItem('ll-current-role') || 'photographer');
 
@@ -116,6 +119,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('ll-current-role', currentRole);
   }, [currentRole]);
+
+  useEffect(() => {
+    localStorage.setItem('ll-user-email', userEmail);
+  }, [userEmail]);
 
   useEffect(() => {
     localStorage.setItem('ll-bookings', JSON.stringify(bookings));
@@ -335,6 +342,8 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       currentRole,
       switchRole,
+      userEmail,
+      setUserEmail,
       bookings,
       threads,
       challenges,

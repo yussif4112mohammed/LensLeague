@@ -3,16 +3,22 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { PrimaryButton } from '../../components/Buttons/Buttons';
 import './AuthPages.css';
 
+import { useApp } from '../../context/AppContext';
+
 export function LoginPage() {
   const navigate = useNavigate();
+  const { setUserEmail } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Mock auth — route based on email contains "client"
-    if (email.includes('client')) {
+    setUserEmail(email);
+
+    if (email === 'admin@lensleague.com') {
+      navigate('/admin');
+    } else if (email.includes('client')) {
       navigate('/client/home');
     } else {
       navigate('/feed');
@@ -84,6 +90,7 @@ export function LoginPage() {
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const { setUserEmail } = useApp();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(searchParams.get('role') ? 2 : 1);
   const [role, setRole] = useState(searchParams.get('role') || null);
@@ -97,6 +104,7 @@ export function SignUpPage() {
   };
 
   const handleFinish = () => {
+    setUserEmail(form.email);
     navigate(role === 'client' ? '/client/home' : '/feed');
   };
 

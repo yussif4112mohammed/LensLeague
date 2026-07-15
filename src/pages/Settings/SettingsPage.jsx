@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import './SettingsPage.css';
 
 const SECTIONS = [
@@ -55,6 +56,7 @@ const SECTIONS = [
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { userEmail, setUserEmail } = useApp();
   const [toggles, setToggles] = useState({
     'notif-likes': true, 'notif-battles': true, 'notif-bookings': true,
     'notif-leaderboard': false, 'notif-marketing': false,
@@ -125,7 +127,14 @@ export default function SettingsPage() {
         <div className="settings-section">
           <div className="settings-section__title label" style={{ color: 'var(--error)' }}>Danger Zone</div>
           <div className="settings-section__items">
-            <button className="settings-row settings-row--danger" id="logout-btn" onClick={() => navigate('/')}>
+             <button 
+              className="settings-row settings-row--danger" 
+              id="logout-btn" 
+              onClick={() => {
+                setUserEmail('');
+                navigate('/');
+              }}
+            >
               <span className="settings-row__label body-md">Log Out</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -139,12 +148,14 @@ export default function SettingsPage() {
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
-            <button className="settings-row" id="admin-console-btn" onClick={() => navigate('/admin')}>
-              <span className="settings-row__label body-md" style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>🛡️ Admin Console (Mock)</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-primary)' }}>
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </button>
+            {userEmail === 'admin@lensleague.com' && (
+              <button className="settings-row" id="admin-console-btn" onClick={() => navigate('/admin')}>
+                <span className="settings-row__label body-md" style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>🛡️ Admin Console (Mock)</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-primary)' }}>
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ const TABS = [
 export default function AdminPage() {
   const navigate = useNavigate();
   const { 
+    userEmail,
     users, 
     reports, 
     disputes, 
@@ -24,6 +25,27 @@ export default function AdminPage() {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('mod');
+
+  // Route guard
+  if (userEmail !== 'admin@lensleague.com') {
+    return (
+      <div className="forbidden-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80vh', gap: '16px', textAlign: 'center', padding: '24px' }}>
+        <div style={{ fontSize: '72px', filter: 'drop-shadow(0 4px 12px rgba(255, 77, 109, 0.2))' }}>🔒</div>
+        <h1 className="display-lg" style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>Access Denied</h1>
+        <p className="body-md text-secondary" style={{ maxWidth: '400px', lineHeight: 1.5 }}>
+          This console is strictly restricted to administrative system operators. Please log in with an authorized administrator account to continue.
+        </p>
+        <button 
+          className="btn btn--primary" 
+          onClick={() => navigate('/login')} 
+          style={{ marginTop: '12px', height: '44px', padding: '0 32px', borderRadius: 'var(--radius-md)' }}
+          id="go-to-login-btn"
+        >
+          Go to Log In
+        </button>
+      </div>
+    );
+  }
 
   // Stats summaries
   const pendingReportsCount = reports.filter(r => r.status === 'pending').length;

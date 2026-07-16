@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PrimaryButton, SecondaryButton } from '../../components/Buttons/Buttons';
+import { useApp } from '../../context/AppContext';
+import { supabase } from '../../lib/supabaseClient';
 import './UploadPage.css';
 
 const CATEGORIES = ['Portrait', 'Landscape', 'Wedding', 'Street', 'Product', 'Nature', 'Editorial', 'Architecture', 'Sports', 'Documentary'];
@@ -12,27 +14,88 @@ const DESTINATIONS = [
 
 export default function UploadPage() {
   const navigate = useNavigate();
+  const { currentUser, setPhotos } = useApp();
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);
+  const [fileObj, setFileObj] = useState(null);
   const [destination, setDestination] = useState('feed');
   const [category, setCategory] = useState('');
   const [caption, setCaption] = useState('');
   const [modStatus, setModStatus] = useState(null);
+  const [error, setError] = useState('');
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setFileObj(file);
     const url = URL.createObjectURL(file);
     setPreview(url);
     setStep(2);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setModStatus('checking');
-    setTimeout(() => {
+    setError('');
+    
+    try {
+      let imageUrl = preview;
+
+      // 1. If user selected a real file, upload it to Supabase Storage
+      if (fileObj) {
+        const fileExt = fileObj.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('photos')
+          .upload(fileName, fileObj);
+
+        if (uploadError) {
+          // If bucket doesn't exist or RLS issue, we fallback gracefully to using local URL simulation
+          console.warn('Storage upload error (falling back to URL):', uploadError.message);
+        } else {
+          const { data } = supabase.storage.from('photos').getPublicUrl(fileName);
+          imageUrl = data.publicUrl;
+        }
+      }
+
+      // 2. Insert record into public.photos table
+      const photoId = `p_${Date.now()}`;
+      const newDbRow = {
+        url: imageUrl,
+        owner_id: currentUser?.id || '1',
+        caption: caption,
+        category: category,
+        aspect_ratio: '3/4'
+      };
+
+      const { data: insertData, error: dbError } = await supabase
+        .from('photos')
+        .insert(newDbRow)
+        .select()
+        .single();
+
+      // Add to local state context
+      const newPhoto = {
+        id: insertData?.id || photoId,
+        url: imageUrl,
+        ownerId: currentUser?.id || '1',
+        ownerName: currentUser?.name || 'Aria Nakamura',
+        ownerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80',
+        caption: caption,
+        category: category,
+        likes: 0,
+        aspectRatio: '3/4',
+        timestamp: 'Just now'
+      };
+
+      setPhotos(prev => [newPhoto, ...prev]);
+
       setModStatus('clear');
-      setTimeout(() => navigate('/feed'), 1500);
-    }, 2000);
+      setTimeout(() => navigate('/feed'), 1200);
+    } catch (err) {
+      console.error('Publish error:', err);
+      setError(err.message || 'Error occurred while publishing your photo.');
+      setModStatus(null);
+    }
   };
 
   return (
@@ -46,6 +109,8 @@ export default function UploadPage() {
         ))}
         <div className="upload-steps__line" />
       </div>
+
+      {error && <div className="upload-error" style={{ color: 'var(--error)', marginBottom: 12 }}>{error}</div>}
 
       {step === 1 && (
         <div className="upload-picker animate-fade-in">
@@ -68,11 +133,11 @@ export default function UploadPage() {
           <div className="upload-quick-picks">
             <p className="body-sm text-tertiary">Or use a sample photo:</p>
             <div className="upload-quick-grid">
-              {['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
-                'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&q=80',
-                'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400&q=80',
+              {['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+                'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80',
+                'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80',
               ].map((url, i) => (
-                <button key={i} onClick={() => { setPreview(url); setStep(2); }} id={`sample-photo-${i}`}>
+                <button key={i} onClick={() => { setPreview(url); setFileObj(null); setStep(2); }} id={`sample-photo-${i}`}>
                   <img src={url} alt={`Sample ${i+1}`} />
                 </button>
               ))}

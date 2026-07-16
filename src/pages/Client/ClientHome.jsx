@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { photographers } from '../../data/photographers';
-import { photos } from '../../data/photos';
+import { useApp } from '../../context/AppContext';
 import RankBadge from '../../components/RankBadge/RankBadge';
 import './ClientHome.css';
 
 export default function ClientHome() {
   const navigate = useNavigate();
+  const { photos } = useApp();
   const featured = photographers.slice(0, 4);
 
   return (

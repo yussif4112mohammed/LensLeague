@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import StoriesBar from '../../components/StoriesBar/StoriesBar';
-import { photos } from '../../data/photos';
+import { useApp } from '../../context/AppContext';
 import { battles } from '../../data/battles';
 import { challenges } from '../../data/challenges';
 import { photographers } from '../../data/photographers';
@@ -37,6 +37,7 @@ const FEED_TABS = ['For You', 'Following'];
 export default function FeedPage() {
   const [tab, setTab] = useState('For You');
   const navigate = useNavigate();
+  const { photos } = useApp();
 
   const feedItems = [];
   photos.forEach((photo, i) => {

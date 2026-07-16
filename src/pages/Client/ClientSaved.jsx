@@ -1,11 +1,11 @@
-import { photos } from '../../data/photos';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import './ClientBookings.css';
-
-const SAVED = photos.slice(0, 6);
 
 export default function ClientSaved() {
   const navigate = useNavigate();
+  const { photos } = useApp();
+  const SAVED = photos.slice(0, 6);
   return (
     <div className="client-saved">
       <h1 className="display-lg">Saved</h1>

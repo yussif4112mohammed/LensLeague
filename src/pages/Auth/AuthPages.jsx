@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { PrimaryButton } from '../../components/Buttons/Buttons';
+import { supabase } from '../../lib/supabaseClient';
 import './AuthPages.css';
 
 import { useApp } from '../../context/AppContext';
@@ -11,17 +12,43 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setUserEmail(email);
+    setLoading(true);
+    setError('');
 
-    if (email === 'admin@lensleague.com') {
-      navigate('/admin');
-    } else if (email.includes('client')) {
-      navigate('/client/home');
-    } else {
-      navigate('/feed');
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (data.user) {
+        setUserEmail(email);
+        
+        // Fetch role to navigate
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (email === 'admin@lensleague.com') {
+          navigate('/admin');
+        } else if (profile?.role === 'client' || email.includes('client')) {
+          navigate('/client/home');
+        } else {
+          navigate('/feed');
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to authenticate user credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,10 +71,6 @@ export function LoginPage() {
             <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
             Continue with Google
           </button>
-          <button className="oauth-btn" id="oauth-apple" onClick={() => navigate('/feed')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            Continue with Apple
-          </button>
         </div>
 
         <div className="auth-divider"><span>or continue with email</span></div>
@@ -61,6 +84,7 @@ export function LoginPage() {
               id="login-email" type="email" className="form-input"
               value={email} onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com" required autoComplete="email"
+              disabled={loading}
             />
           </div>
           <div className="form-field">
@@ -72,16 +96,16 @@ export function LoginPage() {
               id="login-password" type="password" className="form-input"
               value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••••••" required autoComplete="current-password"
+              disabled={loading}
             />
           </div>
-          <PrimaryButton type="submit" fullWidth id="login-submit-btn">Log In</PrimaryButton>
+          <PrimaryButton type="submit" fullWidth id="login-submit-btn" disabled={loading}>
+            {loading ? 'Logging in...' : 'Log In'}
+          </PrimaryButton>
         </form>
 
         <p className="auth-switch body-md text-secondary">
           Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link>
-        </p>
-        <p className="auth-switch body-sm text-tertiary" style={{ marginTop: 4 }}>
-          <em>Tip: use any email with "client" to log in as a Client.</em>
         </p>
       </div>
     </div>
@@ -94,8 +118,10 @@ export function SignUpPage() {
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState(searchParams.get('role') ? 2 : 1);
   const [role, setRole] = useState(searchParams.get('role') || null);
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '', name: '', username: '', location: '' });
   const [categories, setCategories] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const CATEGORIES = ['Portrait', 'Landscape', 'Wedding', 'Street', 'Product', 'Nature', 'Editorial', 'Architecture'];
 
@@ -103,9 +129,45 @@ export function SignUpPage() {
     setCategories(prev => prev.includes(c) ? prev.filter(x => x !== c) : prev.length < 3 ? [...prev, c] : prev);
   };
 
-  const handleFinish = () => {
-    setUserEmail(form.email);
-    navigate(role === 'client' ? '/client/home' : '/feed');
+  const handleFinish = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Sign Up in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        setUserEmail(form.email);
+
+        // 2. Seed profile record in custom profiles table
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: authData.user.id,
+          name: form.name,
+          username: form.username,
+          avatar: `https://images.unsplash.com/photo-${role === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+          bio: role === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
+          location: form.location || 'Tokyo, Japan',
+          role: role,
+          verified: false,
+          banned: false,
+          points: 0,
+          global_rank: 99
+        });
+
+        if (profileError) throw profileError;
+
+        navigate(role === 'client' ? '/client/home' : '/feed');
+      }
+    } catch (err) {
+      setError(err.message || 'Error occurred during registration.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,6 +188,8 @@ export function SignUpPage() {
             <div key={s} className={`signup-step-dot ${step >= s ? 'signup-step-dot--active' : ''}`} />
           ))}
         </div>
+
+        {error && <div className="auth-error">{error}</div>}
 
         {step === 1 && (
           <>
@@ -151,29 +215,25 @@ export function SignUpPage() {
         {step === 2 && (
           <>
             <h1 className="heading-1">Create your account</h1>
-            <div className="auth-oauth">
-              <button className="oauth-btn" id="signup-google" onClick={role === 'photographer' ? () => setStep(3) : handleFinish}>
-                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                Continue with Google
-              </button>
-            </div>
-            <div className="auth-divider"><span>or</span></div>
             <form onSubmit={e => { e.preventDefault(); role === 'photographer' ? setStep(3) : handleFinish(); }} className="auth-form">
               <div className="form-field">
+                <label htmlFor="signup-name" className="form-label">Full Name</label>
+                <input id="signup-name" type="text" className="form-input" placeholder="e.g. Aria Nakamura" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={loading} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="signup-username" className="form-label">Username</label>
+                <input id="signup-username" type="text" className="form-input" placeholder="e.g. aria.lens" required value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} disabled={loading} />
+              </div>
+              <div className="form-field">
                 <label htmlFor="signup-email" className="form-label">Email</label>
-                <input id="signup-email" type="email" className="form-input" placeholder="you@example.com" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                <input id="signup-email" type="email" className="form-input" placeholder="you@example.com" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={loading} />
               </div>
               <div className="form-field">
                 <label htmlFor="signup-password" className="form-label">Password</label>
-                <input id="signup-password" type="password" className="form-input" placeholder="Min. 10 characters" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-                <div className="password-strength">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className={`password-strength__bar ${form.password.length >= i * 3 ? 'password-strength__bar--filled' : ''}`} />
-                  ))}
-                </div>
+                <input id="signup-password" type="password" className="form-input" placeholder="Min. 8 characters" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} disabled={loading} />
               </div>
-              <PrimaryButton type="submit" fullWidth id="signup-submit-btn">
-                {role === 'photographer' ? 'Continue →' : 'Create Account'}
+              <PrimaryButton type="submit" fullWidth id="signup-submit-btn" disabled={loading}>
+                {loading ? 'Creating...' : role === 'photographer' ? 'Continue →' : 'Create Account'}
               </PrimaryButton>
             </form>
           </>
@@ -190,6 +250,7 @@ export function SignUpPage() {
                   className={`category-chip ${categories.includes(c) ? 'category-chip--selected' : ''}`}
                   onClick={() => toggleCategory(c)}
                   id={`cat-${c.toLowerCase()}`}
+                  disabled={loading}
                 >
                   {c}
                 </button>
@@ -197,18 +258,19 @@ export function SignUpPage() {
             </div>
             <div className="form-field">
               <label htmlFor="signup-location" className="form-label">Location (City, Country)</label>
-              <input id="signup-location" type="text" className="form-input" placeholder="e.g. London, UK" />
+              <input id="signup-location" type="text" className="form-input" placeholder="e.g. London, UK" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} disabled={loading} />
             </div>
-            <PrimaryButton fullWidth id="signup-finish-btn" onClick={handleFinish}>
-              Start Competing 🏆
+            <PrimaryButton fullWidth id="signup-finish-btn" onClick={handleFinish} disabled={loading}>
+              {loading ? 'Completing...' : 'Start Competing 🏆'}
             </PrimaryButton>
           </>
         )}
 
-        <p className="auth-switch body-md text-secondary">
+        <p className="auth-switch body-md text-secondary" style={{ marginTop: 12 }}>
           Already have an account? <Link to="/login" className="auth-link">Log in</Link>
         </p>
       </div>
     </div>
   );
 }
+

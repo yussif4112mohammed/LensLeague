@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { photographers } from '../data/photographers';
 import { challenges as initialChallenges } from '../data/challenges';
+import { photos as initialPhotos } from '../data/photos';
 import { supabase } from '../lib/supabaseClient';
 
 const AppContext = createContext(null);
@@ -68,6 +69,13 @@ const DEFAULT_THREADS = [
 export function AppProvider({ children }) {
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('ll-user-email') || '');
   const [currentRole, setCurrentRole] = useState(() => localStorage.getItem('ll-current-role') || 'photographer');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Photos list state
+  const [photos, setPhotos] = useState(() => {
+    const saved = localStorage.getItem('ll-photos');
+    return saved ? JSON.parse(saved) : initialPhotos;
+  });
 
   // Bookings list state
   const [bookings, setBookings] = useState(() => {
@@ -116,7 +124,47 @@ export function AppProvider({ children }) {
     ];
   });
 
-  // ── SUPABASE SYNC SYNC ON MOUNT ──
+  // Fetch a user profile based on ID
+  const fetchUserProfile = async (uid) => {
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
+      if (data) {
+        setCurrentUser(data);
+        setCurrentRole(data.role);
+        localStorage.setItem('ll-current-role', data.role);
+      }
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+    }
+  };
+
+  // Listen to Authentication State Changes
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setUserEmail(session.user.email);
+        fetchUserProfile(session.user.id);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setUserEmail(session.user.email);
+        fetchUserProfile(session.user.id);
+      } else {
+        setUserEmail('');
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // ── SUPABASE SYNC ON MOUNT ──
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
@@ -133,7 +181,25 @@ export function AppProvider({ children }) {
         .select('*')
         .order('created_at', { ascending: false });
       if (bookingsData) {
-        setBookings(bookingsData);
+        const mappedBookings = bookingsData.map(b => {
+          const client = profilesData?.find(p => p.id === b.client_id) || { name: 'Sarah Jenkins' };
+          const photographer = profilesData?.find(p => p.id === b.photographer_id) || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          return {
+            id: b.id,
+            clientId: b.client_id,
+            clientName: client.name,
+            photographerId: b.photographer_id,
+            photographerName: photographer.name,
+            photographerAvatar: photographer.avatar,
+            date: b.date,
+            budget: b.budget,
+            location: b.location,
+            message: b.message,
+            status: b.status,
+            createdAt: b.created_at
+          };
+        });
+        setBookings(mappedBookings);
       }
 
       // 3. Fetch challenges
@@ -148,13 +214,37 @@ export function AppProvider({ children }) {
         setSubmissions(submissionsData);
       }
 
-      // 5. Fetch messages and compile into threads client-side
+      // 5. Fetch photos
+      const { data: photosData } = await supabase
+        .from('photos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (photosData && photosData.length > 0) {
+        const mappedPhotos = photosData.map(p => {
+          const owner = profilesData?.find(usr => usr.id === p.owner_id) || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          return {
+            id: p.id,
+            url: p.url,
+            ownerId: p.owner_id,
+            ownerName: owner.name,
+            ownerAvatar: owner.avatar,
+            caption: p.caption,
+            category: p.category,
+            likes: p.votes || 0,
+            aspectRatio: p.aspect_ratio || '3/4',
+            timestamp: 'Just now'
+          };
+        });
+        setPhotos(mappedPhotos);
+      }
+
+      // 6. Fetch messages and compile into threads client-side
       const { data: messagesData } = await supabase
         .from('messages')
         .select('*')
         .order('created_at', { ascending: true });
       if (messagesData) {
-        const compiled = compileSupabaseThreads(messagesData);
+        const compiled = compileSupabaseThreads(messagesData, profilesData);
         setThreads(compiled);
       }
     };
@@ -173,34 +263,43 @@ export function AppProvider({ children }) {
     return () => {
       supabase.removeChannel(msgChannel);
     };
-  }, []);
+  }, [currentUser]);
 
   // Helper: group flat Supabase messages list into structured UI threads
-  const compileSupabaseThreads = (messagesList) => {
+  const compileSupabaseThreads = (messagesList, profiles) => {
     const threadMap = {};
+    const myId = currentUser?.id || '1';
+    
     messagesList.forEach(msg => {
-      const partnerId = msg.sender_id === '1' ? msg.recipient_id : msg.sender_id;
+      if (msg.sender_id === 'system' || msg.recipient_id === 'system') return;
+      const partnerId = msg.sender_id === myId ? msg.recipient_id : msg.sender_id;
+      const partnerProfile = profiles?.find(p => p.id === partnerId) || photographers.find(p => p.id === partnerId) || { name: 'Sarah Jenkins', avatar: photographers[0].avatar };
+      const myProfile = profiles?.find(p => p.id === myId) || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+
       if (!threadMap[partnerId]) {
         threadMap[partnerId] = {
           id: `th_${partnerId}`,
-          photographerId: '1',
-          photographerName: 'Aria Nakamura',
-          photographerAvatar: photographers[0].avatar,
-          clientId: 'client_1',
-          clientName: 'Sarah Jenkins',
+          photographerId: myRole() === 'photographer' ? myId : partnerId,
+          photographerName: myRole() === 'photographer' ? myProfile.name : partnerProfile.name,
+          photographerAvatar: myRole() === 'photographer' ? myProfile.avatar : partnerProfile.avatar,
+          clientId: myRole() === 'client' ? myId : partnerId,
+          clientName: myRole() === 'client' ? myProfile.name : partnerProfile.name,
           messages: []
         };
       }
+      
       threadMap[partnerId].messages.push({
         id: msg.id,
         senderId: msg.sender_id,
-        senderName: msg.sender_id === '1' ? 'Aria Nakamura' : 'Sarah Jenkins',
+        senderName: msg.sender_id === myId ? myProfile.name : partnerProfile.name,
         body: msg.body,
         timestamp: msg.timestamp
       });
     });
     return Object.values(threadMap);
   };
+
+  const myRole = () => currentUser?.role || currentRole;
 
   // Helper: push live incoming message from real-time channel to state array
   const appendRealtimeMessage = (m) => {
@@ -283,11 +382,14 @@ export function AppProvider({ children }) {
 
   // Booking requests
   const addBookingRequest = async (photographerId, details) => {
-    const photographer = photographers.find(p => p.id === photographerId) || photographers[0];
+    const photographer = users.find(p => p.id === photographerId) || photographers[0];
+    const clientUid = currentUser?.id || 'client_1';
+    const clientName = currentUser?.name || 'Sarah Jenkins';
+
     const newBooking = {
       id: `bk_${Date.now()}`,
-      clientId: 'client_1',
-      clientName: 'Sarah Jenkins',
+      clientId: clientUid,
+      clientName: clientName,
       photographerId,
       photographerName: photographer.name,
       photographerAvatar: photographer.avatar,
@@ -303,7 +405,7 @@ export function AppProvider({ children }) {
 
     if (isSupabaseConfigured) {
       await supabase.from('bookings').insert({
-        client_id: 'client_1',
+        client_id: clientUid,
         photographer_id: photographerId,
         date: details.date,
         budget: details.budget,
@@ -319,13 +421,13 @@ export function AppProvider({ children }) {
       photographerId,
       photographerName: photographer.name,
       photographerAvatar: photographer.avatar,
-      clientId: 'client_1',
-      clientName: 'Sarah Jenkins',
+      clientId: clientUid,
+      clientName: clientName,
       messages: [
         {
           id: `msg_${Date.now()}`,
-          senderId: 'client_1',
-          senderName: 'Sarah Jenkins',
+          senderId: clientUid,
+          senderName: clientName,
           body: `Hi ${photographer.name}! I requested a booking for ${details.date} (budget: ${details.budget}). Details: ${details.message}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
@@ -333,7 +435,7 @@ export function AppProvider({ children }) {
     };
 
     setThreads(prev => {
-      const exists = prev.find(t => t.photographerId === photographerId && t.clientId === 'client_1');
+      const exists = prev.find(t => t.photographerId === photographerId && t.clientId === clientUid);
       if (exists) {
         return prev.map(t => {
           if (t.id === exists.id) {
@@ -347,7 +449,7 @@ export function AppProvider({ children }) {
 
     if (isSupabaseConfigured) {
       await supabase.from('messages').insert({
-        sender_id: 'client_1',
+        sender_id: clientUid,
         recipient_id: photographerId,
         body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -364,7 +466,7 @@ export function AppProvider({ children }) {
 
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
-      addSystemMessage(booking.photographerId, booking.clientId, 'Aria Nakamura accepted the booking request! Chat is now active.');
+      addSystemMessage(booking.photographerId, booking.clientId, `${booking.photographerName} accepted the booking request! Chat is now active.`);
     }
   };
 
@@ -417,8 +519,8 @@ export function AppProvider({ children }) {
   // Chats
   const sendMessage = async (threadId, body) => {
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const senderId = currentRole === 'photographer' ? '1' : 'client_1';
-    const senderName = currentRole === 'photographer' ? 'Aria Nakamura' : 'Sarah Jenkins';
+    const senderId = currentUser?.id || (currentRole === 'photographer' ? '1' : 'client_1');
+    const senderName = currentUser?.name || (currentRole === 'photographer' ? 'Aria Nakamura' : 'Sarah Jenkins');
 
     setThreads(prev => prev.map(t => {
       if (t.id === threadId) {
@@ -436,7 +538,7 @@ export function AppProvider({ children }) {
     if (isSupabaseConfigured) {
       const thread = threads.find(t => t.id === threadId);
       if (thread) {
-        const recipientId = senderId === '1' ? thread.clientId : '1';
+        const recipientId = senderId === thread.photographerId ? thread.clientId : thread.photographerId;
         await supabase.from('messages').insert({
           sender_id: senderId,
           recipient_id: recipientId,
@@ -467,35 +569,48 @@ export function AppProvider({ children }) {
       await supabase.from('challenge_entries').insert({
         challenge_id: challengeId,
         photo_url: photoUrl,
-        photographer_id: '1'
+        photographer_id: currentUser?.id || '1'
       });
     }
   };
 
   // Admin actions
-  const approvePhotoReport = (reportId) => {
+  const approvePhotoReport = async (reportId) => {
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'approved' } : rep));
+    if (isSupabaseConfigured) {
+      await supabase.from('reports').update({ status: 'approved' }).eq('id', reportId);
+    }
   };
 
-  const removeReportedPhoto = (reportId) => {
+  const removeReportedPhoto = async (reportId) => {
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'removed' } : rep));
+    if (isSupabaseConfigured) {
+      await supabase.from('reports').update({ status: 'removed' }).eq('id', reportId);
+    }
   };
 
-  const verifyPhotographer = (userId) => {
+  const verifyPhotographer = async (userId) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: true } : u));
+    if (isSupabaseConfigured) {
+      await supabase.from('profiles').update({ verified: true }).eq('id', userId);
+    }
   };
 
-  const banPhotographer = (userId) => {
-    setUsers(prev => prev.map(u => {
-      if (u.id === userId) {
-        return { ...u, banned: !u.banned };
-      }
-      return u;
-    }));
+  const banPhotographer = async (userId) => {
+    const userObj = users.find(u => u.id === userId);
+    if (!userObj) return;
+    const nextBanned = !userObj.banned;
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, banned: nextBanned } : u));
+    if (isSupabaseConfigured) {
+      await supabase.from('profiles').update({ banned: nextBanned }).eq('id', userId);
+    }
   };
 
-  const resolveDispute = (disputeId, resolution) => {
+  const resolveDispute = async (disputeId, resolution) => {
     setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
+    if (isSupabaseConfigured) {
+      await supabase.from('disputes').update({ status: 'resolved', resolution }).eq('id', disputeId);
+    }
   };
 
   const updateProfile = async (userId, data) => {
@@ -511,6 +626,9 @@ export function AppProvider({ children }) {
       switchRole,
       userEmail,
       setUserEmail,
+      currentUser,
+      photos,
+      setPhotos,
       bookings,
       threads,
       challenges,

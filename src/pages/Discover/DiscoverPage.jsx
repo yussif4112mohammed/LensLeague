@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { photos } from '../../data/photos';
+import { useApp } from '../../context/AppContext';
 import CommentSheet from '../../components/CommentSheet/CommentSheet';
 import './DiscoverPage.css';
 
@@ -111,6 +111,7 @@ export default function DiscoverPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const { photos } = useApp();
 
   const filtered = photos.filter(p =>
     (activeCategory === 'All' || p.category === activeCategory) &&

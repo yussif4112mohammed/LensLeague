@@ -121,4 +121,4 @@
   flex-shrink: 0;
 }
 
-.lb-row__pts { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #F5F5F7; }
+.lb-row__pts { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: #F5F5F7; }

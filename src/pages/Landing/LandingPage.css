@@ -29,7 +29,7 @@
 }
 
 .lp-nav__brand {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
@@ -108,7 +108,7 @@
 }
 
 .lp-hero__headline {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(36px, 4.5vw, 64px);
   font-weight: 800;
   line-height: 1.05;
@@ -216,7 +216,7 @@
 }
 
 .lp-stat__value {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
@@ -328,7 +328,7 @@
 }
 
 .lp-section__title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(28px, 3.5vw, 48px);
   font-weight: 800;
   color: var(--text-primary);
@@ -366,7 +366,7 @@
 .lp-how__icon { font-size: 36px; }
 
 .lp-how__step-num {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: 52px;
   font-weight: 800;
   background: var(--accent-gradient);
@@ -452,7 +452,7 @@
 .lp-lb-location { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 
 .lp-lb-pts {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
   color: #FFC24B;
@@ -483,7 +483,7 @@
 }
 
 .lp-cta-title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(36px, 5vw, 64px);
   font-weight: 800;
   color: var(--text-primary);
@@ -509,7 +509,7 @@
 
 .lp-footer__logo {
   display: flex; align-items: center; gap: 8px;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-display);
   font-size: 16px; font-weight: 700; color: var(--text-primary);
 }
 

@@ -108,7 +108,7 @@
   .sidebar__logo:hover { background: var(--bg-elevated-2); }
 
   .sidebar__brand {
-    font-family: 'Syne', sans-serif;
+    font-family: var(--font-display);
     font-size: 19px;
     font-weight: 800;
     background: var(--accent-gradient);

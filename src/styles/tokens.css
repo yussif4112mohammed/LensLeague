@@ -109,7 +109,8 @@
 
   /* Typography — overridden by ThemeContext JS */
   --font-ui:      'Inter', system-ui, sans-serif;
-  --font-display: 'Syne', 'Inter', sans-serif;
+  --font-serif:   'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Instrument Serif', 'Cormorant Garamond', Georgia, serif;
 
   --text-display-xl:  clamp(28px, 5vw, 34px);
   --text-display-lg:  clamp(22px, 4vw, 28px);

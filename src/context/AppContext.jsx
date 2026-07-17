@@ -708,6 +708,45 @@ export function AppProvider({ children }) {
     }
   };
 
+  const fetchPhotosPaginated = async (start, end) => {
+    if (!isSupabaseConfigured) {
+      // Mock local storage fallback range slicing
+      return photos.slice(start, end + 1);
+    }
+    try {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*, profiles:owner_id(*)')
+        .order('created_at', { ascending: false })
+        .range(start, end);
+
+      if (error) {
+        console.error('Error fetching paginated photos:', error);
+        return [];
+      }
+      if (data) {
+        return data.map(p => {
+          const owner = p.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          return {
+            id: p.id,
+            url: p.url,
+            ownerId: p.owner_id,
+            ownerName: owner.name,
+            ownerAvatar: owner.avatar,
+            caption: p.caption,
+            category: p.category,
+            likes: p.votes || 0,
+            aspectRatio: p.aspect_ratio || '3/4',
+            timestamp: 'Just now'
+          };
+        });
+      }
+    } catch (err) {
+      console.error('Exception fetching paginated photos:', err);
+    }
+    return [];
+  };
+
   return (
     <AppContext.Provider value={{
       currentRole,
@@ -738,7 +777,8 @@ export function AppProvider({ children }) {
       banPhotographer,
       resolveDispute,
       updateProfile,
-      castBattleVote
+      castBattleVote,
+      fetchPhotosPaginated
     }}>
       {children}
     </AppContext.Provider>

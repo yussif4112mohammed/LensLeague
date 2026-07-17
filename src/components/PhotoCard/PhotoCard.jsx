@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommentSheet from '../CommentSheet/CommentSheet';
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import './PhotoCard.css';
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
@@ -80,7 +81,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
     return (
       <div className="photo-tile" onClick={handleImageClick} id={`photo-tile-${photo.id}`}>
         <img
-          src={photo.url}
+          src={getOptimizedImageUrl(photo.url, 400)}
           alt={photo.caption || `Photo by ${photo.ownerName}`}
           className="photo-tile__img"
           loading="lazy"
@@ -135,7 +136,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
         {/* Image */}
         <div className="post-card__image-wrap" onClick={handleTap}>
           <img
-            src={photo.url}
+            src={getOptimizedImageUrl(photo.url, 800)}
             alt={photo.caption || `Photo by ${photo.ownerName}`}
             className="post-card__image"
             loading="lazy"

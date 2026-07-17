@@ -189,8 +189,10 @@ CREATE POLICY "Allow admin operations on disputes"
 
 -- ── 8. CREATE INDEXES FOR SPEED ──
 CREATE INDEX idx_photos_owner ON public.photos(owner_id);
+CREATE INDEX idx_photos_category ON public.photos(category);
 CREATE INDEX idx_bookings_client ON public.bookings(client_id);
 CREATE INDEX idx_bookings_photographer ON public.bookings(photographer_id);
 CREATE INDEX idx_messages_sender ON public.messages(sender_id);
 CREATE INDEX idx_messages_recipient ON public.messages(recipient_id);
 CREATE INDEX idx_entries_challenge ON public.challenge_entries(challenge_id);
+CREATE INDEX idx_entries_user ON public.challenge_entries(user_id);

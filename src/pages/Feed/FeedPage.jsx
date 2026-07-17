@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import StoriesBar from '../../components/StoriesBar/StoriesBar';
@@ -37,10 +37,72 @@ const FEED_TABS = ['For You', 'Following'];
 export default function FeedPage() {
   const [tab, setTab] = useState('For You');
   const navigate = useNavigate();
-  const { photos } = useApp();
+  const { fetchPhotosPaginated } = useApp();
+
+  const [feedPhotos, setFeedPhotos] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  // Initialize and load page 0
+  useEffect(() => {
+    let active = true;
+    const initFetch = async () => {
+      setLoading(true);
+      const initial = await fetchPhotosPaginated(0, 9);
+      if (active) {
+        setFeedPhotos(initial);
+        if (initial.length < 10) {
+          setHasMore(false);
+        } else {
+          setPage(1);
+          setHasMore(true);
+        }
+        setLoading(false);
+      }
+    };
+    initFetch();
+    return () => {
+      active = false;
+    };
+  }, [fetchPhotosPaginated]);
+
+  // Load subsequent pages
+  const loadNextPage = useCallback(async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    const nextPagePhotos = await fetchPhotosPaginated(page * 10, (page + 1) * 10 - 1);
+    if (nextPagePhotos.length === 0) {
+      setHasMore(false);
+    } else {
+      setFeedPhotos(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const filtered = nextPagePhotos.filter(p => !existingIds.has(p.id));
+        return [...prev, ...filtered];
+      });
+      setPage(p => p + 1);
+      if (nextPagePhotos.length < 10) {
+        setHasMore(false);
+      }
+    }
+    setLoading(false);
+  }, [page, loading, hasMore, fetchPhotosPaginated]);
+
+  // Scroll sentinel trigger hook
+  const observerRef = useRef();
+  const lastPhotoRef = useCallback(node => {
+    if (loading) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadNextPage();
+      }
+    });
+    if (node) observerRef.current.observe(node);
+  }, [loading, hasMore, loadNextPage]);
 
   const feedItems = [];
-  photos.forEach((photo, i) => {
+  feedPhotos.forEach((photo, i) => {
     feedItems.push({ type: 'photo', data: photo });
     if ((i + 1) % 5 === 0 && battles[Math.floor(i / 5)]) {
       feedItems.push({ type: 'battle', data: battles[Math.floor(i / 5)] });
@@ -116,6 +178,13 @@ export default function FeedPage() {
             item.type === 'photo'
               ? <PhotoCard key={item.data.id} photo={item.data} />
               : <BattleSpotlightCard key={`battle-${item.data.id}`} battle={item.data} />
+          )}
+
+          {/* Loading spinner sentinel */}
+          {hasMore && (
+            <div ref={lastPhotoRef} className="feed-loading-sentinel">
+              <div className="feed-spinner" />
+            </div>
           )}
         </div>
       </div>

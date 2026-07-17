@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { photographers, PHOTO_URLS } from '../../data/photographers';
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import './StoriesBar.css';
 
 // Combine photographer avatars with real photo covers to show rich content previews
@@ -40,12 +41,12 @@ export default function StoriesBar() {
           >
             {/* Main Shoot Preview Image */}
             <div className="film-slide__frame">
-              <img src={story.cover} alt={`${story.name}'s preview`} className="film-slide__image" />
+              <img src={getOptimizedImageUrl(story.cover, 200, 75)} alt={`${story.name}'s preview`} className="film-slide__image" />
               <div className="film-slide__overlay" />
               
               {/* Creator avatar overlay */}
               <div className="film-slide__avatar-badge">
-                <img src={story.avatar} alt={story.name} className="film-slide__avatar" />
+                <img src={getOptimizedImageUrl(story.avatar, 100, 75)} alt={story.name} className="film-slide__avatar" />
                 {story.isOwn && (
                   <span className="film-slide__plus">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">

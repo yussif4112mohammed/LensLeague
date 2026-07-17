@@ -9,6 +9,8 @@
   bottom: 0; left: 0; right: 0;
   height: var(--bottom-nav-height);
   background: var(--nav-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-top: 1px solid var(--nav-border);
   display: flex;
   align-items: center;
@@ -35,16 +37,16 @@
 .bottom-nav__item:hover { color: var(--text-secondary); }
 
 .bottom-nav__item--active {
-  color: var(--text-primary);
+  color: var(--accent-glow);
 }
 
 .bottom-nav__item--active .bottom-nav__icon svg {
-  filter: drop-shadow(0 0 6px rgba(255,77,109,0.5));
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.6));
 }
 
 /* Active tab indicator dot */
 .bottom-nav__item--active .bottom-nav__label {
-  color: #FF4D6D;
+  color: var(--accent-glow);
 }
 
 /* Featured (Compete) item */
@@ -85,6 +87,8 @@
     left: 0; top: 0; bottom: 0;
     width: 240px;
     background: var(--nav-bg);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border-right: 1px solid var(--nav-border);
     padding: 24px 16px;
     z-index: 200;
@@ -107,7 +111,10 @@
     font-family: 'Syne', sans-serif;
     font-size: 19px;
     font-weight: 800;
-    color: var(--text-primary);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: -0.02em;
   }
 
@@ -129,6 +136,7 @@
     font-weight: 600;
     transition: background 0.18s, color 0.18s;
     text-decoration: none;
+    border: 1px solid transparent;
   }
 
   .sidebar__link:hover {
@@ -137,12 +145,15 @@
   }
 
   .sidebar__link--active {
-    background: var(--bg-elevated-2);
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
   .sidebar__link--active .sidebar__icon {
-    color: #FF4D6D;
+    color: var(--accent-glow);
+    filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.6));
   }
 
   .sidebar__icon {
@@ -160,19 +171,20 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #FF4D6D;
+    background: var(--accent-gradient);
     color: white;
     font-size: 14px; font-weight: 700;
     padding: 13px;
     border-radius: 12px;
     margin-top: 16px;
-    transition: filter 0.18s, box-shadow 0.18s;
+    transition: transform var(--transition-micro), box-shadow 0.18s;
     text-decoration: none;
     border: none; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 59, 112, 0.25), 0 0 1px rgba(0, 245, 255, 0.4);
   }
   .sidebar__upload-btn:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 0 20px rgba(255,77,109,0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 59, 112, 0.35), 0 0 10px rgba(0, 245, 255, 0.6);
   }
 
   .sidebar__footer {

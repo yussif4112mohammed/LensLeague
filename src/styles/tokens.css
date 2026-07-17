@@ -6,42 +6,42 @@
 :root,
 [data-theme="dark"] {
   /* Background layers */
-  --bg-base:        #0A0A0C;
-  --bg-elevated-1:  #131316;
-  --bg-elevated-2:  #1C1C20;
-  --bg-elevated-3:  #26262B;
+  --bg-base:        #020204;
+  --bg-elevated-1:  rgba(15, 15, 20, 0.65);
+  --bg-elevated-2:  rgba(22, 22, 30, 0.75);
+  --bg-elevated-3:  rgba(30, 30, 40, 0.85);
 
   /* Borders */
-  --border-subtle:  #2A2A2E;
-  --border-strong:  #3A3A40;
+  --border-subtle:  rgba(255, 255, 255, 0.07);
+  --border-strong:  rgba(255, 255, 255, 0.14);
 
   /* Text */
-  --text-primary:   #F5F5F7;
-  --text-secondary: #A1A1AA;
-  --text-tertiary:  #6E6E76;
-  --text-disabled:  #4A4A50;
+  --text-primary:   #FFFFFF;
+  --text-secondary: #B0B0BA;
+  --text-tertiary:  #7E7E8A;
+  --text-disabled:  #4E4E58;
 
   /* Nav & shell */
-  --nav-bg:         #0D0D10;
-  --nav-border:     #2A2A2E;
+  --nav-bg:         rgba(10, 10, 14, 0.8);
+  --nav-border:     rgba(255, 255, 255, 0.06);
 
   /* Input */
-  --input-bg:       #1C1C22;
-  --input-border:   #3A3A44;
-  --input-focus-bg: #22222A;
+  --input-bg:       rgba(255, 255, 255, 0.04);
+  --input-border:   rgba(255, 255, 255, 0.08);
+  --input-focus-bg: rgba(255, 255, 255, 0.07);
 
   /* Card */
-  --card-bg:        #131316;
-  --card-border:    #2A2A2E;
+  --card-bg:        rgba(15, 15, 20, 0.45);
+  --card-border:    rgba(255, 255, 255, 0.07);
 
   /* Button Secondary */
-  --btn-secondary-bg:           rgba(255, 255, 255, 0.06);
-  --btn-secondary-border:       rgba(255, 255, 255, 0.18);
-  --btn-secondary-hover-bg:     rgba(255, 255, 255, 0.1);
-  --btn-secondary-hover-border: rgba(255, 255, 255, 0.3);
+  --btn-secondary-bg:           rgba(255, 255, 255, 0.05);
+  --btn-secondary-border:       rgba(255, 255, 255, 0.12);
+  --btn-secondary-hover-bg:     rgba(255, 255, 255, 0.09);
+  --btn-secondary-hover-border: rgba(255, 255, 255, 0.22);
 
   /* Shadows */
-  --shadow-card: 0 2px 16px rgba(0,0,0,0.4);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
 }
 
 /* ── LIGHT MODE ── */
@@ -87,11 +87,15 @@
 
 /* ── Brand / Accent (same in both modes) ── */
 :root {
-  --accent-primary:   #FF4D6D;
-  --accent-secondary: #6E5BFF;
+  --accent-primary:   #FF3B70;
+  --accent-secondary: #703BFF;
+  --accent-glow:      #00F5FF;
   --accent-gold:      #FFC24B;
   --accent-silver:    #C8CCD4;
   --accent-bronze:    #D98C5F;
+
+  --accent-gradient: linear-gradient(135deg, #FF3B70 0%, #703BFF 50%, #00F5FF 100%);
+  --accent-glow-gradient: linear-gradient(135deg, rgba(255, 59, 112, 0.25) 0%, rgba(112, 59, 255, 0.25) 50%, rgba(0, 245, 255, 0.25) 100%);
 
   /* Semantic */
   --success:  #34D399;
@@ -100,8 +104,8 @@
   --info:     #60A5FA;
 
   /* Vote / Battle */
-  --vote-a:   #FF4D6D;
-  --vote-b:   #6E5BFF;
+  --vote-a:   #FF3B70;
+  --vote-b:   #703BFF;
 
   /* Typography — overridden by ThemeContext JS */
   --font-ui:      'Inter', system-ui, sans-serif;

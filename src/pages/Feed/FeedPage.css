@@ -57,6 +57,28 @@
   gap: 8px;
 }
 
+.feed-header__post-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-gradient);
+  border: none;
+  color: #06141B;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(136, 189, 242, 0.2);
+}
+.feed-header__post-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(136, 189, 242, 0.35);
+}
+.feed-header__post-btn:active {
+  transform: translateY(0);
+}
+
 .feed-header__pill {
   display: flex;
   align-items: center;

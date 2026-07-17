@@ -6,24 +6,24 @@
 :root,
 [data-theme="dark"] {
   /* Background layers */
-  --bg-base:        #020204;
-  --bg-elevated-1:  rgba(15, 15, 20, 0.65);
-  --bg-elevated-2:  rgba(22, 22, 30, 0.75);
-  --bg-elevated-3:  rgba(30, 30, 40, 0.85);
+  --bg-base:        #06141B;
+  --bg-elevated-1:  #11212D;
+  --bg-elevated-2:  #253746;
+  --bg-elevated-3:  #4A5C6A;
 
   /* Borders */
-  --border-subtle:  rgba(255, 255, 255, 0.07);
-  --border-strong:  rgba(255, 255, 255, 0.14);
+  --border-subtle:  rgba(155, 168, 171, 0.12);
+  --border-strong:  rgba(155, 168, 171, 0.25);
 
   /* Text */
-  --text-primary:   #FFFFFF;
-  --text-secondary: #B0B0BA;
-  --text-tertiary:  #7E7E8A;
-  --text-disabled:  #4E4E58;
+  --text-primary:   #CCD0CF;
+  --text-secondary: #9BA8AB;
+  --text-tertiary:  #6A89A7;
+  --text-disabled:  #384959;
 
   /* Nav & shell */
-  --nav-bg:         rgba(10, 10, 14, 0.8);
-  --nav-border:     rgba(255, 255, 255, 0.06);
+  --nav-bg:         rgba(6, 20, 27, 0.85);
+  --nav-border:     rgba(74, 92, 106, 0.25);
 
   /* Input */
   --input-bg:       rgba(255, 255, 255, 0.04);
@@ -31,8 +31,8 @@
   --input-focus-bg: rgba(255, 255, 255, 0.07);
 
   /* Card */
-  --card-bg:        rgba(15, 15, 20, 0.45);
-  --card-border:    rgba(255, 255, 255, 0.07);
+  --card-bg:        rgba(17, 33, 45, 0.55);
+  --card-border:    rgba(74, 92, 106, 0.2);
 
   /* Button Secondary */
   --btn-secondary-bg:           rgba(255, 255, 255, 0.05);
@@ -47,65 +47,65 @@
 /* ── LIGHT MODE ── */
 [data-theme="light"] {
   /* Background layers */
-  --bg-base:        #F8F8FA;
+  --bg-base:        #F5F7FA;
   --bg-elevated-1:  #FFFFFF;
-  --bg-elevated-2:  #F2F2F5;
-  --bg-elevated-3:  #E8E8EE;
+  --bg-elevated-2:  #E8EEF5;
+  --bg-elevated-3:  #D5DFEB;
 
   /* Borders */
-  --border-subtle:  #E4E4E8;
-  --border-strong:  #C8C8D0;
+  --border-subtle:  #E2E8F0;
+  --border-strong:  #CBD5E1;
 
   /* Text */
-  --text-primary:   #111114;
-  --text-secondary: #52525B;
-  --text-tertiary:  #8A8A94;
-  --text-disabled:  #BBBBC4;
+  --text-primary:   #1E293B;
+  --text-secondary: #475569;
+  --text-tertiary:  #64748B;
+  --text-disabled:  #94A3B8;
 
   /* Nav & shell */
   --nav-bg:         #FFFFFF;
-  --nav-border:     #E4E4E8;
+  --nav-border:     #E2E8F0;
 
   /* Input */
-  --input-bg:       #F2F2F5;
-  --input-border:   #D4D4DC;
+  --input-bg:       #F1F5F9;
+  --input-border:   #E2E8F0;
   --input-focus-bg: #FFFFFF;
 
   /* Card */
   --card-bg:        #FFFFFF;
-  --card-border:    #E4E4E8;
+  --card-border:    #E2E8F0;
 
   /* Button Secondary */
-  --btn-secondary-bg:           rgba(0, 0, 0, 0.05);
-  --btn-secondary-border:       rgba(0, 0, 0, 0.15);
-  --btn-secondary-hover-bg:     rgba(0, 0, 0, 0.08);
-  --btn-secondary-hover-border: rgba(0, 0, 0, 0.25);
+  --btn-secondary-bg:           rgba(0, 0, 0, 0.04);
+  --btn-secondary-border:       rgba(0, 0, 0, 0.12);
+  --btn-secondary-hover-bg:     rgba(0, 0, 0, 0.07);
+  --btn-secondary-hover-border: rgba(0, 0, 0, 0.2);
 
   /* Shadows */
-  --shadow-card: 0 2px 16px rgba(0,0,0,0.08);
+  --shadow-card: 0 2px 16px rgba(0,0,0,0.06);
 }
 
 /* ── Brand / Accent (same in both modes) ── */
 :root {
-  --accent-primary:   #FF3B70;
-  --accent-secondary: #703BFF;
-  --accent-glow:      #00F5FF;
+  --accent-primary:   #88BDF2;
+  --accent-secondary: #6A89A7;
+  --accent-glow:      #BDDDFC;
   --accent-gold:      #FFC24B;
-  --accent-silver:    #C8CCD4;
+  --accent-silver:    #9BA8AB;
   --accent-bronze:    #D98C5F;
 
-  --accent-gradient: linear-gradient(135deg, #FF3B70 0%, #703BFF 50%, #00F5FF 100%);
-  --accent-glow-gradient: linear-gradient(135deg, rgba(255, 59, 112, 0.25) 0%, rgba(112, 59, 255, 0.25) 50%, rgba(0, 245, 255, 0.25) 100%);
+  --accent-gradient: linear-gradient(135deg, #6A89A7 0%, #88BDF2 50%, #BDDDFC 100%);
+  --accent-glow-gradient: linear-gradient(135deg, rgba(106, 137, 167, 0.2) 0%, rgba(136, 189, 242, 0.2) 50%, rgba(189, 221, 252, 0.2) 100%);
 
   /* Semantic */
-  --success:  #34D399;
-  --warning:  #FBBF24;
-  --error:    #F87171;
-  --info:     #60A5FA;
+  --success:  #10B981;
+  --warning:  #F59E0B;
+  --error:    #EF4444;
+  --info:     #3B82F6;
 
   /* Vote / Battle */
-  --vote-a:   #FF3B70;
-  --vote-b:   #703BFF;
+  --vote-a:   #88BDF2;
+  --vote-b:   #6A89A7;
 
   /* Typography — overridden by ThemeContext JS */
   --font-ui:      'Inter', system-ui, sans-serif;
@@ -151,8 +151,8 @@
   --transition-slow:   300ms ease-out;
 
   /* Glows */
-  --glow-primary:   0 0 24px rgba(255, 77, 109, 0.2);
-  --glow-secondary: 0 0 24px rgba(110, 91, 255, 0.2);
+  --glow-primary:   0 0 24px rgba(136, 189, 242, 0.25);
+  --glow-secondary: 0 0 24px rgba(106, 137, 167, 0.25);
   --glow-gold:      0 0 24px rgba(255, 194, 75, 0.25);
 }
 

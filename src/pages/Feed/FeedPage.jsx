@@ -120,13 +120,24 @@ export default function FeedPage() {
         <header className="feed-header">
           <div className="feed-header__logo">
             <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="#FF4D6D"/>
+              <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
               <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="white" opacity="0.9"/>
               <circle cx="22" cy="10" r="3" fill="white"/>
             </svg>
             <span className="feed-header__brand">LensLeague</span>
           </div>
           <div className="feed-header__actions">
+            <button
+              className="feed-header__post-btn"
+              onClick={() => navigate('/upload')}
+              id="header-create-post-btn"
+              aria-label="Create new post"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span>Post</span>
+            </button>
             <button className="feed-header__pill" aria-label="Your streak" id="streak-btn">
               🔥 <span>12</span>
             </button>
@@ -168,9 +179,6 @@ export default function FeedPage() {
             </button>
           ))}
         </div>
-
-        {/* Stories row */}
-        <StoriesBar />
 
         {/* Feed list */}
         <div className="feed-list">

@@ -1,18 +1,28 @@
 import { useState } from 'react';
+import { useApp } from '../../context/AppContext';
 import './BattleCard.css';
 
 export default function BattleCard({ battle, onVote }) {
+  const { castBattleVote } = useApp();
   const [voted, setVoted] = useState(null); // 'a' | 'b' | null
   const [impact, setImpact] = useState(null);
+  const [eloResults, setEloResults] = useState(null);
 
   const total = battle.photoA.votes + battle.photoB.votes;
   const pctA = Math.round((battle.photoA.votes / total) * 100);
   const pctB = 100 - pctA;
 
-  const handleVote = (side) => {
+  const handleVote = async (side) => {
     if (voted) return;
     setVoted(side);
     setImpact(side);
+    
+    // Calculate and trigger Elo adjustments in database and local state
+    const results = await castBattleVote(battle.id, side);
+    if (results) {
+      setEloResults(results);
+    }
+
     setTimeout(() => setImpact(null), 600);
     onVote?.(side);
   };
@@ -44,7 +54,17 @@ export default function BattleCard({ battle, onVote }) {
           <div className="battle-card__info">
             <div className="battle-card__photographer">
               <img src={battle.photoA.photographerAvatar} alt={battle.photoA.photographerName} />
-              <span>{battle.photoA.photographerName}</span>
+              <div>
+                <span className="battle-card__name">{battle.photoA.photographerName}</span>
+                <div className="battle-card__elo">
+                  ⚡ {eloResults ? eloResults.newRatingA : (battle.photoA.rating || 1200)}
+                  {eloResults && (
+                    <span className={`elo-badge ${eloResults.changeA.startsWith('+') ? 'elo-badge--up' : 'elo-badge--down'}`}>
+                      {eloResults.changeA}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
             {voted
               ? <div className="battle-card__pct battle-card__pct--a">{pctA}%</div>
@@ -88,7 +108,17 @@ export default function BattleCard({ battle, onVote }) {
           <div className="battle-card__info">
             <div className="battle-card__photographer">
               <img src={battle.photoB.photographerAvatar} alt={battle.photoB.photographerName} />
-              <span>{battle.photoB.photographerName}</span>
+              <div>
+                <span className="battle-card__name">{battle.photoB.photographerName}</span>
+                <div className="battle-card__elo">
+                  ⚡ {eloResults ? eloResults.newRatingB : (battle.photoB.rating || 1200)}
+                  {eloResults && (
+                    <span className={`elo-badge ${eloResults.changeB.startsWith('+') ? 'elo-badge--up' : 'elo-badge--down'}`}>
+                      {eloResults.changeB}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
             {voted
               ? <div className="battle-card__pct battle-card__pct--b">{pctB}%</div>

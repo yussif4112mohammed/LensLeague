@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { photographers } from '../data/photographers';
 import { challenges as initialChallenges } from '../data/challenges';
 import { photos as initialPhotos } from '../data/photos';
+import { battles as initialBattles } from '../data/battles';
+import { calculateElo } from '../lib/elo';
 import { supabase } from '../lib/supabaseClient';
 
 const AppContext = createContext(null);
@@ -122,6 +124,12 @@ export function AppProvider({ children }) {
     return saved ? JSON.parse(saved) : [
       { id: 'dsp_1', title: 'Neon Nights Tokyo vs Golden Sun Kyoto', votesA: 1420, votesB: 1412, reason: 'Sudden spike of 200 votes in last 60 seconds (Bot suspicion)', reporter: 'Aria Nakamura', status: 'pending' }
     ];
+  });
+
+  // Active battles list state (supporting dynamic Elo updates)
+  const [battles, setBattles] = useState(() => {
+    const saved = localStorage.getItem('ll-battles');
+    return saved ? JSON.parse(saved) : initialBattles;
   });
 
   // Fetch a user profile based on ID
@@ -374,6 +382,10 @@ export function AppProvider({ children }) {
     localStorage.setItem('ll-disputes', JSON.stringify(disputes));
   }, [disputes]);
 
+  useEffect(() => {
+    localStorage.setItem('ll-battles', JSON.stringify(battles));
+  }, [battles]);
+
   const switchRole = (role) => {
     setCurrentRole(role);
   };
@@ -606,6 +618,82 @@ export function AppProvider({ children }) {
     }
   };
 
+  const castBattleVote = async (battleId, side) => {
+    // 1. Find the battle
+    const battle = battles.find(b => b.id === battleId);
+    if (!battle) return null;
+
+    // 2. Fetch current ratings (default to 1200)
+    const ratingA = battle.photoA.rating || 1200;
+    const ratingB = battle.photoB.rating || 1200;
+
+    // 3. Compute new Elo scores
+    const outcomeA = side === 'a' ? 1 : 0;
+    const eloResults = calculateElo(ratingA, ratingB, outcomeA);
+
+    // 4. Update local battles state array
+    setBattles(prev => prev.map(b => {
+      if (b.id === battleId) {
+        return {
+          ...b,
+          photoA: {
+            ...b.photoA,
+            rating: eloResults.newRatingA,
+            votes: side === 'a' ? b.photoA.votes + 1 : b.photoA.votes
+          },
+          photoB: {
+            ...b.photoB,
+            rating: eloResults.newRatingB,
+            votes: side === 'b' ? b.photoB.votes + 1 : b.photoB.votes
+          },
+          totalVotes: b.totalVotes + 1
+        };
+      }
+      return b;
+    }));
+
+    // 5. Update creator points dynamically on the leaderboard
+    const changeA = eloResults.rawChangeA;
+    const changeB = eloResults.rawChangeB;
+
+    setUsers(prevUsers => prevUsers.map(u => {
+      if (u.id === battle.photoA.photographerId) {
+        return { ...u, points: Math.max(0, (u.points || 0) + changeA) };
+      }
+      if (u.id === battle.photoB.photographerId) {
+        return { ...u, points: Math.max(0, (u.points || 0) + changeB) };
+      }
+      return u;
+    }));
+
+    // 6. Supabase DB Updates (if configured)
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('photos').update({ votes: eloResults.newRatingA }).eq('id', battle.photoA.id);
+        await supabase.from('photos').update({ votes: eloResults.newRatingB }).eq('id', battle.photoB.id);
+
+        const { data: pA } = await supabase.from('profiles').select('points').eq('id', battle.photoA.photographerId).single();
+        const { data: pB } = await supabase.from('profiles').select('points').eq('id', battle.photoB.photographerId).single();
+
+        if (pA) {
+          await supabase.from('profiles').update({ points: Math.max(0, (pA.points || 0) + changeA) }).eq('id', battle.photoA.photographerId);
+        }
+        if (pB) {
+          await supabase.from('profiles').update({ points: Math.max(0, (pB.points || 0) + changeB) }).eq('id', battle.photoB.photographerId);
+        }
+      } catch (err) {
+        console.warn('Supabase DB Elo update error:', err.message);
+      }
+    }
+
+    return {
+      changeA: eloResults.changeA,
+      changeB: eloResults.changeB,
+      newRatingA: eloResults.newRatingA,
+      newRatingB: eloResults.newRatingB
+    };
+  };
+
   const resolveDispute = async (disputeId, resolution) => {
     setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
     if (isSupabaseConfigured) {
@@ -636,6 +724,8 @@ export function AppProvider({ children }) {
       users,
       reports,
       disputes,
+      battles,
+      setBattles,
       addBookingRequest,
       acceptBooking,
       declineBooking,
@@ -647,7 +737,8 @@ export function AppProvider({ children }) {
       verifyPhotographer,
       banPhotographer,
       resolveDispute,
-      updateProfile
+      updateProfile,
+      castBattleVote
     }}>
       {children}
     </AppContext.Provider>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import BattleCard from '../../components/BattleCard/BattleCard';
 import ProgressRing from '../../components/ProgressRing/ProgressRing';
-import { battles } from '../../data/battles';
+import { useApp } from '../../context/AppContext';
 import './VotePage.css';
 
 const TOTAL_DAILY = 20;
@@ -13,6 +13,7 @@ function formatAspectRatio(ratio) {
 }
 
 export default function VotePage() {
+  const { battles, castBattleVote } = useApp();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [votedCount, setVotedCount]     = useState(0);
   const [skipped, setSkipped]           = useState([]);

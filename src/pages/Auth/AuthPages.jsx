@@ -45,16 +45,43 @@ export function LoginPage() {
       if (data.user) {
         setUserEmail(email);
         
-        // Fetch role to navigate
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
+        if (!profile) {
+          const meta = data.user.user_metadata || {};
+          const userRole = meta.role || 'photographer';
+          const { error: seedError } = await supabase.from('profiles').insert({
+            id: data.user.id,
+            name: meta.name || 'Anonymous User',
+            username: meta.username || `user_${Date.now().toString(36)}`,
+            avatar: `https://images.unsplash.com/photo-${userRole === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+            bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
+            location: meta.location || 'Tokyo, Japan',
+            role: userRole,
+            verified: false,
+            banned: false,
+            points: 0,
+            global_rank: 99
+          });
+
+          if (!seedError) {
+            const { data: newProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+            profile = newProfile;
+          }
+        }
+
+        const finalRole = profile?.role || data.user.user_metadata?.role || 'photographer';
         if (email === 'admin@lensleague.com') {
           navigate('/admin');
-        } else if (profile?.role === 'client' || email.includes('client')) {
+        } else if (finalRole === 'client' || email.includes('client')) {
           navigate('/client/home');
         } else {
           navigate('/feed');
@@ -137,6 +164,7 @@ export function SignUpPage() {
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showVerifyNotice, setShowVerifyNotice] = useState(false);
 
   const CATEGORIES = ['Portrait', 'Landscape', 'Wedding', 'Street', 'Product', 'Nature', 'Editorial', 'Architecture'];
 
@@ -148,10 +176,35 @@ export function SignUpPage() {
     setLoading(true);
     setError('');
     try {
-      // 1. Sign Up in Supabase Auth
+      const cleanUsername = form.username.trim().toLowerCase();
+      if (!/^[a-zA-Z0-9_.]+$/.test(cleanUsername)) {
+        throw new Error('Username can only contain letters, numbers, underscores, and periods.');
+      }
+
+      // Check if username is already taken
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', cleanUsername)
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error('This username is already taken. Please choose another one.');
+      }
+
+      // 1. Sign Up in Supabase Auth passing metadata options
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
+        options: {
+          data: {
+            name: form.name,
+            username: cleanUsername,
+            role: role,
+            location: form.location || 'Tokyo, Japan',
+            categories: categories
+          }
+        }
       });
 
       if (authError) throw authError;
@@ -159,24 +212,28 @@ export function SignUpPage() {
       if (authData.user) {
         setUserEmail(form.email);
 
-        // 2. Seed profile record in custom profiles table
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          name: form.name,
-          username: form.username,
-          avatar: `https://images.unsplash.com/photo-${role === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
-          bio: role === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
-          location: form.location || 'Tokyo, Japan',
-          role: role,
-          verified: false,
-          banned: false,
-          points: 0,
-          global_rank: 99
-        });
+        // If session is present immediately (e.g. Email Confirmation is disabled)
+        if (authData.session) {
+          const { error: profileError } = await supabase.from('profiles').insert({
+            id: authData.user.id,
+            name: form.name,
+            username: cleanUsername,
+            avatar: `https://images.unsplash.com/photo-${role === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+            bio: role === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
+            location: form.location || 'Tokyo, Japan',
+            role: role,
+            verified: false,
+            banned: false,
+            points: 0,
+            global_rank: 99
+          });
 
-        if (profileError) throw profileError;
-
-        navigate(role === 'client' ? '/client/home' : '/feed');
+          if (profileError) throw profileError;
+          navigate(role === 'client' ? '/client/home' : '/feed');
+        } else {
+          // If verification email is sent, show success verification notice screen
+          setShowVerifyNotice(true);
+        }
       }
     } catch (err) {
       setError(err.message || 'Error occurred during registration.');
@@ -197,93 +254,109 @@ export function SignUpPage() {
           <span className="display-lg">LensLeague</span>
         </div>
 
-        {/* Step dots */}
-        <div className="signup-steps">
-          {[1, 2, role === 'photographer' ? 3 : null].filter(Boolean).map(s => (
-            <div key={s} className={`signup-step-dot ${step >= s ? 'signup-step-dot--active' : ''}`} />
-          ))}
-        </div>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        {step === 1 && (
+        {showVerifyNotice ? (
+          <div className="verify-notice animate-fade-in" style={{ textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>📧</div>
+            <h1 className="heading-1">Confirm your email</h1>
+            <p className="body-md text-secondary" style={{ marginTop: 12, marginBottom: 24, lineHeight: 1.5 }}>
+              We've sent a verification link to <strong style={{ color: 'var(--text-primary)' }}>{form.email}</strong>.<br />
+              Please click the link in the email to activate your account, then log in!
+            </p>
+            <PrimaryButton onClick={() => navigate('/login')} id="to-login-btn">
+              Go to Log In
+            </PrimaryButton>
+          </div>
+        ) : (
           <>
-            <h1 className="heading-1">Join LensLeague</h1>
-            <p className="body-md text-secondary">Who are you joining as?</p>
-            <div className="role-cards">
-              <button className={`role-card ${role === 'photographer' ? 'role-card--selected' : ''}`} id="role-photographer"
-                onClick={() => { setRole('photographer'); setStep(2); }}>
-                <span className="role-card__icon">📷</span>
-                <div className="heading-2">I'm a Photographer</div>
-                <div className="body-sm text-secondary">Build your portfolio, compete, and get discovered by clients.</div>
-              </button>
-              <button className={`role-card ${role === 'client' ? 'role-card--selected' : ''}`} id="role-client"
-                onClick={() => { setRole('client'); setStep(2); }}>
-                <span className="role-card__icon">🔍</span>
-                <div className="heading-2">I'm Looking to Hire</div>
-                <div className="body-sm text-secondary">Find and book top-ranked photographers for your projects.</div>
-              </button>
-            </div>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <h1 className="heading-1">Create your account</h1>
-            <form onSubmit={e => { e.preventDefault(); role === 'photographer' ? setStep(3) : handleFinish(); }} className="auth-form">
-              <div className="form-field">
-                <label htmlFor="signup-name" className="form-label">Full Name</label>
-                <input id="signup-name" type="text" className="form-input" placeholder="e.g. Aria Nakamura" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={loading} />
-              </div>
-              <div className="form-field">
-                <label htmlFor="signup-username" className="form-label">Username</label>
-                <input id="signup-username" type="text" className="form-input" placeholder="e.g. aria.lens" required value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} disabled={loading} />
-              </div>
-              <div className="form-field">
-                <label htmlFor="signup-email" className="form-label">Email</label>
-                <input id="signup-email" type="email" className="form-input" placeholder="you@example.com" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={loading} />
-              </div>
-              <div className="form-field">
-                <label htmlFor="signup-password" className="form-label">Password</label>
-                <input id="signup-password" type="password" className="form-input" placeholder="Min. 8 characters" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} disabled={loading} />
-              </div>
-              <PrimaryButton type="submit" fullWidth id="signup-submit-btn" disabled={loading}>
-                {loading ? 'Creating...' : role === 'photographer' ? 'Continue →' : 'Create Account'}
-              </PrimaryButton>
-            </form>
-          </>
-        )}
-
-        {step === 3 && role === 'photographer' && (
-          <>
-            <h1 className="heading-1">Your photography style</h1>
-            <p className="body-md text-secondary">Pick up to 3 categories. This seeds your leaderboard placement.</p>
-            <div className="category-chips">
-              {CATEGORIES.map(c => (
-                <button
-                  key={c}
-                  className={`category-chip ${categories.includes(c) ? 'category-chip--selected' : ''}`}
-                  onClick={() => toggleCategory(c)}
-                  id={`cat-${c.toLowerCase()}`}
-                  disabled={loading}
-                >
-                  {c}
-                </button>
+            {/* Step dots */}
+            <div className="signup-steps">
+              {[1, 2, role === 'photographer' ? 3 : null].filter(Boolean).map(s => (
+                <div key={s} className={`signup-step-dot ${step >= s ? 'signup-step-dot--active' : ''}`} />
               ))}
             </div>
-            <div className="form-field">
-              <label htmlFor="signup-location" className="form-label">Location (City, Country)</label>
-              <input id="signup-location" type="text" className="form-input" placeholder="e.g. London, UK" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} disabled={loading} />
-            </div>
-            <PrimaryButton fullWidth id="signup-finish-btn" onClick={handleFinish} disabled={loading}>
-              {loading ? 'Completing...' : 'Start Competing 🏆'}
-            </PrimaryButton>
+
+            {error && <div className="auth-error">{error}</div>}
+
+            {step === 1 && (
+              <>
+                <h1 className="heading-1">Join LensLeague</h1>
+                <p className="body-md text-secondary">Who are you joining as?</p>
+                <div className="role-cards">
+                  <button className={`role-card ${role === 'photographer' ? 'role-card--selected' : ''}`} id="role-photographer"
+                    onClick={() => { setRole('photographer'); setStep(2); }}>
+                    <span className="role-card__icon">📷</span>
+                    <div className="heading-2">I'm a Photographer</div>
+                    <div className="body-sm text-secondary">Build your portfolio, compete, and get discovered by clients.</div>
+                  </button>
+                  <button className={`role-card ${role === 'client' ? 'role-card--selected' : ''}`} id="role-client"
+                    onClick={() => { setRole('client'); setStep(2); }}>
+                    <span className="role-card__icon">🔍</span>
+                    <div className="heading-2">I'm Looking to Hire</div>
+                    <div className="body-sm text-secondary">Find and book top-ranked photographers for your projects.</div>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <h1 className="heading-1">Create your account</h1>
+                <form onSubmit={e => { e.preventDefault(); role === 'photographer' ? setStep(3) : handleFinish(); }} className="auth-form">
+                  <div className="form-field">
+                    <label htmlFor="signup-name" className="form-label">Full Name</label>
+                    <input id="signup-name" type="text" className="form-input" placeholder="e.g. Aria Nakamura" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={loading} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="signup-username" className="form-label">Username</label>
+                    <input id="signup-username" type="text" className="form-input" placeholder="e.g. aria.lens" required value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} disabled={loading} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="signup-email" className="form-label">Email</label>
+                    <input id="signup-email" type="email" className="form-input" placeholder="you@example.com" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={loading} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="signup-password" className="form-label">Password</label>
+                    <input id="signup-password" type="password" className="form-input" placeholder="Min. 8 characters" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} disabled={loading} />
+                  </div>
+                  <PrimaryButton type="submit" fullWidth id="signup-submit-btn" disabled={loading}>
+                    {loading ? 'Creating...' : role === 'photographer' ? 'Continue →' : 'Create Account'}
+                  </PrimaryButton>
+                </form>
+              </>
+            )}
+
+            {step === 3 && role === 'photographer' && (
+              <>
+                <h1 className="heading-1">Your photography style</h1>
+                <p className="body-md text-secondary">Pick up to 3 categories. This seeds your leaderboard placement.</p>
+                <div className="category-chips">
+                  {CATEGORIES.map(c => (
+                    <button
+                      key={c}
+                      className={`category-chip ${categories.includes(c) ? 'category-chip--selected' : ''}`}
+                      onClick={() => toggleCategory(c)}
+                      id={`cat-${c.toLowerCase()}`}
+                      disabled={loading}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="form-field">
+                  <label htmlFor="signup-location" className="form-label">Location (City, Country)</label>
+                  <input id="signup-location" type="text" className="form-input" placeholder="e.g. London, UK" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} disabled={loading} />
+                </div>
+                <PrimaryButton fullWidth id="signup-finish-btn" onClick={handleFinish} disabled={loading}>
+                  {loading ? 'Completing...' : 'Start Competing 🏆'}
+                </PrimaryButton>
+              </>
+            )}
+
+            <p className="auth-switch body-md text-secondary" style={{ marginTop: 12 }}>
+              Already have an account? <Link to="/login" className="auth-link">Log in</Link>
+            </p>
           </>
         )}
-
-        <p className="auth-switch body-md text-secondary" style={{ marginTop: 12 }}>
-          Already have an account? <Link to="/login" className="auth-link">Log in</Link>
-        </p>
       </div>
     </div>
   );

@@ -144,17 +144,16 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentRole, addBookingRequest, users, updateProfile } = useApp();
+  const { currentRole, addBookingRequest, users, updateProfile, follows, followUser, unfollowUser, currentUser, photos } = useApp();
   
   const [activeTab, setActiveTab] = useState('Portfolio');
-  const [following, setFollowing] = useState(false);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
   const photographer = users.find(p => p.id === id) || users[0];
-  const isOwnProfile = id === '1' && currentRole === 'photographer';
+  const isOwnProfile = currentUser && id === currentUser.id;
 
   const [bookingForm, setBookingForm] = useState({
     date: '',
@@ -170,7 +169,8 @@ export default function ProfilePage() {
     location: photographer.location
   });
 
-  const portfolioPhotos = PHOTO_URLS.slice(0, 9).map((url, i) => ({
+  const userPhotos = photos.filter(p => p.ownerId === photographer.id);
+  const portfolioPhotos = userPhotos.length > 0 ? userPhotos : PHOTO_URLS.slice(0, 9).map((url, i) => ({
     id: `port-${i}`,
     url,
     aspectRatio: i % 3 === 0 ? '3/4' : '4/3',
@@ -207,6 +207,16 @@ export default function ProfilePage() {
     navigate(`/inbox?chat=${photographer.id}`);
   };
 
+  const isFollowing = currentUser && follows.some(f => f.follower_id === currentUser.id && f.following_id === photographer.id);
+
+  const handleFollowClick = () => {
+    if (isFollowing) {
+      unfollowUser(photographer.id);
+    } else {
+      followUser(photographer.id);
+    }
+  };
+
   return (
     <div className="profile-page">
       {/* Header */}
@@ -239,8 +249,8 @@ export default function ProfilePage() {
             ) : (
               <>
                 <SecondaryButton small onClick={handleStartChat} id="message-photographer-btn">💬 Message</SecondaryButton>
-                <SecondaryButton small onClick={() => setFollowing(f => !f)} id="follow-btn">
-                  {following ? '✓ Following' : 'Follow'}
+                <SecondaryButton small onClick={handleFollowClick} id="follow-btn">
+                  {isFollowing ? '✓ Following' : 'Follow'}
                 </SecondaryButton>
                 <PrimaryButton small onClick={() => setBookingModalOpen(true)} id="book-photographer-btn">Request Booking</PrimaryButton>
               </>

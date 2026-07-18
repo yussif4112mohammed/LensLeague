@@ -9,10 +9,12 @@ const CATEGORIES = ['All', 'Portrait', 'Landscape', 'Street', 'Wedding', 'Produc
 
 function PhotoDetailModal({ photo, onClose }) {
   const navigate = useNavigate();
+  const { comments } = useApp();
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(photo?.likes || 0);
   const [showComments, setShowComments] = useState(false);
+  const commentCount = comments.filter(c => c.photo_id === photo.id).length;
 
   if (!photo) return null;
   const fmt = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n;
@@ -111,7 +113,7 @@ function PhotoDetailModal({ photo, onClose }) {
             <div className="post-modal__like-count">{fmt(likeCount)} {likeCount === 1 ? 'like' : 'likes'}</div>
           )}
           <button className="post-modal__comments-link" onClick={() => setShowComments(true)} id="discover-modal-view-comments">
-            View all {fmt(photo.comments || 24)} comments
+            View all {fmt(commentCount)} comments
           </button>
         </div>
       </div>

@@ -54,7 +54,11 @@ export default function FeedPage() {
     let active = true;
     const initFetch = async () => {
       setLoading(true);
-      const initial = await fetchPhotosPaginated(0, 9);
+      setFeedPhotos([]);
+      setPage(0);
+      setHasMore(true);
+      const filterType = tab === 'Following' ? 'following' : 'for-you';
+      const initial = await fetchPhotosPaginated(0, 9, filterType);
       if (active) {
         setFeedPhotos(initial);
         if (initial.length < 10) {
@@ -70,13 +74,14 @@ export default function FeedPage() {
     return () => {
       active = false;
     };
-  }, [fetchPhotosPaginated]);
+  }, [fetchPhotosPaginated, tab]);
 
   // Load subsequent pages
   const loadNextPage = useCallback(async () => {
     if (loading || !hasMore) return;
     setLoading(true);
-    const nextPagePhotos = await fetchPhotosPaginated(page * 10, (page + 1) * 10 - 1);
+    const filterType = tab === 'Following' ? 'following' : 'for-you';
+    const nextPagePhotos = await fetchPhotosPaginated(page * 10, (page + 1) * 10 - 1, filterType);
     if (nextPagePhotos.length === 0) {
       setHasMore(false);
     } else {
@@ -91,7 +96,7 @@ export default function FeedPage() {
       }
     }
     setLoading(false);
-  }, [page, loading, hasMore, fetchPhotosPaginated]);
+  }, [page, loading, hasMore, fetchPhotosPaginated, tab]);
 
   // Scroll sentinel trigger hook
   const observerRef = useRef();

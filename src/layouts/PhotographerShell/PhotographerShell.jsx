@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import './PhotographerShell.css';
 
 const NAV_ITEMS = [
@@ -51,6 +52,8 @@ const NAV_ITEMS = [
 
 export default function PhotographerShell() {
   const navigate = useNavigate();
+  const { currentUser } = useApp();
+  const profileId = currentUser?.id || '1';
 
   return (
     <div className="app-shell">
@@ -66,21 +69,24 @@ export default function PhotographerShell() {
         </div>
 
         <nav className="sidebar__nav">
-          {NAV_ITEMS.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              id={`sidebar-${item.id}`}
-              className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''} ${item.featured ? 'sidebar__link--featured' : ''}`}
-            >
-              {({ isActive }) => (
-                <>
-                  <span className="sidebar__icon">{item.icon(isActive)}</span>
-                  <span className="sidebar__label">{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map(item => {
+            const targetUrl = item.to === '/profile/1' ? `/profile/${profileId}` : item.to;
+            return (
+              <NavLink
+                key={item.to}
+                to={targetUrl}
+                id={`sidebar-${item.id}`}
+                className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''} ${item.featured ? 'sidebar__link--featured' : ''}`}
+              >
+                {({ isActive }) => (
+                  <>
+                    <span className="sidebar__icon">{item.icon(isActive)}</span>
+                    <span className="sidebar__label">{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <NavLink to="/upload" id="sidebar-upload" className="sidebar__upload-btn">
@@ -107,21 +113,24 @@ export default function PhotographerShell() {
 
       {/* Mobile bottom tab bar */}
       <nav className="bottom-nav" aria-label="Main navigation">
-        {NAV_ITEMS.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            id={item.id}
-            className={({ isActive }) => `bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''} ${item.featured ? 'bottom-nav__item--featured' : ''}`}
-          >
-            {({ isActive }) => (
-              <>
-                <span className="bottom-nav__icon">{item.icon(isActive)}</span>
-                <span className="bottom-nav__label">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        {NAV_ITEMS.map(item => {
+          const targetUrl = item.to === '/profile/1' ? `/profile/${profileId}` : item.to;
+          return (
+            <NavLink
+              key={item.to}
+              to={targetUrl}
+              id={item.id}
+              className={({ isActive }) => `bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''} ${item.featured ? 'bottom-nav__item--featured' : ''}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <span className="bottom-nav__icon">{item.icon(isActive)}</span>
+                  <span className="bottom-nav__label">{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Mobile FAB for upload */}

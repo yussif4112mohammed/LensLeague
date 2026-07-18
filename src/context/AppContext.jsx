@@ -132,17 +132,52 @@ export function AppProvider({ children }) {
     return saved ? JSON.parse(saved) : initialBattles;
   });
 
+  // Follows and comments states
+  const [follows, setFollows] = useState([]);
+  const [comments, setComments] = useState([]);
+
   // Fetch a user profile based on ID
   const fetchUserProfile = async (uid) => {
     try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
-      if (data) {
-        setCurrentUser(data);
-        setCurrentRole(data.role);
-        localStorage.setItem('ll-current-role', data.role);
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', uid)
+        .maybeSingle();
+
+      if (existingProfile) {
+        setCurrentUser(existingProfile);
+        setCurrentRole(existingProfile.role);
+        localStorage.setItem('ll-current-role', existingProfile.role);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const meta = user.user_metadata || {};
+          const userRole = meta.role || 'photographer';
+          const newProfile = {
+            id: uid,
+            name: meta.name || 'Anonymous User',
+            username: meta.username || `user_${Date.now().toString(36)}`,
+            avatar: `https://images.unsplash.com/photo-${userRole === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+            bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
+            location: meta.location || 'Tokyo, Japan',
+            role: userRole,
+            verified: false,
+            banned: false,
+            points: 0,
+            global_rank: 99
+          };
+
+          const { error: seedError } = await supabase.from('profiles').insert(newProfile);
+          if (!seedError) {
+            setCurrentUser(newProfile);
+            setCurrentRole(userRole);
+            localStorage.setItem('ll-current-role', userRole);
+          }
+        }
       }
     } catch (err) {
-      console.error('Error fetching user profile:', err);
+      console.error('Error fetching/seeding user profile:', err);
     }
   };
 
@@ -255,6 +290,32 @@ export function AppProvider({ children }) {
         const compiled = compileSupabaseThreads(messagesData, profilesData);
         setThreads(compiled);
       }
+
+      // 7. Fetch follows system
+      const { data: followsData } = await supabase.from('follows').select('*');
+      if (followsData) {
+        setFollows(followsData);
+      }
+
+      // 8. Fetch comments system
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('*, profiles:user_id(*)');
+      if (commentsData) {
+        const mappedComments = commentsData.map(c => {
+          const user = c.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          return {
+            id: c.id,
+            photo_id: c.photo_id,
+            user_id: c.user_id,
+            body: c.body,
+            created_at: c.created_at,
+            userName: user.name,
+            userAvatar: user.avatar
+          };
+        });
+        setComments(mappedComments);
+      }
     };
 
     syncFromSupabase();
@@ -311,7 +372,8 @@ export function AppProvider({ children }) {
 
   // Helper: push live incoming message from real-time channel to state array
   const appendRealtimeMessage = (m) => {
-    const partnerId = m.sender_id === '1' ? m.recipient_id : m.sender_id;
+    const myId = currentUser?.id || '1';
+    const partnerId = m.sender_id === myId ? m.recipient_id : m.sender_id;
     setThreads(prev => {
       const exists = prev.find(t => t.clientId === partnerId || t.photographerId === partnerId);
       if (exists) {
@@ -319,12 +381,13 @@ export function AppProvider({ children }) {
           if (t.id === exists.id) {
             // Avoid duplicates
             if (t.messages.some(msg => msg.id === m.id)) return t;
+            const senderProfile = users.find(u => u.id === m.sender_id) || { name: m.sender_id === myId ? 'Me' : 'Partner' };
             return {
               ...t,
               messages: [...t.messages, {
                 id: m.id,
                 senderId: m.sender_id,
-                senderName: m.sender_id === '1' ? 'Aria Nakamura' : 'Sarah Jenkins',
+                senderName: senderProfile.name,
                 body: m.body,
                 timestamp: m.timestamp
               }]
@@ -703,26 +766,43 @@ export function AppProvider({ children }) {
 
   const updateProfile = async (userId, data) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
+    if (currentUser && currentUser.id === userId) {
+      setCurrentUser(prev => ({ ...prev, ...data }));
+    }
     if (isSupabaseConfigured) {
       await supabase.from('profiles').update(data).eq('id', userId);
     }
   };
 
-  const fetchPhotosPaginated = async (start, end) => {
+  const fetchPhotosPaginated = async (start, end, filterType = 'for-you') => {
+    let basePhotos = photos;
+    if (filterType === 'following' && currentUser) {
+      const followedIds = follows.filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
+      basePhotos = photos.filter(p => followedIds.includes(p.ownerId));
+    }
+
     if (!isSupabaseConfigured) {
       // Mock local storage fallback range slicing
-      return photos.slice(start, end + 1);
+      return basePhotos.slice(start, end + 1);
     }
     try {
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*, profiles:owner_id(*)')
+      let query = supabase.from('photos').select('*, profiles:owner_id(*)');
+
+      if (filterType === 'following' && currentUser) {
+        const followedIds = follows.filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
+        if (followedIds.length === 0) {
+          return []; // return empty if not following anyone
+        }
+        query = query.in('owner_id', followedIds);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(start, end);
 
       if (error) {
         console.warn('Error fetching paginated photos, falling back to local mock data:', error);
-        return photos.slice(start, end + 1);
+        return basePhotos.slice(start, end + 1);
       }
       if (data && data.length > 0) {
         return data.map(p => {
@@ -742,13 +822,73 @@ export function AppProvider({ children }) {
         });
       } else {
         // Fallback to local mock photos if database is empty
-        return photos.slice(start, end + 1);
+        return basePhotos.slice(start, end + 1);
       }
     } catch (err) {
       console.warn('Exception fetching paginated photos, falling back to local mock data:', err);
-      return photos.slice(start, end + 1);
+      return basePhotos.slice(start, end + 1);
     }
   };
+  const followUser = async (followingId) => {
+    const followerId = currentUser?.id;
+    if (!followerId) return;
+
+    const newFollow = { follower_id: followerId, following_id: followingId };
+    setFollows(prev => [...prev, newFollow]);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('follows').insert(newFollow);
+      } catch (err) {
+        console.warn('Supabase follow error:', err.message);
+      }
+    }
+  };
+
+  const unfollowUser = async (followingId) => {
+    const followerId = currentUser?.id;
+    if (!followerId) return;
+
+    setFollows(prev => prev.filter(f => !(f.follower_id === followerId && f.following_id === followingId)));
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('follows').delete().eq('follower_id', followerId).eq('following_id', followingId);
+      } catch (err) {
+        console.warn('Supabase unfollow error:', err.message);
+      }
+    }
+  };
+
+  const addPhotoComment = async (photoId, body) => {
+    const userId = currentUser?.id;
+    if (!userId) return;
+
+    const newComment = {
+      id: `c_${Date.now()}`,
+      photo_id: photoId,
+      user_id: userId,
+      body: body,
+      created_at: new Date().toISOString(),
+      userName: currentUser.name || 'Anonymous',
+      userAvatar: currentUser.avatar || photographers[0].avatar
+    };
+
+    setComments(prev => [...prev, newComment]);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('comments').insert({
+          photo_id: photoId,
+          user_id: userId,
+          body: body
+        });
+      } catch (err) {
+        console.warn('Supabase comment insert error:', err.message);
+      }
+    }
+  };
+
   const logoutUser = async () => {
     setUserEmail('');
     setCurrentUser(null);
@@ -791,7 +931,12 @@ export function AppProvider({ children }) {
       updateProfile,
       castBattleVote,
       fetchPhotosPaginated,
-      logoutUser
+      logoutUser,
+      follows,
+      comments,
+      followUser,
+      unfollowUser,
+      addPhotoComment
     }}>
       {children}
     </AppContext.Provider>

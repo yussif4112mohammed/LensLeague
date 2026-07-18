@@ -198,4 +198,47 @@ CREATE INDEX idx_bookings_photographer ON public.bookings(photographer_id);
 CREATE INDEX idx_messages_sender ON public.messages(sender_id);
 CREATE INDEX idx_messages_recipient ON public.messages(recipient_id);
 CREATE INDEX idx_entries_challenge ON public.challenge_entries(challenge_id);
-CREATE INDEX idx_entries_user ON public.challenge_entries(user_id);
+CREATE INDEX idx_entries_user ON public.challenge_entries(photographer_id);
+
+
+-- ── 9. SOCIAL FOLLOWS SYSTEM ──
+CREATE TABLE public.follows (
+  follower_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  following_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  PRIMARY KEY (follower_id, following_id)
+);
+
+ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to follows"
+  ON public.follows FOR SELECT USING (true);
+
+CREATE POLICY "Allow users to follow others"
+  ON public.follows FOR INSERT WITH CHECK (auth.uid() = follower_id);
+
+CREATE POLICY "Allow users to unfollow others"
+  ON public.follows FOR DELETE USING (auth.uid() = follower_id);
+
+CREATE INDEX idx_follows_follower ON public.follows(follower_id);
+CREATE INDEX idx_follows_following ON public.follows(following_id);
+
+
+-- ── 10. PHOTO COMMENTS SYSTEM ──
+CREATE TABLE public.comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  photo_id UUID REFERENCES public.photos(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to comments"
+  ON public.comments FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated users to write comments"
+  ON public.comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE INDEX idx_comments_photo ON public.comments(photo_id);

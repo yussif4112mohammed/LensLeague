@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { photographers } from '../../data/photographers';
+import { useApp } from '../../context/AppContext';
 import './CommentSheet.css';
 
 const MOCK_COMMENTS = [
@@ -11,11 +12,15 @@ const MOCK_COMMENTS = [
 ];
 
 export default function CommentSheet({ photo, onClose }) {
-  const [comments, setComments] = useState(MOCK_COMMENTS);
+  const { comments: allComments, addPhotoComment, currentUser } = useApp();
   const [newComment, setNewComment] = useState('');
   const [likedComments, setLikedComments] = useState(new Set());
   const inputRef = useRef(null);
   const listRef = useRef(null);
+
+  // Filter comments for this specific photo
+  const photoComments = allComments.filter(c => c.photo_id === photo.id);
+  const activeComments = photoComments.length > 0 ? photoComments : MOCK_COMMENTS;
 
   useEffect(() => {
     // Auto-focus input and prevent body scroll
@@ -35,16 +40,7 @@ export default function CommentSheet({ photo, onClose }) {
   const handleSend = (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    const comment = {
-      id: `c${Date.now()}`,
-      userId: 'me',
-      userName: 'you',
-      userAvatar: photographers[0].avatar,
-      body: newComment.trim(),
-      time: 'just now',
-      likes: 0,
-    };
-    setComments(prev => [...prev, comment]);
+    addPhotoComment(photo.id, newComment.trim());
     setNewComment('');
     setTimeout(() => {
       listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -75,7 +71,7 @@ export default function CommentSheet({ photo, onClose }) {
 
         {/* Comment list */}
         <div className="comment-sheet__list" ref={listRef}>
-          {comments.map(c => (
+          {activeComments.map(c => (
             <div key={c.id} className="comment-row" id={`comment-${c.id}`}>
               <img src={c.userAvatar} alt={c.userName} className="comment-row__avatar" />
               <div className="comment-row__content">
@@ -84,7 +80,7 @@ export default function CommentSheet({ photo, onClose }) {
                   <span className="comment-row__body">{c.body}</span>
                 </div>
                 <div className="comment-row__meta">
-                  <span className="comment-row__time">{c.time}</span>
+                  <span className="comment-row__time">{c.time || 'just now'}</span>
                   <button
                     className={`comment-row__like ${likedComments.has(c.id) ? 'comment-row__like--active' : ''}`}
                     onClick={() => toggleCommentLike(c.id)}
@@ -105,7 +101,7 @@ export default function CommentSheet({ photo, onClose }) {
 
         {/* Input row */}
         <form className="comment-sheet__input-row" onSubmit={handleSend}>
-          <img src={photographers[0].avatar} alt="You" className="comment-sheet__input-avatar" />
+          <img src={currentUser?.avatar || photographers[0].avatar} alt="You" className="comment-sheet__input-avatar" />
           <input
             ref={inputRef}
             id="comment-input"

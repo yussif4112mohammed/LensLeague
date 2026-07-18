@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CommentSheet from '../CommentSheet/CommentSheet';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import { parseGearOrGetExif } from '../../utils/exif';
+import { useApp } from '../../context/AppContext';
 import './PhotoCard.css';
 
 function getPhotoTitle(caption) {
@@ -17,16 +18,28 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
+  const { follows, followUser, unfollowUser, currentUser, comments } = useApp();
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(photo.likes);
-  const [commentCount, setCommentCount] = useState(photo.comments || 0);
   const [heartBurst, setHeartBurst] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const navigate = useNavigate();
   const lastTapRef = useRef(0);
+
+  const isFollowing = currentUser && follows.some(f => f.follower_id === currentUser.id && f.following_id === photo.ownerId);
+  const isOwnPhoto = currentUser && photo.ownerId === currentUser.id;
+  const commentCount = comments.filter(c => c.photo_id === photo.id).length;
+
+  const handleFollowClick = (e) => {
+    e.stopPropagation();
+    if (isFollowing) {
+      unfollowUser(photo.ownerId);
+    } else {
+      followUser(photo.ownerId);
+    }
+  };
 
   const exif = parseGearOrGetExif(photo.gear, photo.id, photo.ownerName);
   const photoTitle = getPhotoTitle(photo.caption);
@@ -131,13 +144,13 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             </div>
           </button>
           <div className="post-card__header-right">
-            {!isFollowing && (
+            {!isOwnPhoto && (
               <button
-                className="post-card__follow-btn"
-                onClick={(e) => { e.stopPropagation(); setIsFollowing(true); }}
+                className={`post-card__follow-btn ${isFollowing ? 'post-card__follow-btn--active' : ''}`}
+                onClick={handleFollowClick}
                 id={`follow-${photo.id}`}
               >
-                Follow
+                {isFollowing ? 'Following' : 'Follow'}
               </button>
             )}
             <button className="post-card__more" aria-label="More options" id={`more-${photo.id}`}>

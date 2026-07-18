@@ -70,21 +70,21 @@
 .discover-cat {
   flex-shrink: 0;
   padding: 8px 16px;
-
   border-radius: var(--radius-full);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
+  border: 1.5px solid var(--border-subtle);
   background: var(--bg-elevated-1);
   transition: all var(--transition-fast);
   white-space: nowrap;
+  cursor: pointer;
 }
 .discover-cat:hover { color: var(--text-primary); border-color: var(--border-strong); }
 .discover-cat--active {
-  background: var(--accent-primary);
-  color: white;
-  border-color: var(--accent-primary);
+  background: rgba(136, 189, 242, 0.08);
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-primary);
 }
 
 /* Masonry grid — CSS columns approach */
@@ -359,11 +359,43 @@
 }
 .post-modal__profile-btn:hover { background: var(--accent-primary); color: white; }
 
-.post-modal__body { padding: 14px; flex: 1; border-bottom: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 8px; }
+.post-modal__body { padding: 14px; flex: 1; border-bottom: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 12px; }
 .post-modal__caption { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
 .post-modal__caption-name { font-weight: 700; color: var(--text-primary); margin-right: 6px; }
-.post-modal__gear { font-size: 12px; color: var(--text-tertiary); }
-.post-modal__tag { font-size: 13px; color: var(--accent-secondary); font-weight: 500; }
+
+/* EXIF Detail Box */
+.post-modal__exif-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.post-modal__exif-camera {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+.post-modal__exif-lens {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.post-modal__exif-specs {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.post-modal__exif-specs strong {
+  color: var(--text-secondary);
+}
+
+.post-modal__tag { font-size: 13px; color: var(--accent-secondary); font-weight: 600; }
 
 .post-modal__actions {
   display: flex; align-items: center; justify-content: space-between;

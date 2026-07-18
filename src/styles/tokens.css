@@ -111,14 +111,15 @@
   --font-ui:      'Inter', system-ui, sans-serif;
   --font-serif:   'Cormorant Garamond', Georgia, serif;
   --font-display: 'Instrument Serif', 'Cormorant Garamond', Georgia, serif;
+  --font-logo:    'Telma', 'Instrument Serif', Georgia, serif;
 
-  --text-display-xl:  clamp(28px, 5vw, 34px);
-  --text-display-lg:  clamp(22px, 4vw, 28px);
-  --text-heading-1:   22px;
-  --text-heading-2:   18px;
-  --text-body-lg:     16px;
-  --text-body-md:     14px;
-  --text-body-sm:     12px;
+  --text-display-xl:  clamp(34px, 6vw, 44px);
+  --text-display-lg:  clamp(24px, 4.5vw, 32px);
+  --text-heading-1:   24px;
+  --text-heading-2:   20px;
+  --text-body-lg:     17px;
+  --text-body-md:     15px;
+  --text-body-sm:     13px;
 
   /* Spacing */
   --space-1:  4px;

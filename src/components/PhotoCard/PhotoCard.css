@@ -4,8 +4,11 @@
 
 /* ── Full post card ── */
 .post-card {
-  background: var(--bg-base);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* Header row */
@@ -29,7 +32,7 @@
   height: 38px;
   border-radius: var(--radius-full);
   padding: 2px;
-  background: linear-gradient(135deg, #FF4D6D, #FFC24B, #6E5BFF);
+  background: var(--accent-gradient);
   flex-shrink: 0;
 }
 
@@ -107,13 +110,19 @@
   cursor: pointer;
   overflow: hidden;
   background: var(--bg-elevated-1);
+  padding: 20px 20px 48px 20px;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  box-sizing: border-box;
 }
 
 .post-card__image {
   width: 100%;
   display: block;
-  object-fit: cover;
-  max-height: 90vh;
+  object-fit: contain;
+  max-height: 80vh;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Double-tap heart overlay */
@@ -288,3 +297,56 @@
   align-items: center;
   gap: 5px;
 }
+
+/* Passepartout Label */
+.post-card__passepartout-label {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.passepartout-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.passepartout-exif {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+/* EXIF HUD Overlay */
+.post-card__hud-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 48px;
+  background: rgba(6, 20, 27, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-4);
+  gap: var(--space-4);
+  z-index: 10;
+}
+
+.post-card__image-wrap:hover .post-card__hud-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+

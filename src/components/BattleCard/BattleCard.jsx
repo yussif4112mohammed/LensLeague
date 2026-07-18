@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { parseGearOrGetExif } from '../../utils/exif';
 import './BattleCard.css';
 
 export default function BattleCard({ battle, onVote }) {
@@ -11,6 +12,9 @@ export default function BattleCard({ battle, onVote }) {
   const total = battle.photoA.votes + battle.photoB.votes;
   const pctA = Math.round((battle.photoA.votes / total) * 100);
   const pctB = 100 - pctA;
+
+  const exifA = parseGearOrGetExif(battle.photoA.gear, battle.photoA.id, battle.photoA.photographerName);
+  const exifB = parseGearOrGetExif(battle.photoB.gear, battle.photoB.id, battle.photoB.photographerName);
 
   const handleVote = async (side) => {
     if (voted) return;
@@ -41,13 +45,37 @@ export default function BattleCard({ battle, onVote }) {
           id={`vote-a-${battle.id}`}
           disabled={!!voted}
         >
-          {/* Dark cinema box — shows FULL image regardless of aspect ratio */}
           <div className="battle-card__cinema">
             <img
               src={battle.photoA.url}
               alt={`Entry by ${battle.photoA.photographerName}`}
               className="battle-card__img"
             />
+            {/* EXIF HUD Overlay */}
+            <div className="battle-card__hud-overlay">
+              <div className="hud-exif-header">
+                <div className="hud-exif-camera">{exifA.camera}</div>
+                <div className="hud-exif-lens">{exifA.lens}</div>
+              </div>
+              <div className="hud-exif-grid">
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifA.focalLength}</span>
+                  <span className="hud-exif-pill__lbl">Focal</span>
+                </div>
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifA.aperture}</span>
+                  <span className="hud-exif-pill__lbl">Aperture</span>
+                </div>
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifA.shutter}</span>
+                  <span className="hud-exif-pill__lbl">Shutter</span>
+                </div>
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifA.iso}</span>
+                  <span className="hud-exif-pill__lbl">ISO</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Info row at bottom */}
@@ -103,6 +131,31 @@ export default function BattleCard({ battle, onVote }) {
               alt={`Entry by ${battle.photoB.photographerName}`}
               className="battle-card__img"
             />
+            {/* EXIF HUD Overlay */}
+            <div className="battle-card__hud-overlay">
+              <div className="hud-exif-header">
+                <div className="hud-exif-camera">{exifB.camera}</div>
+                <div className="hud-exif-lens">{exifB.lens}</div>
+              </div>
+              <div className="hud-exif-grid">
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifB.focalLength}</span>
+                  <span className="hud-exif-pill__lbl">Focal</span>
+                </div>
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifB.aperture}</span>
+                  <span className="hud-exif-pill__lbl">Aperture</span>
+                </div>
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifB.shutter}</span>
+                  <span className="hud-exif-pill__lbl">Shutter</span>
+                </div>
+                <div className="hud-exif-pill">
+                  <span className="hud-exif-pill__val">{exifB.iso}</span>
+                  <span className="hud-exif-pill__lbl">ISO</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="battle-card__info">

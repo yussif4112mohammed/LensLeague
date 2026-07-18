@@ -2,7 +2,19 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommentSheet from '../CommentSheet/CommentSheet';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
+import { parseGearOrGetExif } from '../../utils/exif';
 import './PhotoCard.css';
+
+function getPhotoTitle(caption) {
+  if (!caption) return 'Untitled';
+  // Strip emojis and punctuation
+  const clean = caption
+    .replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '')
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
+    .trim();
+  const words = clean.split(/\s+/).slice(0, 3).join(' ');
+  return words || 'Untitled';
+}
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const [liked, setLiked] = useState(false);
@@ -15,6 +27,9 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const [isFollowing, setIsFollowing] = useState(false);
   const navigate = useNavigate();
   const lastTapRef = useRef(0);
+
+  const exif = parseGearOrGetExif(photo.gear, photo.id, photo.ownerName);
+  const photoTitle = getPhotoTitle(photo.caption);
 
   const triggerLike = () => {
     if (!liked) {
@@ -133,7 +148,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
           </div>
         </div>
 
-        {/* Image */}
+        {/* Image wrapped in Passepartout frame */}
         <div className="post-card__image-wrap" onClick={handleTap}>
           <img
             src={getOptimizedImageUrl(photo.url, 800)}
@@ -149,6 +164,40 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
               </svg>
             </div>
           )}
+
+          {/* EXIF HUD Overlay */}
+          <div className="post-card__hud-overlay">
+            <div className="hud-exif-header">
+              <div className="hud-exif-camera">{exif.camera}</div>
+              <div className="hud-exif-lens">{exif.lens}</div>
+            </div>
+            <div className="hud-exif-grid">
+              <div className="hud-exif-pill">
+                <span className="hud-exif-pill__val">{exif.focalLength}</span>
+                <span className="hud-exif-pill__lbl">Focal</span>
+              </div>
+              <div className="hud-exif-pill">
+                <span className="hud-exif-pill__val">{exif.aperture}</span>
+                <span className="hud-exif-pill__lbl">Aperture</span>
+              </div>
+              <div className="hud-exif-pill">
+                <span className="hud-exif-pill__val">{exif.shutter}</span>
+                <span className="hud-exif-pill__lbl">Shutter</span>
+              </div>
+              <div className="hud-exif-pill">
+                <span className="hud-exif-pill__val">{exif.iso}</span>
+                <span className="hud-exif-pill__lbl">ISO</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Printed Passepartout Label */}
+          <div className="post-card__passepartout-label">
+            <div className="passepartout-title">“{photoTitle}”</div>
+            <div className="passepartout-exif">
+              {exif.camera} • {exif.lens}
+            </div>
+          </div>
         </div>
 
         {/* Actions bar */}

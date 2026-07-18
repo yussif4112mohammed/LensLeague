@@ -21,8 +21,12 @@ const NAV_ITEMS = [
   {
     to: '/compete/vote', label: 'Compete', id: 'nav-compete', featured: true,
     icon: (active) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+        <path d="M4 22h16" />
+        <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+        <path d="M12 2a6 6 0 0 0-6 6v3.5c0 3.3 2.7 6 6 6s6-2.7 6-6V8a6 6 0 0 0-6-6z" />
       </svg>
     )
   },
@@ -54,7 +58,7 @@ export default function PhotographerShell() {
       <aside className="sidebar">
         <div className="sidebar__logo" onClick={() => navigate('/feed')}>
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#FF4D6D"/>
+            <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
             <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="white" opacity="0.9"/>
             <circle cx="22" cy="10" r="3" fill="white"/>
           </svg>

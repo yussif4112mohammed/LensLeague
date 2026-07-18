@@ -721,10 +721,10 @@ export function AppProvider({ children }) {
         .range(start, end);
 
       if (error) {
-        console.error('Error fetching paginated photos:', error);
-        return [];
+        console.warn('Error fetching paginated photos, falling back to local mock data:', error);
+        return photos.slice(start, end + 1);
       }
-      if (data) {
+      if (data && data.length > 0) {
         return data.map(p => {
           const owner = p.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
           return {
@@ -740,11 +740,23 @@ export function AppProvider({ children }) {
             timestamp: 'Just now'
           };
         });
+      } else {
+        // Fallback to local mock photos if database is empty
+        return photos.slice(start, end + 1);
       }
     } catch (err) {
-      console.error('Exception fetching paginated photos:', err);
+      console.warn('Exception fetching paginated photos, falling back to local mock data:', err);
+      return photos.slice(start, end + 1);
     }
-    return [];
+  };
+  const logoutUser = async () => {
+    setUserEmail('');
+    setCurrentUser(null);
+    localStorage.removeItem('ll-user-email');
+    localStorage.removeItem('ll-current-role');
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
   };
 
   return (
@@ -778,7 +790,8 @@ export function AppProvider({ children }) {
       resolveDispute,
       updateProfile,
       castBattleVote,
-      fetchPhotosPaginated
+      fetchPhotosPaginated,
+      logoutUser
     }}>
       {children}
     </AppContext.Provider>

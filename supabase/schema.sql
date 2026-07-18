@@ -25,6 +25,9 @@ CREATE POLICY "Allow public read access to profiles"
 CREATE POLICY "Allow authenticated users to update their own profile" 
   ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
+CREATE POLICY "Allow users to insert their own profile record" 
+  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
 
 -- ── 2. PHOTOS TABLE ──
 CREATE TABLE public.photos (

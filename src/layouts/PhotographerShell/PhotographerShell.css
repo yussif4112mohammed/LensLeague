@@ -51,11 +51,11 @@
 
 /* Featured (Compete) item */
 .bottom-nav__item--featured .bottom-nav__icon {
-  background: linear-gradient(135deg, #FF4D6D, #c9253e);
-  padding: 9px;
-  border-radius: 14px;
-  color: white;
-  box-shadow: 0 4px 16px rgba(255,77,109,0.4);
+  background: var(--accent-gradient);
+  padding: 10px;
+  border-radius: var(--radius-full);
+  color: #06141B;
+  box-shadow: var(--glow-primary);
   margin-bottom: -3px;
 }
 
@@ -108,8 +108,8 @@
   .sidebar__logo:hover { background: var(--bg-elevated-2); }
 
   .sidebar__brand {
-    font-family: var(--font-display);
-    font-size: 19px;
+    font-family: var(--font-logo);
+    font-size: 21px;
     font-weight: 800;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
@@ -214,4 +214,24 @@
     margin-left: 240px;
     padding-bottom: 40px;
   }
+}
+
+/* ── Light Mode Nav Contrast Correction ── */
+[data-theme="light"] .bottom-nav__item--active {
+  color: var(--text-primary);
+}
+[data-theme="light"] .bottom-nav__item--active .bottom-nav__icon svg {
+  filter: drop-shadow(0 0 8px rgba(106, 137, 167, 0.4));
+}
+[data-theme="light"] .sidebar__link--active {
+  background: rgba(136, 189, 242, 0.08);
+  border-color: rgba(136, 189, 242, 0.2);
+  color: var(--text-primary);
+}
+[data-theme="light"] .sidebar__link--active .sidebar__icon {
+  color: var(--text-primary);
+  filter: none;
+}
+[data-theme="light"] .bottom-nav__item--featured .bottom-nav__icon {
+  color: #FFFFFF;
 }

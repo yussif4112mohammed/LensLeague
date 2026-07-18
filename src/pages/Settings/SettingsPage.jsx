@@ -56,7 +56,7 @@ const SECTIONS = [
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { userEmail, setUserEmail } = useApp();
+  const { userEmail, setUserEmail, logoutUser } = useApp();
   const [toggles, setToggles] = useState({
     'notif-likes': true, 'notif-battles': true, 'notif-bookings': true,
     'notif-leaderboard': false, 'notif-marketing': false,
@@ -130,8 +130,8 @@ export default function SettingsPage() {
              <button 
               className="settings-row settings-row--danger" 
               id="logout-btn" 
-              onClick={() => {
-                setUserEmail('');
+              onClick={async () => {
+                await logoutUser();
                 navigate('/');
               }}
             >

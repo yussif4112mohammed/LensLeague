@@ -39,13 +39,14 @@
 }
 
 .challenge-hero__badge {
-  background: rgba(255,194,75,0.15);
-  border: 1px solid rgba(255,194,75,0.3);
+  background: rgba(255,194,75,0.08);
+  border: 2px solid var(--accent-gold);
   color: var(--accent-gold);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
   display: inline-flex; align-items: center; width: fit-content;
   font-size: 11px;
+  font-weight: 700;
 }
 
 .challenge-hero__meta {
@@ -177,9 +178,9 @@
 }
 
 .submitted-badge {
-  background: rgba(52,211,153,0.15);
-  border: 1px solid rgba(52,211,153,0.35);
-  color: #34d399;
+  background: rgba(52,211,153,0.08);
+  border: 2px solid var(--success);
+  color: var(--success);
   padding: 6px 14px;
   border-radius: var(--radius-full);
   font-size: 12px;

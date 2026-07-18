@@ -30,7 +30,14 @@
   color: var(--text-primary);
 }
 
-.auth-card h1 { color: var(--text-primary); }
+.auth-card h1 {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 500;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
 .auth-card p { color: var(--text-secondary); }
 
 .auth-oauth {
@@ -154,6 +161,7 @@
 .role-card--selected {
   border-color: var(--accent-primary);
   background: rgba(136, 189, 242, 0.06);
+  box-shadow: 0 0 16px rgba(136, 189, 242, 0.15);
 }
 
 .role-card .heading-2 { color: var(--text-primary); }
@@ -173,7 +181,7 @@
 }
 .category-chip:hover { border-color: var(--border-strong); color: var(--text-primary); background: var(--bg-elevated-3); }
 .category-chip--selected {
-  background: rgba(136, 189, 242, 0.12);
-  border-color: var(--accent-primary);
+  background: rgba(136, 189, 242, 0.08);
+  border: 2px solid var(--accent-primary);
   color: var(--accent-primary);
 }

@@ -234,7 +234,6 @@ export default function ProfilePage() {
           <div className="profile-avatar-row__actions">
             {isOwnProfile ? (
               <div style={{ display: 'flex', gap: '8px' }}>
-                <SecondaryButton small onClick={() => navigate('/analytics')} id="profile-analytics-btn">📈 Analytics</SecondaryButton>
                 <SecondaryButton small onClick={() => setEditModalOpen(true)} id="edit-profile-btn">Edit Profile</SecondaryButton>
               </div>
             ) : (
@@ -253,6 +252,11 @@ export default function ProfilePage() {
           <h1 className="heading-1">{photographer.name}</h1>
           {photographer.verified && <span className="verified-badge" title="Verified">✓</span>}
           <RankBadge rank={photographer.globalRank} size="sm" />
+          {isOwnProfile && (
+            <div className="profile-streak-badge" title="Daily Streak">
+              🔥 12 days
+            </div>
+          )}
         </div>
         <p className="body-sm text-secondary">@{photographer.username} · {photographer.location}</p>
         <p className="body-md profile-bio">{photographer.bio}</p>
@@ -263,6 +267,22 @@ export default function ProfilePage() {
           <StatPill icon="⭐" value={photographer.avgRating} label="rating" />
           <StatPill icon="💎" value={(photographer.points/1000).toFixed(1)+'k'} label="pts" />
         </div>
+
+        {isOwnProfile && (
+          <button 
+            className="profile-analytics-bar" 
+            onClick={() => navigate('/analytics')}
+            id="profile-analytics-bar-btn"
+          >
+            <span>What you did this month</span>
+            <div className="profile-analytics-bar__link">
+              <span>View Insights 📈</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -311,14 +331,41 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'Achievements' && (
-          <div className="achievements-grid">
-            {ACHIEVEMENTS.map(a => (
-              <div key={a.id} className={`achievement ${a.unlocked ? 'achievement--unlocked' : 'achievement--locked'}`} id={`achievement-${a.id}`}>
-                <div className="achievement__icon">{a.icon}</div>
-                <div className="achievement__name body-sm">{a.name}</div>
-                <div className="achievement__desc" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{a.desc}</div>
+          <div className="achievements-section animate-fade-in">
+            <div className="profile-insights-card">
+              <div className="insights-card__header">
+                <span className="insights-card__title">This Month's Progress 📈</span>
+                <span className="insights-card__sub">What you did this month</span>
               </div>
-            ))}
+              <div className="insights-card__grid">
+                <div className="insights-stat">
+                  <span className="insights-stat__val">+14.2%</span>
+                  <span className="insights-stat__lbl">Profile Views</span>
+                </div>
+                <div className="insights-stat">
+                  <span className="insights-stat__val">87</span>
+                  <span className="insights-stat__lbl">Battles Won</span>
+                </div>
+                <div className="insights-stat">
+                  <span className="insights-stat__val">68%</span>
+                  <span className="insights-stat__lbl">Win Rate</span>
+                </div>
+                <div className="insights-stat">
+                  <span className="insights-stat__val">+1,420</span>
+                  <span className="insights-stat__lbl">Elo Gained</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="achievements-grid">
+              {ACHIEVEMENTS.map(a => (
+                <div key={a.id} className={`achievement ${a.unlocked ? 'achievement--unlocked' : 'achievement--locked'}`} id={`achievement-${a.id}`}>
+                  <div className="achievement__icon">{a.icon}</div>
+                  <div className="achievement__name body-sm">{a.name}</div>
+                  <div className="achievement__desc" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{a.desc}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

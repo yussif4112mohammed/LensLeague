@@ -16,15 +16,20 @@ function BattleSpotlightCard({ battle }) {
         <span className="battle-spotlight__label">⚡ Live Battle — {battle.category}</span>
         <span className="battle-spotlight__meta">{battle.totalVotes.toLocaleString()} votes · {battle.endsIn}</span>
       </div>
+
+      <div className="battle-spotlight__announcement">
+        <span className="battle-spotlight__competitor-name">{battle.photoA.photographerName}</span>
+        <span className="battle-spotlight__vs-text">VS</span>
+        <span className="battle-spotlight__competitor-name">{battle.photoB.photographerName}</span>
+      </div>
+
       <div className="battle-spotlight__photos">
         <div className="battle-spotlight__cinema">
           <img src={battle.photoA.url} alt={battle.photoA.photographerName} className="battle-spotlight__img" />
-          <div className="battle-spotlight__name">{battle.photoA.photographerName}</div>
         </div>
         <div className="battle-spotlight__vs">VS</div>
         <div className="battle-spotlight__cinema">
           <img src={battle.photoB.url} alt={battle.photoB.photographerName} className="battle-spotlight__img" />
-          <div className="battle-spotlight__name">{battle.photoB.photographerName}</div>
         </div>
       </div>
       <button className="battle-spotlight__cta">Tap to vote →</button>
@@ -133,13 +138,9 @@ export default function FeedPage() {
               id="header-create-post-btn"
               aria-label="Create new post"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              <span>Post</span>
-            </button>
-            <button className="feed-header__pill" aria-label="Your streak" id="streak-btn">
-              🔥 <span>12</span>
             </button>
             <button
               className="feed-header__icon-btn"

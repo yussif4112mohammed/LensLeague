@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import CommentSheet from '../../components/CommentSheet/CommentSheet';
+import { parseGearOrGetExif } from '../../utils/exif';
 import './DiscoverPage.css';
 
 const CATEGORIES = ['All', 'Portrait', 'Landscape', 'Street', 'Wedding', 'Product', 'Nature', 'Editorial', 'Architecture'];
@@ -53,7 +54,21 @@ function PhotoDetailModal({ photo, onClose }) {
                 {photo.caption}
               </p>
             )}
-            {photo.gear && <p className="post-modal__gear">📷 {photo.gear}</p>}
+            {photo.gear && (() => {
+              const exif = parseGearOrGetExif(photo.gear, photo.id, photo.ownerName);
+              return (
+                <div className="post-modal__exif-box">
+                  <div className="post-modal__exif-camera">📷 {exif.camera}</div>
+                  <div className="post-modal__exif-lens">{exif.lens}</div>
+                  <div className="post-modal__exif-specs">
+                    <span>Focal: <strong>{exif.focalLength}</strong></span> • 
+                    <span>Aperture: <strong>{exif.aperture}</strong></span> • 
+                    <span>Shutter: <strong>{exif.shutter}</strong></span> • 
+                    <span>ISO: <strong>{exif.iso}</strong></span>
+                  </div>
+                </div>
+              );
+            })()}
             {photo.category && <p className="post-modal__tag">#{photo.category?.toLowerCase()}</p>}
           </div>
 

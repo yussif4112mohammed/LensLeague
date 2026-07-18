@@ -152,7 +152,7 @@ export default function ProfilePage() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  const photographer = users.find(p => p.id === id) || users[0];
+  const photographer = (currentUser && id === currentUser.id) ? currentUser : (users.find(p => p.id === id) || users[0]);
   const isOwnProfile = currentUser && id === currentUser.id;
 
   const [bookingForm, setBookingForm] = useState({

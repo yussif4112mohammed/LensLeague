@@ -172,6 +172,45 @@ export function SignUpPage() {
     setCategories(prev => prev.includes(c) ? prev.filter(x => x !== c) : prev.length < 3 ? [...prev, c] : prev);
   };
 
+  const handleStep2Submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    const cleanUsername = form.username.trim().toLowerCase();
+    if (!/^[a-zA-Z0-9_.]+$/.test(cleanUsername)) {
+      setError('Username can only contain letters, numbers, underscores, and periods.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', cleanUsername)
+        .maybeSingle();
+
+      if (existingUser) {
+        setError('This username is already taken. Please choose another one.');
+        return;
+      }
+
+      if (role === 'photographer') {
+        setStep(3);
+      } else {
+        await handleFinish();
+      }
+    } catch (err) {
+      console.warn('Preemptive check error:', err.message);
+      if (role === 'photographer') {
+        setStep(3);
+      } else {
+        await handleFinish();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFinish = async () => {
     setLoading(true);
     setError('');
@@ -301,7 +340,7 @@ export function SignUpPage() {
             {step === 2 && (
               <>
                 <h1 className="heading-1">Create your account</h1>
-                <form onSubmit={e => { e.preventDefault(); role === 'photographer' ? setStep(3) : handleFinish(); }} className="auth-form">
+                <form onSubmit={handleStep2Submit} className="auth-form">
                   <div className="form-field">
                     <label htmlFor="signup-name" className="form-label">Full Name</label>
                     <input id="signup-name" type="text" className="form-input" placeholder="e.g. Aria Nakamura" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={loading} />

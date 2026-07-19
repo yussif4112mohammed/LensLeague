@@ -5,7 +5,7 @@ import CommentSheet from '../../components/CommentSheet/CommentSheet';
 import { parseGearOrGetExif } from '../../utils/exif';
 import './DiscoverPage.css';
 
-const CATEGORIES = ['All', 'Portrait', 'Landscape', 'Street', 'Wedding', 'Product', 'Nature', 'Editorial', 'Architecture'];
+const CATEGORIES = ['All', 'Portrait', 'Landscape', 'Street', 'Wedding', 'Product', 'Nature', 'Editorial', 'Architecture', 'Sports'];
 
 function PhotoDetailModal({ photo, onClose }) {
   const navigate = useNavigate();
@@ -128,11 +128,16 @@ export default function DiscoverPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const { photos } = useApp();
+  const { photos, users } = useApp();
 
   const filtered = photos.filter(p =>
     (activeCategory === 'All' || p.category === activeCategory) &&
-    (search === '' || p.ownerName.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
+    (search === '' || (p.caption || '').toLowerCase().includes(search.toLowerCase()) || p.ownerName.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()))
+  );
+  
+  const matchingUsers = search === '' ? [] : users.filter(u => 
+    u.name?.toLowerCase().includes(search.toLowerCase()) || 
+    u.username?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -175,7 +180,20 @@ export default function DiscoverPage() {
 
         {/* Results column */}
         <div className="discover-results">
-          {filtered.length === 0 ? (
+          
+          {matchingUsers.length > 0 && (
+            <div className="discover-users-row animate-fade-in" style={{ display: 'flex', gap: 'var(--space-4)', overflowX: 'auto', paddingBottom: 'var(--space-4)', marginBottom: 'var(--space-4)', borderBottom: '1px solid var(--border-subtle)' }}>
+              {matchingUsers.map(u => (
+                <div key={u.id} className="discover-user-card" onClick={() => navigate(`/profile/${u.id}`)} style={{ cursor: 'pointer', textAlign: 'center', minWidth: '80px' }}>
+                  <img src={u.avatar || 'https://via.placeholder.com/60'} alt={u.name} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', marginBottom: '8px', border: '2px solid var(--accent-primary)' }} />
+                  <div className="body-sm" style={{ fontWeight: '600', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80px' }}>{u.name}</div>
+                  <div className="body-sm text-secondary" style={{ fontSize: '11px' }}>@{u.username}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {filtered.length === 0 && matchingUsers.length === 0 ? (
             <div className="discover-empty animate-fade-in">
               <div style={{ fontSize: 48 }}>🔍</div>
               <p className="heading-2">No results found</p>

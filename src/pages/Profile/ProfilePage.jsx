@@ -172,7 +172,6 @@ export default function ProfilePage() {
 
   let photographer = (currentUser && id === currentUser.id) ? currentUser : users.find(p => p.id === id);
   if (!photographer) photographer = fetchedUser;
-  if (!photographer) photographer = users[0]; // Final fallback
 
   const isOwnProfile = currentUser && id === currentUser.id;
 

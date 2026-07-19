@@ -8,7 +8,7 @@
   display: flex; align-items: center; gap: var(--space-3);
   padding: var(--space-4) var(--screen-px);
   position: sticky; top: 0;
-  background: rgba(10,10,12,0.92); backdrop-filter: blur(16px);
+  background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 50;
 }

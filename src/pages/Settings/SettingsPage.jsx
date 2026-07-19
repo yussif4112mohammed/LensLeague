@@ -74,6 +74,15 @@ export default function SettingsPage() {
     setToggles(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleRowClick = (item) => {
+    if (item.id === 'analytics') {
+      // Allow analytics page to navigate if we implement it, but for now we'll just alert too or navigate.
+      navigate('/analytics');
+    } else {
+      alert(`The "${item.label}" feature is coming soon!`);
+    }
+  };
+
   return (
     <div className="settings-page">
       <div className="settings-header">
@@ -101,7 +110,7 @@ export default function SettingsPage() {
                     style={item.type !== 'toggle' ? { cursor: 'pointer' } : {}}
                     onClick={() => {
                       if (item.type !== 'toggle') {
-                        if (item.id === 'analytics-link') navigate('/analytics');
+                        handleRowClick(item);
                       }
                     }}
                   >

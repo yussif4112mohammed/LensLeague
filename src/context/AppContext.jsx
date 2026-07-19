@@ -76,25 +76,29 @@ export function AppProvider({ children }) {
   // Photos list state
   const [photos, setPhotos] = useState(() => {
     const saved = localStorage.getItem('ll-photos');
-    return saved ? JSON.parse(saved) : initialPhotos;
+    if (saved) return JSON.parse(saved);
+    return isSupabaseConfigured ? [] : initialPhotos;
   });
 
   // Bookings list state
   const [bookings, setBookings] = useState(() => {
     const saved = localStorage.getItem('ll-bookings');
-    return saved ? JSON.parse(saved) : DEFAULT_BOOKINGS;
+    if (saved) return JSON.parse(saved);
+    return isSupabaseConfigured ? [] : DEFAULT_BOOKINGS;
   });
 
   // Chat threads list state
   const [threads, setThreads] = useState(() => {
     const saved = localStorage.getItem('ll-threads');
-    return saved ? JSON.parse(saved) : DEFAULT_THREADS;
+    if (saved) return JSON.parse(saved);
+    return isSupabaseConfigured ? [] : DEFAULT_THREADS;
   });
 
   // Challenges active list state
   const [challenges, setChallenges] = useState(() => {
     const saved = localStorage.getItem('ll-challenges');
-    return saved ? JSON.parse(saved) : initialChallenges;
+    if (saved) return JSON.parse(saved);
+    return isSupabaseConfigured ? [] : initialChallenges;
   });
 
   // User submissions to challenges
@@ -106,7 +110,8 @@ export function AppProvider({ children }) {
   // User list state (supporting bans and verification updates)
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('ll-users');
-    return saved ? JSON.parse(saved) : photographers;
+    if (saved) return JSON.parse(saved);
+    return isSupabaseConfigured ? [] : photographers;
   });
 
   // Flagged reported photos list
@@ -214,9 +219,7 @@ export function AppProvider({ children }) {
     const syncFromSupabase = async () => {
       // 1. Fetch profiles (users list) - Limit to 100 for now to prevent memory bloat
       const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
-      if (profilesData && profilesData.length > 0) {
-        setUsers(profilesData);
-      }
+      setUsers(profilesData || []);
 
       // 2. Fetch photos - Limit to 100 for feed performance
       const { data: photosData } = await supabase
@@ -224,7 +227,8 @@ export function AppProvider({ children }) {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
-      if (photosData && photosData.length > 0) {
+        
+      if (photosData) {
         const mappedPhotos = photosData.map(p => {
           const owner = profilesData?.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
           return {
@@ -241,14 +245,59 @@ export function AppProvider({ children }) {
           };
         });
         setPhotos(mappedPhotos);
+        
+        // Dynamically generate fair battles based on matching aspect ratios
+        const generateFairBattles = (photoList) => {
+          const grouped = {};
+          photoList.forEach(p => {
+            const ratio = p.aspectRatio || '3/4';
+            if (!grouped[ratio]) grouped[ratio] = [];
+            grouped[ratio].push(p);
+          });
+          
+          let dynamicBattles = [];
+          Object.keys(grouped).forEach(ratio => {
+            const list = grouped[ratio];
+            // Shuffle list for randomness
+            for (let i = list.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [list[i], list[j]] = [list[j], list[i]];
+            }
+            
+            // Pair them up
+            for (let i = 0; i < list.length - 1; i += 2) {
+              const pA = list[i];
+              const pB = list[i+1];
+              dynamicBattles.push({
+                id: `bat_${Date.now()}_${pA.id}_${pB.id}`,
+                category: pA.category === pB.category ? pA.category : 'Mixed ' + ratio,
+                endsIn: '24h',
+                photoA: { ...pA, score: 1200 },
+                photoB: { ...pB, score: 1200 },
+              });
+            }
+          });
+          
+          // Shuffle final battles array
+          for (let i = dynamicBattles.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [dynamicBattles[i], dynamicBattles[j]] = [dynamicBattles[j], dynamicBattles[i]];
+          }
+          return dynamicBattles;
+        };
+        
+        setBattles(generateFairBattles(mappedPhotos));
+      } else {
+        setPhotos([]);
+        setBattles([]);
       }
 
       // 3. Fetch challenges & submissions
       const { data: challengesData } = await supabase.from('challenges').select('*');
-      if (challengesData && challengesData.length > 0) setChallenges(challengesData);
+      setChallenges(challengesData || []);
 
       const { data: submissionsData } = await supabase.from('challenge_entries').select('*').limit(200);
-      if (submissionsData) setSubmissions(submissionsData);
+      setSubmissions(submissionsData || []);
 
       // 4. PRIVATE DATA (Only fetch if logged in)
       if (currentUser) {
@@ -259,7 +308,7 @@ export function AppProvider({ children }) {
           .or(`client_id.eq.${currentUser.id},photographer_id.eq.${currentUser.id}`)
           .order('created_at', { ascending: false });
         
-        if (bookingsData) {
+        if (bookingsData && bookingsData.length > 0) {
           const mappedBookings = bookingsData.map(b => {
             const client = profilesData?.find(p => p.id === b.client_id) || { name: 'Unknown Client' };
             const photographer = profilesData?.find(p => p.id === b.photographer_id) || { name: 'Unknown Photographer' };
@@ -279,6 +328,8 @@ export function AppProvider({ children }) {
             };
           });
           setBookings(mappedBookings);
+        } else {
+          setBookings([]);
         }
 
         // Messages
@@ -288,9 +339,11 @@ export function AppProvider({ children }) {
           .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
           .order('created_at', { ascending: true })
           .limit(1000);
-        if (messagesData) {
+        if (messagesData && messagesData.length > 0) {
           const compiled = compileSupabaseThreads(messagesData, profilesData);
           setThreads(compiled);
+        } else {
+          setThreads([]);
         }
 
         // Follows

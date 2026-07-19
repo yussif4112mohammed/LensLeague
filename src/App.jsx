@@ -53,7 +53,7 @@ const router = createBrowserRouter([
       { path: '/leaderboard', element: <LeaderboardPage /> },
       // Profile (own or others)
       { path: '/profile/:id', element: <ProfilePage /> },
-      { path: '/profile', element: <Navigate to="/profile/1" replace /> },
+      { path: '/profile', element: <Navigate to="/profile/me" replace /> },
       // Analytics
       { path: '/analytics', element: <AnalyticsPage /> },
       // Upload

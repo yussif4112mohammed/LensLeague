@@ -40,7 +40,7 @@ const NAV_ITEMS = [
     )
   },
   {
-    to: '/profile/1', label: 'Profile', id: 'nav-profile',
+    to: '/profile/me', label: 'Profile', id: 'nav-profile',
     icon: (active) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
@@ -70,11 +70,10 @@ export default function PhotographerShell() {
 
         <nav className="sidebar__nav">
           {NAV_ITEMS.map(item => {
-            const targetUrl = item.to === '/profile/1' ? `/profile/${profileId}` : item.to;
             return (
               <NavLink
                 key={item.to}
-                to={targetUrl}
+                to={item.to}
                 id={`sidebar-${item.id}`}
                 className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''} ${item.featured ? 'sidebar__link--featured' : ''}`}
               >
@@ -114,11 +113,10 @@ export default function PhotographerShell() {
       {/* Mobile bottom tab bar */}
       <nav className="bottom-nav" aria-label="Main navigation">
         {NAV_ITEMS.map(item => {
-          const targetUrl = item.to === '/profile/1' ? `/profile/${profileId}` : item.to;
           return (
             <NavLink
               key={item.to}
-              to={targetUrl}
+              to={item.to}
               id={item.id}
               className={({ isActive }) => `bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''} ${item.featured ? 'bottom-nav__item--featured' : ''}`}
             >

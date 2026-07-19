@@ -158,6 +158,7 @@ export default function ProfilePage() {
 
   // Fallback to dynamic fetch if user is not in the list
   useEffect(() => {
+    if (id === 'me') return;
     if (currentUser && id === currentUser.id) return;
     if (users.find(p => p.id === id)) return;
     
@@ -170,10 +171,10 @@ export default function ProfilePage() {
     fetchProfile();
   }, [id, currentUser, users]);
 
-  let photographer = (currentUser && id === currentUser.id) ? currentUser : users.find(p => p.id === id);
+  let photographer = (currentUser && (id === currentUser.id || id === 'me')) ? currentUser : users.find(p => p.id === id);
   if (!photographer) photographer = fetchedUser;
 
-  const isOwnProfile = currentUser && id === currentUser.id;
+  const isOwnProfile = currentUser && (id === currentUser.id || id === 'me');
 
   const [bookingForm, setBookingForm] = useState({
     date: '',
@@ -183,11 +184,40 @@ export default function ProfilePage() {
   });
 
   const [editForm, setEditForm] = useState({
-    name: photographer.name,
-    username: photographer.username,
-    bio: photographer.bio,
-    location: photographer.location
+    name: '',
+    username: '',
+    bio: '',
+    location: ''
   });
+
+  // Sync editForm when photographer loads
+  useEffect(() => {
+    if (photographer) {
+      setEditForm({
+        name: photographer.name || '',
+        username: photographer.username || '',
+        bio: photographer.bio || '',
+        location: photographer.location || ''
+      });
+    }
+  }, [photographer]);
+
+  if (!photographer) {
+    if (loadingProfile) {
+      return (
+        <div className="profile-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div className="body-md text-secondary">Loading profile...</div>
+        </div>
+      );
+    }
+    return (
+      <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <h1 className="heading-2">Profile Not Found</h1>
+        <p className="body-md text-secondary">This photographer doesn't exist or hasn't created a profile yet.</p>
+        <button className="primary-btn" onClick={() => navigate('/feed')} style={{ marginTop: 16 }}>Return to Feed</button>
+      </div>
+    );
+  }
 
   const userPhotos = photos.filter(p => p.ownerId === photographer.id);
   const portfolioPhotos = userPhotos.length > 0 ? userPhotos : PHOTO_URLS.slice(0, 9).map((url, i) => ({

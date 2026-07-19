@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import './SettingsPage.css';
 
 const SECTIONS = [
   {
     title: 'Account',
     items: [
+      { id: 'theme-mode', label: 'Dark Mode', type: 'toggle' },
       { id: 'email', label: 'Email', value: 'aria@lensleague.com', type: 'row' },
       { id: 'analytics-link', label: 'View My Analytics 📈', value: 'Tap to view', type: 'row' },
       { id: 'password', label: 'Password', value: '••••••••••••', type: 'row' },
@@ -57,12 +59,18 @@ const SECTIONS = [
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { userEmail, setUserEmail, logoutUser } = useApp();
+  const { mode, toggleMode } = useTheme();
+  
   const [toggles, setToggles] = useState({
     'notif-likes': true, 'notif-battles': true, 'notif-bookings': true,
     'notif-leaderboard': false, 'notif-marketing': false,
   });
 
   const handleToggle = (id) => {
+    if (id === 'theme-mode') {
+      toggleMode();
+      return;
+    }
     setToggles(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -82,34 +90,35 @@ export default function SettingsPage() {
           <div key={section.title} className="settings-section">
             <div className="settings-section__title label">{section.title}</div>
             <div className="settings-section__items">
-              {section.items.map(item => (
-                <div 
-                  key={item.id} 
-                  className={`settings-row ${item.type !== 'toggle' ? 'settings-row--clickable' : ''}`} 
-                  id={`settings-${item.id}`}
-                  style={item.type !== 'toggle' ? { cursor: 'pointer' } : {}}
-                  onClick={() => {
-                    if (item.type !== 'toggle') {
-                      if (item.id === 'analytics-link') {
-                        navigate('/analytics');
+              {section.items.map(item => {
+                const isChecked = item.id === 'theme-mode' ? (mode === 'dark') : toggles[item.id];
+                
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`settings-row ${item.type !== 'toggle' ? 'settings-row--clickable' : ''}`} 
+                    id={`settings-${item.id}`}
+                    style={item.type !== 'toggle' ? { cursor: 'pointer' } : {}}
+                    onClick={() => {
+                      if (item.type !== 'toggle') {
+                        if (item.id === 'analytics-link') navigate('/analytics');
                       }
-                    }
-                  }}
-                >
-                  <span className="settings-row__label body-md">{item.label}</span>
-                  {item.type === 'toggle' ? (
-                    <button
-                      className={`toggle-switch ${toggles[item.id] ? 'toggle-switch--on' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggle(item.id);
-                      }}
-                      aria-checked={toggles[item.id]}
-                      role="switch"
-                    >
-                      <div className="toggle-switch__thumb" />
-                    </button>
-                  ) : (
+                    }}
+                  >
+                    <span className="settings-row__label body-md">{item.label}</span>
+                    {item.type === 'toggle' ? (
+                      <button
+                        className={`toggle-switch ${isChecked ? 'toggle-switch--on' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggle(item.id);
+                        }}
+                        aria-checked={isChecked}
+                        role="switch"
+                      >
+                        <div className="toggle-switch__thumb" />
+                      </button>
+                    ) : (
                     <div className="settings-row__right">
                       {item.value && <span className="body-sm text-secondary">{item.value}</span>}
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -118,10 +127,11 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ))}
+        </div>
+      ))}
 
         {/* Danger zone */}
         <div className="settings-section">

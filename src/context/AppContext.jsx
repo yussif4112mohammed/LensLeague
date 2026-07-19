@@ -212,65 +212,27 @@ export function AppProvider({ children }) {
     if (!isSupabaseConfigured) return;
 
     const syncFromSupabase = async () => {
-      // 1. Fetch profiles (users list)
-      const { data: profilesData } = await supabase.from('profiles').select('*');
+      // 1. Fetch profiles (users list) - Limit to 100 for now to prevent memory bloat
+      const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
       if (profilesData && profilesData.length > 0) {
         setUsers(profilesData);
       }
 
-      // 2. Fetch bookings
-      const { data: bookingsData } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (bookingsData) {
-        const mappedBookings = bookingsData.map(b => {
-          const client = profilesData?.find(p => p.id === b.client_id) || { name: 'Sarah Jenkins' };
-          const photographer = profilesData?.find(p => p.id === b.photographer_id) || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
-          return {
-            id: b.id,
-            clientId: b.client_id,
-            clientName: client.name,
-            photographerId: b.photographer_id,
-            photographerName: photographer.name,
-            photographerAvatar: photographer.avatar,
-            date: b.date,
-            budget: b.budget,
-            location: b.location,
-            message: b.message,
-            status: b.status,
-            createdAt: b.created_at
-          };
-        });
-        setBookings(mappedBookings);
-      }
-
-      // 3. Fetch challenges
-      const { data: challengesData } = await supabase.from('challenges').select('*');
-      if (challengesData && challengesData.length > 0) {
-        setChallenges(challengesData);
-      }
-
-      // 4. Fetch challenge entries (submissions)
-      const { data: submissionsData } = await supabase.from('challenge_entries').select('*');
-      if (submissionsData) {
-        setSubmissions(submissionsData);
-      }
-
-      // 5. Fetch photos
+      // 2. Fetch photos - Limit to 100 for feed performance
       const { data: photosData } = await supabase
         .from('photos')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (photosData && photosData.length > 0) {
         const mappedPhotos = photosData.map(p => {
-          const owner = profilesData?.find(usr => usr.id === p.owner_id) || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          const owner = profilesData?.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
           return {
             id: p.id,
             url: p.url,
             ownerId: p.owner_id,
-            ownerName: owner.name,
-            ownerAvatar: owner.avatar,
+            ownerName: owner.name || 'Anonymous',
+            ownerAvatar: owner.avatar || '',
             caption: p.caption,
             category: p.category,
             likes: p.votes || 0,
@@ -281,26 +243,75 @@ export function AppProvider({ children }) {
         setPhotos(mappedPhotos);
       }
 
-      // 6. Fetch messages and compile into threads client-side
-      const { data: messagesData } = await supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
-      if (messagesData) {
-        const compiled = compileSupabaseThreads(messagesData, profilesData);
-        setThreads(compiled);
+      // 3. Fetch challenges & submissions
+      const { data: challengesData } = await supabase.from('challenges').select('*');
+      if (challengesData && challengesData.length > 0) setChallenges(challengesData);
+
+      const { data: submissionsData } = await supabase.from('challenge_entries').select('*').limit(200);
+      if (submissionsData) setSubmissions(submissionsData);
+
+      // 4. PRIVATE DATA (Only fetch if logged in)
+      if (currentUser) {
+        // Bookings - only where user is client or photographer
+        const { data: bookingsData } = await supabase
+          .from('bookings')
+          .select('*')
+          .or(`client_id.eq.${currentUser.id},photographer_id.eq.${currentUser.id}`)
+          .order('created_at', { ascending: false });
+        
+        if (bookingsData) {
+          const mappedBookings = bookingsData.map(b => {
+            const client = profilesData?.find(p => p.id === b.client_id) || { name: 'Unknown Client' };
+            const photographer = profilesData?.find(p => p.id === b.photographer_id) || { name: 'Unknown Photographer' };
+            return {
+              id: b.id,
+              clientId: b.client_id,
+              clientName: client.name,
+              photographerId: b.photographer_id,
+              photographerName: photographer.name,
+              photographerAvatar: photographer.avatar,
+              date: b.date,
+              budget: b.budget,
+              location: b.location,
+              message: b.message,
+              status: b.status,
+              createdAt: b.created_at
+            };
+          });
+          setBookings(mappedBookings);
+        }
+
+        // Messages
+        const { data: messagesData } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+          .order('created_at', { ascending: true })
+          .limit(1000);
+        if (messagesData) {
+          const compiled = compileSupabaseThreads(messagesData, profilesData);
+          setThreads(compiled);
+        }
+
+        // Follows
+        const { data: followsData } = await supabase
+          .from('follows')
+          .select('*')
+          .or(`follower_id.eq.${currentUser.id},following_id.eq.${currentUser.id}`);
+        if (followsData) setFollows(followsData);
+      } else {
+        // If logged out, clear private data from memory
+        setBookings([]);
+        setThreads([]);
+        setFollows([]);
       }
 
-      // 7. Fetch follows system
-      const { data: followsData } = await supabase.from('follows').select('*');
-      if (followsData) {
-        setFollows(followsData);
-      }
-
-      // 8. Fetch comments system
+      // 5. Comments - Limit to recent 500 across app
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, profiles:user_id(*)');
+        .select('*, profiles:user_id(*)')
+        .order('created_at', { ascending: false })
+        .limit(500);
       if (commentsData) {
         const mappedComments = commentsData.map(c => {
           const user = c.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };

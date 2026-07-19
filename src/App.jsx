@@ -29,7 +29,7 @@ import InboxPage from './pages/Inbox/InboxPage';
 // Pages — Admin
 import AdminPage from './pages/Admin/AdminPage';
 
-import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
+
 
 const router = createBrowserRouter([
   // ────── Public routes ──────
@@ -86,9 +86,6 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <>
-      <RouterProvider router={router} />
-      <ThemeSwitcher />
-    </>
+    <RouterProvider router={router} />
   );
 }

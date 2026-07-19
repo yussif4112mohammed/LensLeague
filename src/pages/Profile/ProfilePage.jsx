@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { photographers, PHOTO_URLS } from '../../data/photographers';
 import { useApp } from '../../context/AppContext';
@@ -141,6 +141,7 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
   );
 }
 
+import { supabase } from '../../lib/supabaseClient';
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -151,8 +152,28 @@ export default function ProfilePage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  
+  const [fetchedUser, setFetchedUser] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
-  const photographer = (currentUser && id === currentUser.id) ? currentUser : (users.find(p => p.id === id) || users[0]);
+  // Fallback to dynamic fetch if user is not in the list
+  useEffect(() => {
+    if (currentUser && id === currentUser.id) return;
+    if (users.find(p => p.id === id)) return;
+    
+    const fetchProfile = async () => {
+      setLoadingProfile(true);
+      const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
+      if (data) setFetchedUser(data);
+      setLoadingProfile(false);
+    };
+    fetchProfile();
+  }, [id, currentUser, users]);
+
+  let photographer = (currentUser && id === currentUser.id) ? currentUser : users.find(p => p.id === id);
+  if (!photographer) photographer = fetchedUser;
+  if (!photographer) photographer = users[0]; // Final fallback
+
   const isOwnProfile = currentUser && id === currentUser.id;
 
   const [bookingForm, setBookingForm] = useState({

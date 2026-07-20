@@ -188,20 +188,35 @@ export default function FeedPage() {
 
         {/* Feed list */}
         <div className="feed-list">
-          {tab === 'Following' && feedPhotos.length === 0 && !loading ? (
-            <div className="feed-empty-state" style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--card-bg)', borderRadius: 'var(--radius-lg, 12px)', border: '1px solid var(--border-subtle)', margin: '24px 0' }}>
-              <div style={{ fontSize: '42px', marginBottom: '12px' }}>📷</div>
-              <h2 className="heading-2" style={{ marginBottom: '8px' }}>Your Following Timeline is Empty</h2>
-              <p className="body-md text-secondary" style={{ marginBottom: '20px', maxWidth: '360px', margin: '0 auto 20px' }}>
-                Follow photographers on LensLeague to see their latest shoots and video clips here!
+          {feedPhotos.length === 0 && !loading ? (
+            <div className="feed-empty-state" style={{ padding: '60px 24px', textAlign: 'center', background: 'var(--card-bg)', borderRadius: 'var(--radius-xl, 16px)', border: '1px solid var(--border-subtle)', margin: '24px 0', boxShadow: 'var(--shadow-card)' }}>
+              <div style={{ fontSize: '54px', marginBottom: '16px' }}>📸 🎥</div>
+              <h2 className="heading-1" style={{ marginBottom: '10px' }}>
+                {tab === 'Following' ? 'Your Following Timeline is Empty' : 'Welcome to LensLeague!'}
+              </h2>
+              <p className="body-md text-secondary" style={{ marginBottom: '24px', maxWidth: '440px', margin: '0 auto 24px', lineHeight: '1.6' }}>
+                {tab === 'Following' 
+                  ? 'Follow photographers on LensLeague to see their latest photo shoots and video clips here.' 
+                  : 'Be the first photographer to post! Share your high-res photos or video clips to launch the feed.'}
               </p>
-              <button 
-                className="btn-primary" 
-                onClick={() => setTab('For You')}
-                style={{ background: 'var(--accent-gradient)', color: '#000', fontWeight: '700', padding: '10px 20px', borderRadius: '100px', border: 'none', cursor: 'pointer' }}
-              >
-                Explore Creators
-              </button>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button 
+                  className="btn-primary" 
+                  onClick={() => navigate('/upload')}
+                  style={{ background: 'var(--accent-gradient)', color: '#000', fontWeight: '700', padding: '12px 28px', borderRadius: '100px', border: 'none', cursor: 'pointer', fontSize: '15px' }}
+                >
+                  + Upload Your First Shoot
+                </button>
+                {tab === 'Following' && (
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => setTab('For You')}
+                    style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#FFF', fontWeight: '600', padding: '12px 24px', borderRadius: '100px', border: '1px solid rgba(255, 255, 255, 0.15)', cursor: 'pointer' }}
+                  >
+                    Explore Creators
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             feedItems.map((item) =>
@@ -229,15 +244,21 @@ export default function FeedPage() {
             <button className="rail-box__link" onClick={() => navigate('/compete/challenges')}>View All</button>
           </div>
           <div className="rail-list">
-            {activeChallenges.map(c => (
-              <div key={c.id} className="rail-challenge" onClick={() => navigate('/compete/challenges')}>
-                <img src={c.coverUrl} alt={c.title} className="rail-challenge__img" />
-                <div className="rail-challenge__info">
-                  <div className="rail-challenge__title">{c.title}</div>
-                  <div className="rail-challenge__meta">🏆 {c.prizePoints} pts · {c.entries} entries</div>
+            {activeChallenges.length > 0 ? (
+              activeChallenges.map(c => (
+                <div key={c.id} className="rail-challenge" onClick={() => navigate('/compete/challenges')}>
+                  <img src={c.coverUrl} alt={c.title} className="rail-challenge__img" />
+                  <div className="rail-challenge__info">
+                    <div className="rail-challenge__title">{c.title}</div>
+                    <div className="rail-challenge__meta">🏆 {c.prizePoints} pts · {c.entries} entries</div>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '13px' }}>
+                No active challenges right now.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -248,16 +269,22 @@ export default function FeedPage() {
             <button className="rail-box__link" onClick={() => navigate('/leaderboard')}>Board</button>
           </div>
           <div className="rail-list">
-            {trendingPhotographers.map(p => (
-              <div key={p.id} className="rail-user" onClick={() => navigate(`/profile/${p.id}`)}>
-                <img src={p.avatar} alt={p.name} className="rail-user__avatar" />
-                <div className="rail-user__info">
-                  <div className="rail-user__name">{p.name}</div>
-                  <div className="rail-user__meta">Rank #{p.globalRank} · {p.points.toLocaleString()} pts</div>
+            {trendingPhotographers.length > 0 ? (
+              trendingPhotographers.map(p => (
+                <div key={p.id} className="rail-user" onClick={() => navigate(`/profile/${p.id}`)}>
+                  <img src={p.avatar} alt={p.name} className="rail-user__avatar" />
+                  <div className="rail-user__info">
+                    <div className="rail-user__name">{p.name}</div>
+                    <div className="rail-user__meta">Rank #{p.globalRank || 1} · {(p.points || 0).toLocaleString()} pts</div>
+                  </div>
+                  <div className="rail-user__arrow">›</div>
                 </div>
-                <div className="rail-user__arrow">›</div>
+              ))
+            ) : (
+              <div style={{ padding: '12px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '13px' }}>
+                Join & post to rank on the leaderboard!
               </div>
-            ))}
+            )}
           </div>
         </div>
       </aside>

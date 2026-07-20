@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommentSheet from '../CommentSheet/CommentSheet';
+import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import { parseGearOrGetExif } from '../../utils/exif';
 import { useApp } from '../../context/AppContext';
@@ -161,14 +162,22 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
           </div>
         </div>
 
-        {/* Image wrapped in Passepartout frame */}
+        {/* Image or Video wrapped in Passepartout frame */}
         <div className="post-card__image-wrap" onClick={handleTap}>
-          <img
-            src={getOptimizedImageUrl(photo.url, 800)}
-            alt={photo.caption || `Photo by ${photo.ownerName}`}
-            className="post-card__image"
-            loading="lazy"
-          />
+          {photo.isVideo ? (
+            <VideoPlayer
+              src={photo.url}
+              aspectRatio={photo.aspectRatio || '9/16'}
+              autoPlay={false}
+            />
+          ) : (
+            <img
+              src={getOptimizedImageUrl(photo.url, 800)}
+              alt={photo.caption || `Photo by ${photo.ownerName}`}
+              className="post-card__image"
+              loading="lazy"
+            />
+          )}
           {/* Double-tap heart overlay */}
           {showHeart && (
             <div className={`post-card__heart-overlay ${heartBurst ? 'post-card__heart-overlay--burst' : ''}`}>

@@ -842,17 +842,20 @@ export function AppProvider({ children }) {
       }
       if (data && data.length > 0) {
         return data.map(p => {
-          const owner = p.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          const owner = p.profiles || { name: 'Photographer', avatar: '' };
           return {
             id: p.id,
             url: p.url,
+            isVideo: p.url?.toLowerCase()?.includes('.mp4') || p.url?.toLowerCase()?.includes('.webm') || p.url?.includes('/video/'),
             ownerId: p.owner_id,
-            ownerName: owner.name,
-            ownerAvatar: owner.avatar,
+            ownerName: owner.name || 'Photographer',
+            ownerAvatar: owner.avatar || '',
             caption: p.caption,
             category: p.category,
+            gear: p.gear,
+            location: p.location,
             likes: p.votes || 0,
-            aspectRatio: p.aspect_ratio || '3/4',
+            aspectRatio: p.aspect_ratio || (p.url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4'),
             timestamp: 'Just now'
           };
         });

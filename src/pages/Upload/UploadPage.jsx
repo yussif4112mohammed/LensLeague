@@ -17,10 +17,17 @@ export default function UploadPage() {
   const { currentUser, setPhotos } = useApp();
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);
-  const [fileObj, setFileObj] = useState(null);
+  const [isVideo, setIsVideo] = useState(false);
   const [destination, setDestination] = useState('feed');
   const [category, setCategory] = useState('');
   const [caption, setCaption] = useState('');
+  const [gear, setGear] = useState('');
+  const [camera, setCamera] = useState('');
+  const [lens, setLens] = useState('');
+  const [aperture, setAperture] = useState('');
+  const [shutter, setShutter] = useState('');
+  const [iso, setIso] = useState('');
+  const [location, setLocation] = useState('');
   const [modStatus, setModStatus] = useState(null);
   const [error, setError] = useState('');
 
@@ -28,6 +35,7 @@ export default function UploadPage() {
     const file = e.target.files[0];
     if (!file) return;
     setFileObj(file);
+    setIsVideo(file.type.startsWith('video'));
     const url = URL.createObjectURL(file);
     setPreview(url);
     setStep(2);
@@ -64,10 +72,12 @@ export default function UploadPage() {
         owner_id: currentUser?.id || '1',
         caption: caption,
         category: category,
-        aspect_ratio: '3/4'
+        aspect_ratio: isVideo ? '9/16' : '3/4',
+        gear: gear || camera,
+        location: location
       };
 
-      const { data: insertData, error: dbError } = await supabase
+      const { data: insertData } = await supabase
         .from('photos')
         .insert(newDbRow)
         .select()
@@ -77,13 +87,20 @@ export default function UploadPage() {
       const newPhoto = {
         id: insertData?.id || photoId,
         url: imageUrl,
+        isVideo: isVideo,
         ownerId: currentUser?.id || '1',
-        ownerName: currentUser?.name || 'Aria Nakamura',
-        ownerAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80',
+        ownerName: currentUser?.name || 'Photographer',
+        ownerAvatar: currentUser?.avatar || '',
         caption: caption,
         category: category,
+        gear: gear || camera,
+        lens: lens,
+        aperture: aperture,
+        shutter: shutter,
+        iso: iso,
+        location: location,
         likes: 0,
-        aspectRatio: '3/4',
+        aspectRatio: isVideo ? '9/16' : '3/4',
         timestamp: 'Just now'
       };
 
@@ -114,20 +131,20 @@ export default function UploadPage() {
 
       {step === 1 && (
         <div className="upload-picker animate-fade-in">
-          <h1 className="display-lg">Upload a Photo</h1>
-          <p className="body-md text-secondary">Share to your portfolio, feed, or enter a competition.</p>
+          <h1 className="display-lg">Upload Photo or Video</h1>
+          <p className="body-md text-secondary">Share high-res photos or video clips to your feed or portfolio.</p>
           <label htmlFor="file-input" className="upload-dropzone" id="upload-dropzone">
             <input
               id="file-input"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               style={{ display: 'none' }}
               onChange={handleFileChange}
             />
-            <div className="upload-dropzone__icon">📷</div>
-            <div className="heading-2">Choose from library</div>
-            <div className="body-md text-secondary">or drag and drop here</div>
-            <div className="upload-dropzone__formats body-sm text-tertiary">JPEG, PNG, WEBP · Max 25MB</div>
+            <div className="upload-dropzone__icon">📷 🎥</div>
+            <div className="heading-2">Choose photo or video</div>
+            <div className="body-md text-secondary">or drag and drop media file here</div>
+            <div className="upload-dropzone__formats body-sm text-tertiary">JPEG, PNG, WEBP, MP4, WEBM · Max 50MB</div>
           </label>
 
           <div className="upload-quick-picks">
@@ -215,13 +232,15 @@ export default function UploadPage() {
           </div>
 
           <div className="form-field">
-            <label className="form-label" htmlFor="upload-gear">Gear used (optional)</label>
-            <input id="upload-gear" type="text" className="form-input" placeholder="e.g. Sony A7IV + 85mm f/1.4" />
-          </div>
-
-          <div className="form-field">
-            <label className="form-label" htmlFor="upload-location">Location (optional)</label>
-            <input id="upload-location" type="text" className="form-input" placeholder="e.g. Tokyo, Japan" />
+            <label className="form-label">Camera & EXIF Metadata (Optional)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <input id="upload-camera" type="text" className="form-input" placeholder="Camera Body (e.g. Sony A7IV)" value={camera} onChange={e => setCamera(e.target.value)} />
+              <input id="upload-lens" type="text" className="form-input" placeholder="Lens (e.g. 85mm f/1.4 GM)" value={lens} onChange={e => setLens(e.target.value)} />
+              <input id="upload-aperture" type="text" className="form-input" placeholder="Aperture (e.g. 1.4)" value={aperture} onChange={e => setAperture(e.target.value)} />
+              <input id="upload-shutter" type="text" className="form-input" placeholder="Shutter (e.g. 1/1000)" value={shutter} onChange={e => setShutter(e.target.value)} />
+              <input id="upload-iso" type="text" className="form-input" placeholder="ISO (e.g. 100)" value={iso} onChange={e => setIso(e.target.value)} />
+              <input id="upload-location" type="text" className="form-input" placeholder="Location (e.g. Tokyo)" value={location} onChange={e => setLocation(e.target.value)} />
+            </div>
           </div>
 
           <div className="upload-nav">

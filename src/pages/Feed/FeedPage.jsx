@@ -185,10 +185,27 @@ export default function FeedPage() {
 
         {/* Feed list */}
         <div className="feed-list">
-          {feedItems.map((item) =>
-            item.type === 'photo'
-              ? <PhotoCard key={item.data.id} photo={item.data} />
-              : <BattleSpotlightCard key={`battle-${item.data.id}`} battle={item.data} />
+          {tab === 'Following' && feedPhotos.length === 0 && !loading ? (
+            <div className="feed-empty-state" style={{ padding: '48px 24px', textAlign: 'center', background: 'var(--card-bg)', borderRadius: 'var(--radius-lg, 12px)', border: '1px solid var(--border-subtle)', margin: '24px 0' }}>
+              <div style={{ fontSize: '42px', marginBottom: '12px' }}>📷</div>
+              <h2 className="heading-2" style={{ marginBottom: '8px' }}>Your Following Timeline is Empty</h2>
+              <p className="body-md text-secondary" style={{ marginBottom: '20px', maxWidth: '360px', margin: '0 auto 20px' }}>
+                Follow photographers on LensLeague to see their latest shoots and video clips here!
+              </p>
+              <button 
+                className="btn-primary" 
+                onClick={() => setTab('For You')}
+                style={{ background: 'var(--accent-gradient)', color: '#000', fontWeight: '700', padding: '10px 20px', borderRadius: '100px', border: 'none', cursor: 'pointer' }}
+              >
+                Explore Creators
+              </button>
+            </div>
+          ) : (
+            feedItems.map((item) =>
+              item.type === 'photo'
+                ? <PhotoCard key={item.data.id} photo={item.data} />
+                : <BattleSpotlightCard key={`battle-${item.data.id}`} battle={item.data} />
+            )
           )}
 
           {/* Loading spinner sentinel */}

@@ -364,9 +364,9 @@ export default function ProfilePage() {
         <p className="body-md profile-bio">{photographer.bio}</p>
 
         <div className="profile-stats">
-          <StatPill icon="👥" value={photographer.followers ? (photographer.followers >= 1000 ? (photographer.followers/1000).toFixed(1)+'k' : photographer.followers) : 0} label="followers" />
+          <StatPill icon="👥" value={follows.filter(f => f.following_id === photographer.id).length} label="followers" />
           <StatPill icon="🏆" value={photographer.wins || 0} label="wins" />
-          <StatPill icon="⭐" value={photographer.avgRating || 0} label="rating" />
+          <StatPill icon="⭐" value={photographer.avgRating || '5.0'} label="rating" />
           <StatPill icon="💎" value={photographer.points ? (photographer.points >= 1000 ? (photographer.points/1000).toFixed(1)+'k' : photographer.points) : 0} label="pts" />
         </div>
 

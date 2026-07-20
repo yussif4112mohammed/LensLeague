@@ -1,0 +1,53 @@
+.exif-badge {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(18, 20, 27, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: var(--radius-md, 8px);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  color: var(--text-secondary, #9CA3AF);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.exif-badge__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text-primary, #F3F4F6);
+}
+
+.exif-badge__icon {
+  font-size: 13px;
+}
+
+.exif-badge__title {
+  letter-spacing: 0.02em;
+}
+
+.exif-badge__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exif-tag {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary, #E5E7EB);
+}
+
+.exif-tag--loc {
+  background: rgba(229, 184, 105, 0.12);
+  border-color: rgba(229, 184, 105, 0.25);
+  color: #F3D084;
+}

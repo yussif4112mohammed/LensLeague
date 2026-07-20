@@ -5,43 +5,43 @@
 /* ── DARK MODE (default) ── */
 :root,
 [data-theme="dark"] {
-  /* Background layers */
-  --bg-base:        #06141B;
-  --bg-elevated-1:  #11212D;
-  --bg-elevated-2:  #253746;
-  --bg-elevated-3:  #4A5C6A;
+  /* Background layers - Cinematic Dark Gallery */
+  --bg-base:        #08090C;
+  --bg-elevated-1:  #12141B;
+  --bg-elevated-2:  #1C1F2B;
+  --bg-elevated-3:  #2B3042;
 
   /* Borders */
-  --border-subtle:  rgba(155, 168, 171, 0.12);
-  --border-strong:  rgba(155, 168, 171, 0.25);
+  --border-subtle:  rgba(255, 255, 255, 0.08);
+  --border-strong:  rgba(255, 255, 255, 0.18);
 
   /* Text */
-  --text-primary:   #CCD0CF;
-  --text-secondary: #9BA8AB;
-  --text-tertiary:  #6A89A7;
-  --text-disabled:  #384959;
+  --text-primary:   #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --text-tertiary:  #6B7280;
+  --text-disabled:  #4B5563;
 
   /* Nav & shell */
-  --nav-bg:         rgba(6, 20, 27, 0.85);
-  --nav-border:     rgba(74, 92, 106, 0.25);
+  --nav-bg:         rgba(8, 9, 12, 0.85);
+  --nav-border:     rgba(255, 255, 255, 0.1);
 
   /* Input */
-  --input-bg:       rgba(255, 255, 255, 0.04);
-  --input-border:   rgba(255, 255, 255, 0.08);
-  --input-focus-bg: rgba(255, 255, 255, 0.07);
+  --input-bg:       rgba(255, 255, 255, 0.05);
+  --input-border:   rgba(255, 255, 255, 0.12);
+  --input-focus-bg: rgba(255, 255, 255, 0.09);
 
   /* Card */
-  --card-bg:        rgba(17, 33, 45, 0.55);
-  --card-border:    rgba(74, 92, 106, 0.2);
+  --card-bg:        rgba(18, 20, 27, 0.65);
+  --card-border:    rgba(255, 255, 255, 0.09);
 
   /* Button Secondary */
-  --btn-secondary-bg:           rgba(255, 255, 255, 0.05);
-  --btn-secondary-border:       rgba(255, 255, 255, 0.12);
-  --btn-secondary-hover-bg:     rgba(255, 255, 255, 0.09);
-  --btn-secondary-hover-border: rgba(255, 255, 255, 0.22);
+  --btn-secondary-bg:           rgba(255, 255, 255, 0.06);
+  --btn-secondary-border:       rgba(255, 255, 255, 0.14);
+  --btn-secondary-hover-bg:     rgba(255, 255, 255, 0.12);
+  --btn-secondary-hover-border: rgba(255, 255, 255, 0.25);
 
   /* Shadows */
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.75);
 }
 
 /* ── LIGHT MODE ── */

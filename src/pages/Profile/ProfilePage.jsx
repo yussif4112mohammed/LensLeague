@@ -236,20 +236,7 @@ export default function ProfilePage() {
   }
 
   const userPhotos = photos.filter(p => p.ownerId === photographer.id);
-  const portfolioPhotos = userPhotos.length > 0 ? userPhotos : PHOTO_URLS.slice(0, 9).map((url, i) => ({
-    id: `port-${i}`,
-    url,
-    aspectRatio: i % 3 === 0 ? '3/4' : '4/3',
-    ownerId: photographer.id,
-    ownerName: photographer.name,
-    ownerAvatar: photographer.avatar,
-    category: photographer.specialty || 'Creative',
-    location: photographer.location,
-    caption: `Sensing geometry in nature. Composition study #${i + 1}.`,
-    likes: 1240 + i * 85,
-    comments: 18 + i * 3,
-    gear: 'Leica M11 · 35mm f/1.4 Summilux'
-  }));
+  const portfolioPhotos = userPhotos;
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
@@ -327,21 +314,16 @@ export default function ProfilePage() {
         <div className="profile-name-row">
           <h1 className="heading-1">{photographer.name}</h1>
           {photographer.verified && <span className="verified-badge" title="Verified">✓</span>}
-          <RankBadge rank={photographer.globalRank} size="sm" />
-          {isOwnProfile && (
-            <div className="profile-streak-badge" title="Daily Streak">
-              🔥 12 days
-            </div>
-          )}
+          <RankBadge rank={photographer.global_rank || photographer.globalRank || 99} size="sm" />
         </div>
         <p className="body-sm text-secondary">@{photographer.username} · {photographer.location}</p>
         <p className="body-md profile-bio">{photographer.bio}</p>
 
         <div className="profile-stats">
-          <StatPill icon="👥" value={(photographer.followers/1000).toFixed(1)+'k'} label="followers" />
-          <StatPill icon="🏆" value={photographer.wins} label="wins" />
-          <StatPill icon="⭐" value={photographer.avgRating} label="rating" />
-          <StatPill icon="💎" value={(photographer.points/1000).toFixed(1)+'k'} label="pts" />
+          <StatPill icon="👥" value={photographer.followers ? (photographer.followers >= 1000 ? (photographer.followers/1000).toFixed(1)+'k' : photographer.followers) : 0} label="followers" />
+          <StatPill icon="🏆" value={photographer.wins || 0} label="wins" />
+          <StatPill icon="⭐" value={photographer.avgRating || 0} label="rating" />
+          <StatPill icon="💎" value={photographer.points ? (photographer.points >= 1000 ? (photographer.points/1000).toFixed(1)+'k' : photographer.points) : 0} label="pts" />
         </div>
 
         {isOwnProfile && (
@@ -379,90 +361,42 @@ export default function ProfilePage() {
       <div className="profile-tab-content animate-fade-in" key={activeTab}>
         {activeTab === 'Portfolio' && (
           <div className="portfolio-grid">
-            {portfolioPhotos.map(p => (
+            {portfolioPhotos.length > 0 ? portfolioPhotos.map(p => (
               <PhotoCard
                 key={p.id}
                 photo={p}
                 compact
                 onPhotoClick={() => setSelectedPhoto(p)}
               />
-            ))}
+            )) : (
+              <div style={{ gridColumn: '1 / -1', padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                No photos uploaded yet.
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'Timeline' && (
           <div className="timeline">
-            {TIMELINE_EVENTS.map((ev, i) => (
-              <div key={i} className="timeline-entry">
-                <div className="timeline-entry__icon">{ev.icon}</div>
-                <div className="timeline-entry__connector" />
-                <div className="timeline-entry__content">
-                  <div className="body-sm text-tertiary timeline-entry__date">{ev.date}</div>
-                  <div className="heading-2">{ev.title}</div>
-                  <div className="body-md text-secondary">{ev.desc}</div>
-                </div>
-              </div>
-            ))}
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              No timeline events yet.
+            </div>
           </div>
         )}
 
         {activeTab === 'Achievements' && (
           <div className="achievements-section animate-fade-in">
-            <div className="profile-insights-card">
-              <div className="insights-card__header">
-                <span className="insights-card__title">This Month's Progress 📈</span>
-                <span className="insights-card__sub">What you did this month</span>
-              </div>
-              <div className="insights-card__grid">
-                <div className="insights-stat">
-                  <span className="insights-stat__val">+14.2%</span>
-                  <span className="insights-stat__lbl">Profile Views</span>
-                </div>
-                <div className="insights-stat">
-                  <span className="insights-stat__val">87</span>
-                  <span className="insights-stat__lbl">Battles Won</span>
-                </div>
-                <div className="insights-stat">
-                  <span className="insights-stat__val">68%</span>
-                  <span className="insights-stat__lbl">Win Rate</span>
-                </div>
-                <div className="insights-stat">
-                  <span className="insights-stat__val">+1,420</span>
-                  <span className="insights-stat__lbl">Elo Gained</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="achievements-grid">
-              {ACHIEVEMENTS.map(a => (
-                <div key={a.id} className={`achievement ${a.unlocked ? 'achievement--unlocked' : 'achievement--locked'}`} id={`achievement-${a.id}`}>
-                  <div className="achievement__icon">{a.icon}</div>
-                  <div className="achievement__name body-sm">{a.name}</div>
-                  <div className="achievement__desc" style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{a.desc}</div>
-                </div>
-              ))}
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              No achievements unlocked yet.
             </div>
           </div>
         )}
 
         {activeTab === 'Reviews' && (
           <div className="reviews-list">
-            {REVIEWS.map(r => (
-              <div key={r.id} className="review-card" id={`review-${r.id}`}>
-                <div className="review-card__header">
-                  <div className="review-card__reviewer">
-                    <img src={r.reviewerAvatar} alt={r.reviewer} className="review-card__avatar" />
-                    <div>
-                      <div className="body-md">{r.reviewer}</div>
-                      <div className="body-sm text-tertiary">{r.type} · {r.date}</div>
-                    </div>
-                  </div>
-                  <div className="review-card__stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
-                </div>
-                <p className="body-md review-card__body">{r.body}</p>
-                {r.verified && <span className="review-card__verified label">✓ Verified Booking</span>}
-              </div>
-            ))}
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              No reviews yet.
+            </div>
           </div>
         )}
       </div>

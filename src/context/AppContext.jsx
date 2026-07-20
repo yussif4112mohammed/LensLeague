@@ -163,7 +163,7 @@ export function AppProvider({ children }) {
             id: uid,
             name: meta.name || 'Anonymous User',
             username: meta.username || `user_${Date.now().toString(36)}`,
-            avatar: `https://images.unsplash.com/photo-${userRole === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(meta.name || 'Anonymous')}&background=random&color=fff&size=128`,
             bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
             location: meta.location || 'Tokyo, Japan',
             role: userRole,
@@ -211,7 +211,7 @@ export function AppProvider({ children }) {
             id: uid,
             name: meta.name || 'Anonymous User',
             username: meta.username || `user_${Date.now().toString(36)}`,
-            avatar: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80`,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(meta.name || 'Anonymous')}&background=random&color=fff&size=128`,
             bio: 'LensLeague creator.',
             location: meta.location || 'Tokyo, Japan',
             role: meta.role || 'photographer'

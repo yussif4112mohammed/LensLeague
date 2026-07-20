@@ -315,7 +315,7 @@
 
 .post-modal__image-panel {
   flex: 1;
-  background: #000;
+  background: var(--bg-base);
   display: flex;
   align-items: center;
   justify-content: center;

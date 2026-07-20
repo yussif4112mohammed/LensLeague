@@ -5,10 +5,10 @@
    ================================================================ */
 
 .battle-card {
-  background: #131316;
+  background: var(--bg-elevated-1);
   border-radius: 20px;
   overflow: hidden;
-  border: 1px solid #2A2A2E;
+  border: 1px solid var(--border-subtle);
 }
 
 /* Stacked: Photo A on top, Photo B on bottom */
@@ -24,7 +24,7 @@
   padding: 0;
   border: none;
   cursor: pointer;
-  background: #0A0A0C;
+  background: var(--bg-base);
   display: flex;
   flex-direction: column;
   transition: filter 0.2s;
@@ -111,9 +111,9 @@
 .battle-card__vote-hint {
   font-size: 12px;
   font-weight: 600;
-  color: #52525A;
+  color: var(--text-tertiary);
   padding: 6px 14px;
-  border: 1px dashed #2A2A2E;
+  border: 1px dashed var(--border-strong);
   border-radius: 100px;
 }
 
@@ -130,8 +130,8 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
-.battle-card__pct--a { color: #FF4D6D; }
-.battle-card__pct--b { color: #6E5BFF; }
+.battle-card__pct--a { color: var(--accent-primary); }
+.battle-card__pct--b { color: var(--accent-secondary); }
 
 /* "Your vote" badge */
 .battle-card__chosen-badge {
@@ -165,7 +165,7 @@
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  background: #0A0A0C;
+  background: var(--bg-base);
   height: 36px;
   position: relative;
   z-index: 2;
@@ -174,7 +174,7 @@
 .battle-card__vs-line {
   flex: 1;
   height: 1px;
-  background: #2A2A2E;
+  background: var(--border-subtle);
 }
 
 .battle-card__vs-badge {
@@ -192,7 +192,7 @@
 /* Vote bars (shown after voting) */
 .battle-card__bars {
   padding: 14px 16px 6px;
-  border-top: 1px solid #1C1C20;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .battle-card__bar-track {
@@ -202,7 +202,7 @@
   overflow: hidden;
   gap: 2px;
   margin-bottom: 10px;
-  background: #1C1C20;
+  background: var(--bg-elevated-2);
 }
 
 .battle-card__bar-fill {
@@ -212,13 +212,13 @@
 }
 
 .battle-card__bar-fill--a {
-  background: #FF4D6D;
-  box-shadow: 0 0 10px rgba(255,77,109,0.5);
+  background: var(--accent-primary);
+  box-shadow: var(--glow-primary);
 }
 
 .battle-card__bar-fill--b {
-  background: #6E5BFF;
-  box-shadow: 0 0 10px rgba(110,91,255,0.5);
+  background: var(--accent-secondary);
+  box-shadow: var(--glow-secondary);
 }
 
 .battle-card__bar-labels {
@@ -231,8 +231,8 @@
 .battle-card__hint {
   text-align: center;
   padding: 12px 16px;
-  color: #52525A;
-  border-top: 1px solid #1C1C20;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-subtle);
   font-size: 13px;
 }
 

@@ -254,7 +254,9 @@ export function AppProvider({ children }) {
     const syncFromSupabase = async () => {
       // 1. Fetch profiles (users list) - Limit to 100 for now to prevent memory bloat
       const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
-      setUsers(profilesData || []);
+      const fetchedUsers = profilesData || [];
+      const combinedUsers = [...fetchedUsers, ...photographers];
+      setUsers(combinedUsers);
 
       // 2. Fetch photos - Limit to 100 for feed performance
       const { data: photosData } = await supabase
@@ -265,7 +267,7 @@ export function AppProvider({ children }) {
         
       if (photosData) {
         const mappedPhotos = photosData.map(p => {
-          const owner = profilesData?.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
+          const owner = combinedUsers.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
           return {
             id: p.id,
             url: p.url,
@@ -279,7 +281,8 @@ export function AppProvider({ children }) {
             timestamp: 'Just now'
           };
         });
-        setPhotos(mappedPhotos);
+        const combinedPhotos = [...mappedPhotos, ...initialPhotos];
+        setPhotos(combinedPhotos);
         
         // Dynamically generate fair battles based on matching aspect ratios
         const generateFairBattles = (photoList) => {
@@ -321,7 +324,7 @@ export function AppProvider({ children }) {
           return dynamicBattles;
         };
         
-        setBattles(generateFairBattles(mappedPhotos));
+        setBattles(generateFairBattles(combinedPhotos));
       } else {
         setPhotos([]);
         setBattles([]);
@@ -577,7 +580,7 @@ export function AppProvider({ children }) {
 
     setBookings(prev => [newBooking, ...prev]);
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && String(photographerId).includes('-')) {
       await supabase.from('bookings').insert({
         client_id: clientUid,
         photographer_id: photographerId,
@@ -935,7 +938,7 @@ export function AppProvider({ children }) {
     const newFollow = { follower_id: followerId, following_id: followingId };
     setFollows(prev => [...prev, newFollow]);
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && String(followingId).includes('-')) {
       try {
         await supabase.from('follows').insert(newFollow);
       } catch (err) {
@@ -950,7 +953,7 @@ export function AppProvider({ children }) {
 
     setFollows(prev => prev.filter(f => !(f.follower_id === followerId && f.following_id === followingId)));
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && String(followingId).includes('-')) {
       try {
         await supabase.from('follows').delete().eq('follower_id', followerId).eq('following_id', followingId);
       } catch (err) {

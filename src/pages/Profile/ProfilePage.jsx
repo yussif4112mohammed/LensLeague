@@ -189,6 +189,10 @@ export default function ProfilePage() {
     bio: '',
     location: ''
   });
+  
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Sync editForm when photographer loads
   useEffect(() => {
@@ -199,6 +203,8 @@ export default function ProfilePage() {
         bio: photographer.bio || '',
         location: photographer.location || ''
       });
+      setAvatarPreview(photographer.avatar);
+      setAvatarFile(null);
     }
   }, [photographer]);
 
@@ -262,10 +268,37 @@ export default function ProfilePage() {
     }, 2000);
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    updateProfile(photographer.id, editForm);
+    setIsSavingEdit(true);
+    
+    let newAvatarUrl = null;
+    if (avatarFile) {
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `avatars/${currentUser.id}_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('photos').upload(fileName, avatarFile);
+      if (!uploadError) {
+        const { data } = supabase.storage.from('photos').getPublicUrl(fileName);
+        newAvatarUrl = data.publicUrl;
+      } else {
+        console.warn('Avatar upload failed:', uploadError);
+      }
+    }
+    
+    const updateData = { ...editForm };
+    if (newAvatarUrl) updateData.avatar = newAvatarUrl;
+    
+    updateProfile(photographer.id, updateData);
+    setIsSavingEdit(false);
     setEditModalOpen(false);
+  };
+  
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleStartChat = () => {
@@ -510,6 +543,15 @@ export default function ProfilePage() {
             <button className="photo-modal__close" onClick={() => setEditModalOpen(false)}>✕</button>
             <h2 className="heading-1" style={{ marginBottom: 'var(--space-4)' }}>Edit Profile</h2>
             <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                <img src={avatarPreview} alt="Preview" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-subtle)' }} />
+                <label className="btn btn--secondary" style={{ cursor: 'pointer', fontSize: '12px', padding: '6px 12px' }}>
+                  Change Avatar
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+                </label>
+              </div>
+
               <div>
                 <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Display Name</label>
                 <input 
@@ -553,8 +595,8 @@ export default function ProfilePage() {
                   required 
                 />
               </div>
-              <button type="submit" className="btn btn--primary btn--full" style={{ marginTop: 'var(--space-2)' }}>
-                Save Changes
+              <button type="submit" className="btn btn--primary btn--full" style={{ marginTop: 'var(--space-2)' }} disabled={isSavingEdit}>
+                {isSavingEdit ? 'Saving...' : 'Save Changes'}
               </button>
             </form>
           </div>

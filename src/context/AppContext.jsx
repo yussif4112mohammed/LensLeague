@@ -178,11 +178,46 @@ export function AppProvider({ children }) {
             setCurrentUser(newProfile);
             setCurrentRole(userRole);
             localStorage.setItem('ll-current-role', userRole);
+          } else {
+            console.warn('Profile insert failed (possible race condition), fetching instead:', seedError);
+            const { data: retryProfile } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+            if (retryProfile) {
+              setCurrentUser(retryProfile);
+              setCurrentRole(retryProfile.role);
+              localStorage.setItem('ll-current-role', retryProfile.role);
+            } else {
+              console.error("Critical: Could not insert OR fetch profile. Falling back to auth user.");
+              // Fallback to raw auth user so the app doesn't break
+              setCurrentUser({
+                id: uid,
+                name: meta.name || 'Anonymous User',
+                username: meta.username || `user_${Date.now().toString(36)}`,
+                avatar: `https://images.unsplash.com/photo-${userRole === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+                bio: 'LensLeague creator.',
+                location: meta.location || 'Tokyo, Japan',
+                role: userRole
+              });
+            }
           }
         }
       }
     } catch (err) {
       console.error('Error fetching/seeding user profile:', err);
+      // Ensure we don't leave currentUser as null if network fails
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          const meta = user.user_metadata || {};
+          setCurrentUser({
+            id: uid,
+            name: meta.name || 'Anonymous User',
+            username: meta.username || `user_${Date.now().toString(36)}`,
+            avatar: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80`,
+            bio: 'LensLeague creator.',
+            location: meta.location || 'Tokyo, Japan',
+            role: meta.role || 'photographer'
+          });
+        }
+      });
     }
   };
 

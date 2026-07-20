@@ -129,7 +129,7 @@ export default function SettingsPage() {
                       </button>
                     ) : (
                     <div className="settings-row__right">
-                      {item.value && <span className="body-sm text-secondary">{item.value}</span>}
+                      {(item.id === 'email' ? userEmail : item.value) && <span className="body-sm text-secondary">{item.id === 'email' ? userEmail : item.value}</span>}
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="9 18 15 12 9 6"/>
                       </svg>

@@ -226,11 +226,23 @@ export default function ProfilePage() {
         </div>
       );
     }
+    if (!currentUser && id === 'me') {
+      return (
+        <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center' }}>
+          <div style={{ padding: 'var(--space-8)', background: 'var(--bg-elevated-1)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-subtle)', maxWidth: 400 }}>
+            <h2 className="heading-2" style={{ marginBottom: 'var(--space-2)' }}>Please Log In</h2>
+            <p className="body-md text-secondary" style={{ marginBottom: 'var(--space-6)' }}>You need to be logged in to view your profile.</p>
+            <PrimaryButton onClick={() => navigate('/login')}>Go to Login</PrimaryButton>
+          </div>
+        </div>
+      );
+    }
+    
     return (
-      <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <h1 className="heading-2">Profile Not Found</h1>
-        <p className="body-md text-secondary">This photographer doesn't exist or hasn't created a profile yet.</p>
-        <button className="primary-btn" onClick={() => navigate('/feed')} style={{ marginTop: 16 }}>Return to Feed</button>
+      <div className="profile-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center' }}>
+        <h2 className="heading-2" style={{ marginBottom: 'var(--space-2)' }}>Profile Not Found</h2>
+        <p className="body-md text-secondary" style={{ marginBottom: 'var(--space-6)' }}>This photographer doesn't exist or hasn't created a profile yet.</p>
+        <SecondaryButton onClick={() => navigate('/feed')}>Return to Feed</SecondaryButton>
       </div>
     );
   }

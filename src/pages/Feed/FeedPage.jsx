@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import StoriesBar from '../../components/StoriesBar/StoriesBar';
+import NotificationsDrawer from '../../components/Notifications/NotificationsDrawer';
 import { useApp } from '../../context/AppContext';
 import './FeedPage.css';
 
@@ -38,6 +39,7 @@ const FEED_TABS = ['For You', 'Following'];
 
 export default function FeedPage() {
   const [tab, setTab] = useState('For You');
+  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const { fetchPhotosPaginated, battles, challenges, users } = useApp();
 
@@ -157,6 +159,7 @@ export default function FeedPage() {
             </button>
             <button
               className="feed-header__icon-btn"
+              onClick={() => setNotifOpen(true)}
               aria-label="Notifications"
               id="notifications-btn"
             >
@@ -258,6 +261,8 @@ export default function FeedPage() {
           </div>
         </div>
       </aside>
+
+      <NotificationsDrawer isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import SegmentedControl from '../../components/SegmentedControl/SegmentedControl
 import './InboxPage.css';
 
 export default function InboxPage() {
-  const { currentRole, bookings, threads, acceptBooking, declineBooking, sendMessage, completeBooking } = useApp();
+  const { currentRole, currentUser, bookings, threads, acceptBooking, declineBooking, sendMessage, completeBooking } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -13,34 +13,26 @@ export default function InboxPage() {
   const [selectedThreadId, setSelectedThreadId] = useState(null);
   const [messageText, setMessageText] = useState('');
 
+  const myId = currentUser?.id || '1';
+
   // Auto-select chat thread if URL contains a query (e.g. ?chat=2)
   useEffect(() => {
     const chatPartnerId = searchParams.get('chat');
     if (chatPartnerId) {
-      const isPhotographer = currentRole === 'photographer';
-      const roleThreads = isPhotographer
-        ? threads.filter(t => t.photographerId === '1')
-        : threads.filter(t => t.clientId === 'client_1');
-
-      const targetThread = roleThreads.find(t => t.clientId === chatPartnerId || t.photographerId === chatPartnerId);
+      const userThreads = threads.filter(t => t.photographerId === myId || t.clientId === myId);
+      const targetThread = userThreads.find(t => t.clientId === chatPartnerId || t.photographerId === chatPartnerId);
       if (targetThread) {
         setSelectedThreadId(targetThread.id);
         setActiveTab('chats');
       }
     }
-  }, [searchParams, threads, currentRole]);
+  }, [searchParams, threads, myId]);
 
-  // Filter bookings and threads based on active role
+  // Filter bookings and threads based on current logged in user
   const isPhotographer = currentRole === 'photographer';
   
-  const roleBookings = isPhotographer 
-    ? bookings.filter(b => b.photographerId === '1') // Aria Nakamura's bookings
-    : bookings.filter(b => b.clientId === 'client_1'); // Client Jenkins's bookings
-
-  const roleThreads = isPhotographer
-    ? threads.filter(t => t.photographerId === '1')
-    : threads.filter(t => t.clientId === 'client_1');
-
+  const roleBookings = bookings.filter(b => b.photographerId === myId || b.clientId === myId);
+  const roleThreads = threads.filter(t => t.photographerId === myId || t.clientId === myId);
   const selectedThread = roleThreads.find(t => t.id === selectedThreadId);
 
   const handleSendMessage = (e) => {
@@ -84,7 +76,7 @@ export default function InboxPage() {
                       id={`thread-${t.id}`}
                     >
                       <img 
-                        src={isPhotographer ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&q=80' : t.photographerAvatar} 
+                        src={t.photographerAvatar || t.clientAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=random`} 
                         alt={partnerName} 
                         className="thread-row__avatar" 
                       />

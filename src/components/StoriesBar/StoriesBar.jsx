@@ -1,32 +1,35 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { photographers, PHOTO_URLS } from '../../data/photographers';
+import { useApp } from '../../context/AppContext';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import './StoriesBar.css';
-
-// Combine photographer avatars with real photo covers to show rich content previews
-const STORY_CARDS = [
-  { 
-    id: 'your-story', 
-    name: 'Your Story', 
-    avatar: photographers[0].avatar, 
-    cover: PHOTO_URLS[10], // Beautiful landscape preview
-    isOwn: true, 
-    hasStory: false 
-  },
-  ...photographers.slice(0, 8).map((p, index) => ({
-    id: p.id,
-    name: p.name.split(' ')[0],
-    avatar: p.avatar,
-    cover: PHOTO_URLS[index % PHOTO_URLS.length], // Assign realistic photos
-    isOwn: false,
-    hasStory: true
-  })),
-];
 
 export default function StoriesBar() {
   const scrollRef = useRef(null);
   const navigate = useNavigate();
+  const { users, currentUser, photos } = useApp();
+
+  const STORY_CARDS = [
+    { 
+      id: 'your-story', 
+      name: 'Your Story', 
+      avatar: currentUser?.avatar || 'https://ui-avatars.com/api/?name=You&background=random&color=fff&size=128', 
+      cover: currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+      isOwn: true, 
+      hasStory: false 
+    },
+    ...users.slice(0, 8).map((p) => {
+       const userPhoto = photos.find(ph => ph.ownerId === p.id);
+       return {
+         id: p.id,
+         name: (p.name || 'User').split(' ')[0],
+         avatar: p.avatar,
+         cover: userPhoto ? userPhoto.url : p.avatar,
+         isOwn: false,
+         hasStory: !!userPhoto
+       };
+    }),
+  ];
 
   return (
     <div className="stories-filmstrip" ref={scrollRef} aria-label="Recent Shoots & Stories">

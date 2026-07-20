@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { photographers } from '../../data/photographers';
+import { useApp } from '../../context/AppContext';
 import RankBadge from '../../components/RankBadge/RankBadge';
 import { PrimaryButton } from '../../components/Buttons/Buttons';
 import './ClientSearch.css';
@@ -14,9 +14,12 @@ export default function ClientSearch() {
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('Top Rated');
 
+  const { users } = useApp();
   const CATEGORIES = ['All', 'Portrait', 'Wedding', 'Commercial', 'Street', 'Nature'];
 
-  const filtered = photographers.filter(p =>
+  const mappedUsers = users.map(u => ({ ...u, avgRating: 5.0, globalRank: u.global_rank || 1, categories: ['Portrait'], startingPrice: '$500', wins: 0, photos: [] }));
+
+  const filtered = mappedUsers.filter(p =>
     (category === 'All' || p.categories.includes(category)) &&
     p.avgRating >= minRating &&
     (search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.location.toLowerCase().includes(search.toLowerCase()))

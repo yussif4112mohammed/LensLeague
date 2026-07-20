@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { photographers } from '../../data/photographers';
 import { useApp } from '../../context/AppContext';
 import RankBadge from '../../components/RankBadge/RankBadge';
 import './ClientHome.css';
 
 export default function ClientHome() {
   const navigate = useNavigate();
-  const { photos } = useApp();
-  const featured = photographers.slice(0, 4);
+  const { photos, users } = useApp();
+  const featured = users.slice(0, 4).map(u => ({ ...u, globalRank: u.global_rank || 1, categories: ['Portrait'], startingPrice: '$500', avgRating: '5.0', cover: u.avatar }));
 
   return (
     <div className="client-home">

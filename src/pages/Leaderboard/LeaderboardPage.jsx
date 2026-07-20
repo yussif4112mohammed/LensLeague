@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SegmentedControl from '../../components/SegmentedControl/SegmentedControl';
 import RankBadge from '../../components/RankBadge/RankBadge';
-import { leaderboard, myRank } from '../../data/leaderboard';
+import { useApp } from '../../context/AppContext';
 import './LeaderboardPage.css';
 
 const SCOPE_OPTS = [
@@ -24,9 +24,20 @@ function TrendArrow({ trend }) {
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
+  const { users, currentUser } = useApp();
   const [scope, setScope] = useState('global');
   const [period, setPeriod] = useState('all');
-  const entries = leaderboard.global;
+  
+  const entries = [...users].sort((a, b) => (a.global_rank || 99) - (b.global_rank || 99)).slice(0, 50).map((u, i) => ({
+    id: u.id,
+    rank: i + 1,
+    name: u.name,
+    avatar: u.avatar,
+    score: (10000 - i * 100), // mock score based on rank for display
+    trend: i % 3 === 0 ? +2 : (i % 5 === 0 ? -1 : 0),
+  }));
+
+  const myRank = { global: currentUser?.global_rank || 99, weeklyChange: 'Top 10%', trend: +2 };
 
   return (
     <div className="leaderboard-page">

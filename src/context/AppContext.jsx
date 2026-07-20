@@ -1,8 +1,4 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { photographers } from '../data/photographers';
-import { challenges as initialChallenges } from '../data/challenges';
-import { photos as initialPhotos } from '../data/photos';
-import { battles as initialBattles } from '../data/battles';
 import { calculateElo } from '../lib/elo';
 import { supabase } from '../lib/supabaseClient';
 
@@ -10,63 +6,8 @@ const AppContext = createContext(null);
 
 const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
-const DEFAULT_BOOKINGS = [
-  {
-    id: 'bk_1',
-    clientId: 'client_1',
-    clientName: 'Sarah Jenkins',
-    photographerId: '1',
-    photographerName: 'Aria Nakamura',
-    photographerAvatar: photographers[0].avatar,
-    date: '2026-08-15',
-    budget: '$1,200',
-    location: 'Studio, Tokyo',
-    message: 'Looking for a high-fashion editorial shoot for our autumn clothing line catalog release.',
-    status: 'requested',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'bk_2',
-    clientId: 'client_1',
-    clientName: 'Sarah Jenkins',
-    photographerId: '2',
-    photographerName: 'Marcus Osei',
-    photographerAvatar: photographers[1].avatar,
-    date: '2026-07-30',
-    budget: '$800',
-    location: 'Outdoor, Lagos',
-    message: 'Need documentary style street portraits of our team at the Lagos tech hub space.',
-    status: 'accepted',
-    createdAt: new Date().toISOString(),
-  }
-];
-
-const DEFAULT_THREADS = [
-  {
-    id: 'th_1',
-    photographerId: '1',
-    photographerName: 'Aria Nakamura',
-    photographerAvatar: photographers[0].avatar,
-    clientId: 'client_1',
-    clientName: 'Sarah Jenkins',
-    messages: [
-      {
-        id: 'msg_1',
-        senderId: 'client_1',
-        senderName: 'Sarah Jenkins',
-        body: 'Hello Aria! I just submitted a booking request for August 15th. Do you have studio space available?',
-        timestamp: '10:32 AM',
-      },
-      {
-        id: 'msg_2',
-        senderId: '1',
-        senderName: 'Aria Nakamura',
-        body: 'Hi Sarah! Yes, I do have access to the studio on that day. What is the style of fashion shoots you are looking to achieve?',
-        timestamp: '10:45 AM',
-      }
-    ]
-  }
-];
+const DEFAULT_BOOKINGS = [];
+const DEFAULT_THREADS = [];
 
 export function AppProvider({ children }) {
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('ll-user-email') || '');
@@ -77,28 +18,28 @@ export function AppProvider({ children }) {
   const [photos, setPhotos] = useState(() => {
     const saved = localStorage.getItem('ll-photos');
     if (saved) return JSON.parse(saved);
-    return isSupabaseConfigured ? [] : initialPhotos;
+    return [];
   });
 
   // Bookings list state
   const [bookings, setBookings] = useState(() => {
     const saved = localStorage.getItem('ll-bookings');
     if (saved) return JSON.parse(saved);
-    return isSupabaseConfigured ? [] : DEFAULT_BOOKINGS;
+    return [];
   });
 
   // Chat threads list state
   const [threads, setThreads] = useState(() => {
     const saved = localStorage.getItem('ll-threads');
     if (saved) return JSON.parse(saved);
-    return isSupabaseConfigured ? [] : DEFAULT_THREADS;
+    return [];
   });
 
   // Challenges active list state
   const [challenges, setChallenges] = useState(() => {
     const saved = localStorage.getItem('ll-challenges');
     if (saved) return JSON.parse(saved);
-    return isSupabaseConfigured ? [] : initialChallenges;
+    return [];
   });
 
   // User submissions to challenges
@@ -111,30 +52,25 @@ export function AppProvider({ children }) {
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('ll-users');
     if (saved) return JSON.parse(saved);
-    return isSupabaseConfigured ? [] : photographers;
+    return [];
   });
 
   // Flagged reported photos list
   const [reports, setReports] = useState(() => {
     const saved = localStorage.getItem('ll-reports');
-    return saved ? JSON.parse(saved) : [
-      { id: 'rep_1', photoId: 'port-0', photographerId: '2', photographerName: 'Marcus Osei', photoUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&q=80', reason: 'Unlicensed commercial reuse', reporter: 'GettyImages Inc.', status: 'pending' },
-      { id: 'rep_2', photoId: 'port-1', photographerId: '3', photographerName: 'Sofia Reyes', photoUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=300&q=80', reason: 'Spam / Duplicate Upload', reporter: 'user_881', status: 'pending' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Battle dispute cases
   const [disputes, setDisputes] = useState(() => {
     const saved = localStorage.getItem('ll-disputes');
-    return saved ? JSON.parse(saved) : [
-      { id: 'dsp_1', title: 'Neon Nights Tokyo vs Golden Sun Kyoto', votesA: 1420, votesB: 1412, reason: 'Sudden spike of 200 votes in last 60 seconds (Bot suspicion)', reporter: 'Aria Nakamura', status: 'pending' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Active battles list state (supporting dynamic Elo updates)
   const [battles, setBattles] = useState(() => {
     const saved = localStorage.getItem('ll-battles');
-    return saved ? JSON.parse(saved) : initialBattles;
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Follows and comments states
@@ -255,8 +191,7 @@ export function AppProvider({ children }) {
       // 1. Fetch profiles (users list) - Limit to 100 for now to prevent memory bloat
       const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
       const fetchedUsers = profilesData || [];
-      const combinedUsers = [...fetchedUsers, ...photographers];
-      setUsers(combinedUsers);
+      setUsers(fetchedUsers);
 
       // 2. Fetch photos - Limit to 100 for feed performance
       const { data: photosData } = await supabase
@@ -267,7 +202,7 @@ export function AppProvider({ children }) {
         
       if (photosData) {
         const mappedPhotos = photosData.map(p => {
-          const owner = combinedUsers.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
+          const owner = fetchedUsers.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
           return {
             id: p.id,
             url: p.url,
@@ -281,8 +216,7 @@ export function AppProvider({ children }) {
             timestamp: 'Just now'
           };
         });
-        const combinedPhotos = [...mappedPhotos, ...initialPhotos];
-        setPhotos(combinedPhotos);
+        setPhotos(mappedPhotos);
         
         // Dynamically generate fair battles based on matching aspect ratios
         const generateFairBattles = (photoList) => {
@@ -324,7 +258,7 @@ export function AppProvider({ children }) {
           return dynamicBattles;
         };
         
-        setBattles(generateFairBattles(combinedPhotos));
+        setBattles(generateFairBattles(mappedPhotos));
       } else {
         setPhotos([]);
         setBattles([]);

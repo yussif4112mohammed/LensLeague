@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { photographers, PHOTO_URLS } from '../../data/photographers';
 import { useApp } from '../../context/AppContext';
 import RankBadge from '../../components/RankBadge/RankBadge';
 import StatPill from '../../components/StatPill/StatPill';
@@ -21,9 +20,9 @@ const ACHIEVEMENTS = [
 ];
 
 const REVIEWS = [
-  { id: 'r1', reviewer: 'Jordan Blake', reviewerAvatar: PHOTO_URLS[12], rating: 5, body: 'Absolutely stunning work. Aria captured our brand campaign with a level of artistry I hadn\'t seen before. Will book again.', type: 'Commercial Campaign', date: '2 weeks ago', verified: true },
-  { id: 'r2', reviewer: 'Maria Santos', reviewerAvatar: PHOTO_URLS[13], rating: 5, body: 'Our family portraits turned out beyond expectations. Professional, warm, and incredibly talented.', type: 'Portrait Session', date: '1 month ago', verified: true },
-  { id: 'r3', reviewer: 'Tech Ventures Ltd.', reviewerAvatar: PHOTO_URLS[14], rating: 4, body: 'Great product photography for our launch. Fast turnaround, excellent communication.', type: 'Product Photography', date: '2 months ago', verified: true },
+  { id: 'r1', reviewer: 'Jordan Blake', reviewerAvatar: 'https://ui-avatars.com/api/?name=Jordan+Blake', rating: 5, body: 'Absolutely stunning work. Captured our brand campaign with a level of artistry I hadn\'t seen before. Will book again.', type: 'Commercial Campaign', date: '2 weeks ago', verified: true },
+  { id: 'r2', reviewer: 'Maria Santos', reviewerAvatar: 'https://ui-avatars.com/api/?name=Maria+Santos', rating: 5, body: 'Our family portraits turned out beyond expectations. Professional, warm, and incredibly talented.', type: 'Portrait Session', date: '1 month ago', verified: true },
+  { id: 'r3', reviewer: 'Tech Ventures Ltd.', reviewerAvatar: 'https://ui-avatars.com/api/?name=Tech+Ventures', rating: 4, body: 'Great product photography for our launch. Fast turnaround, excellent communication.', type: 'Product Photography', date: '2 months ago', verified: true },
 ];
 
 const TIMELINE_EVENTS = [

@@ -1,15 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { photographers } from '../../data/photographers';
 import { useApp } from '../../context/AppContext';
 import './CommentSheet.css';
-
-const MOCK_COMMENTS = [
-  { id: 'c1', userId: '1', userName: 'aria.lens', userAvatar: photographers[0].avatar, body: 'Absolutely stunning composition! The light here is unreal 🔥', time: '2h', likes: 47 },
-  { id: 'c2', userId: '2', userName: 'marco_frames', userAvatar: photographers[1].avatar, body: 'The way the shadows fall is just perfect. What lens did you use?', time: '4h', likes: 23 },
-  { id: 'c3', userId: '3', userName: 'yuki.photo', userAvatar: photographers[2].avatar, body: 'This is the golden hour shot I\'ve been waiting to see from you ✨', time: '5h', likes: 15 },
-  { id: 'c4', userId: '4', userName: 'kai_visuals', userAvatar: photographers[3].avatar, body: 'Color grading on this is 🤌', time: '7h', likes: 31 },
-  { id: 'c5', userId: '5', userName: 'priya.captures', userAvatar: photographers[4].avatar, body: 'This should be in a gallery honestly', time: '8h', likes: 8 },
-];
 
 export default function CommentSheet({ photo, onClose }) {
   const { comments: allComments, addPhotoComment, currentUser } = useApp();
@@ -20,7 +11,7 @@ export default function CommentSheet({ photo, onClose }) {
 
   // Filter comments for this specific photo
   const photoComments = allComments.filter(c => c.photo_id === photo.id);
-  const activeComments = photoComments.length > 0 ? photoComments : MOCK_COMMENTS;
+  const activeComments = photoComments;
 
   useEffect(() => {
     // Auto-focus input and prevent body scroll

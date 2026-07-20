@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import SegmentedControl from '../../components/SegmentedControl/SegmentedControl';
-import { photographers, PHOTO_URLS } from '../../data/photographers';
+import { useApp } from '../../context/AppContext';
 import './AnalyticsPage.css';
-
-const ME = photographers[0];
 
 const PERIOD_OPTS = [
   { label: '7D', value: '7d' },
@@ -20,11 +18,6 @@ const STATS = [
   { label: 'Avg. Rating', value: '4.97 ★', delta: 'Stable', sparkline: [4.8, 4.9, 4.85, 4.95, 4.9, 4.97, 4.97] },
 ];
 
-const TOP_PHOTOS = PHOTO_URLS.slice(0, 5).map((url, i) => ({
-  id: `top-${i}`, url,
-  votes: [4780, 3420, 3120, 2810, 2340][i],
-  category: ['Portrait', 'Landscape', 'Portrait', 'Nature', 'Street'][i],
-}));
 
 function MiniSparkline({ data }) {
   const max = Math.max(...data);
@@ -40,6 +33,15 @@ function MiniSparkline({ data }) {
 }
 
 export default function AnalyticsPage() {
+  const { currentUser, photos } = useApp();
+  const ME = currentUser || { name: 'You', avatar: 'https://ui-avatars.com/api/?name=You' };
+  
+  const TOP_PHOTOS = photos.slice(0, 5).map((p, i) => ({
+    id: p.id, url: p.url,
+    votes: p.likes || [4780, 3420, 3120, 2810, 2340][i] || 100,
+    category: p.category,
+  }));
+
   const [period, setPeriod] = useState('30d');
   const [showWrapped, setShowWrapped] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);

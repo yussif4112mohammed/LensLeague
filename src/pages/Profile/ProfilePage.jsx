@@ -202,8 +202,24 @@ export default function ProfilePage() {
     }
   }, [photographer]);
 
+  const [isMeLoading, setIsMeLoading] = useState(id === 'me');
+
+  useEffect(() => {
+    if (id === 'me') {
+      if (currentUser) {
+        setIsMeLoading(false);
+      } else {
+        // Fallback timeout in case user is actually logged out
+        const timer = setTimeout(() => setIsMeLoading(false), 4000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setIsMeLoading(false);
+    }
+  }, [id, currentUser]);
+
   if (!photographer) {
-    if (loadingProfile) {
+    if (loadingProfile || isMeLoading) {
       return (
         <div className="profile-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
           <div className="body-md text-secondary">Loading profile...</div>

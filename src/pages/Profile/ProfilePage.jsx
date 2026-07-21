@@ -552,6 +552,23 @@ export default function ProfilePage() {
                   </div>
 
                   <div>
+                    <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Available Time Slot</label>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {['🌅 9:00 AM (Golden Hour)', '☀️ 1:00 PM (Afternoon)', '🌆 5:30 PM (Sunset)'].map(slot => (
+                        <button
+                          key={slot}
+                          type="button"
+                          className={`category-chip ${bookingForm.timeSlot === slot ? 'category-chip--selected' : ''}`}
+                          style={{ padding: '6px 12px', fontSize: '12px' }}
+                          onClick={() => setBookingForm(prev => ({ ...prev, timeSlot: slot }))}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
                     <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Approx Budget</label>
                     <input 
                       type="text" 

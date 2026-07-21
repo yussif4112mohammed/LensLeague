@@ -96,7 +96,14 @@ export default function VotePage() {
         )}
 
         {/* The battle card */}
-        <BattleCard battle={battle} onVote={handleVote} />
+        <BattleCard battle={battle} onVote={handleVote} onSkip={handleSkip} />
+
+        {/* Mobile Swipe / Tap instructions */}
+        <div style={{ textAlign: 'center', marginTop: '12px' }}>
+          <span className="vote-aspect-chip" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+            ☝️ Tap to vote now · Swipe up to skip
+          </span>
+        </div>
 
         {/* Skip */}
         <button className="vote-skip" onClick={handleSkip} id="skip-battle-btn">

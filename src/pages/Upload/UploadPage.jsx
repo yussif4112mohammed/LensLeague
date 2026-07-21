@@ -21,6 +21,7 @@ export default function UploadPage() {
   const [destination, setDestination] = useState('feed');
   const [category, setCategory] = useState('');
   const [caption, setCaption] = useState('');
+  const [altText, setAltText] = useState('');
   const [gear, setGear] = useState('');
   const [camera, setCamera] = useState('');
   const [lens, setLens] = useState('');
@@ -213,6 +214,21 @@ export default function UploadPage() {
               rows={3}
             />
             <div className="body-sm text-tertiary" style={{ textAlign: 'right' }}>{caption.length}/500</div>
+          </div>
+
+          <div className="form-field">
+            <label className="form-label" htmlFor="upload-alt-text">Screen Reader Alt Text (Accessibility)</label>
+            <input
+              id="upload-alt-text"
+              type="text"
+              className="form-input"
+              placeholder="Describe the image for screen readers..."
+              value={altText}
+              onChange={e => setAltText(e.target.value)}
+            />
+            <div className="body-sm text-tertiary" style={{ marginTop: '4px' }}>
+              Adding alt text helps more people experience your work.
+            </div>
           </div>
 
           <div className="form-field">

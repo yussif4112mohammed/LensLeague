@@ -3,11 +3,27 @@ import { useApp } from '../../context/AppContext';
 import { parseGearOrGetExif } from '../../utils/exif';
 import './BattleCard.css';
 
-export default function BattleCard({ battle, onVote }) {
+export default function BattleCard({ battle, onVote, onSkip }) {
   const { castBattleVote } = useApp();
   const [voted, setVoted] = useState(null); // 'a' | 'b' | null
   const [impact, setImpact] = useState(null);
   const [eloResults, setEloResults] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
+
+  const handleTouchStart = (e) => {
+    setTouchStartY(e.touches[0].clientY);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartY) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffY = touchStartY - touchEndY;
+    if (diffY > 60) {
+      // Swiped UP -> trigger skip
+      onSkip?.();
+    }
+    setTouchStartY(null);
+  };
 
   const total = battle.photoA.votes + battle.photoB.votes;
   const pctA = Math.round((battle.photoA.votes / total) * 100);
@@ -32,7 +48,7 @@ export default function BattleCard({ battle, onVote }) {
   };
 
   return (
-    <div className="battle-card">
+    <div className="battle-card" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
 
       {/* ── STACKED layout: Photo A on top, Photo B below ── */}
       <div className="battle-card__photos">

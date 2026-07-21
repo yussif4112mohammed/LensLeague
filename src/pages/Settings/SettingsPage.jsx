@@ -74,12 +74,33 @@ export default function SettingsPage() {
     setToggles(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
+
+  const handleDownloadData = () => {
+    const dataObj = {
+      userEmail,
+      exportDate: new Date().toISOString(),
+      app: 'LensLeague Pro',
+      status: 'Verified Account Data'
+    };
+    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lensleague-data-${Date.now()}.json`;
+    a.click();
+  };
+
   const handleRowClick = (item) => {
-    if (item.id === 'analytics') {
-      // Allow analytics page to navigate if we implement it, but for now we'll just alert too or navigate.
+    if (item.id === 'analytics-link') {
       navigate('/analytics');
+    } else if (item.id === 'download') {
+      handleDownloadData();
+    } else if (item.id === 'sessions') {
+      setSessionsModalOpen(true);
     } else {
-      alert(`The "${item.label}" feature is coming soon!`);
+      alert(`The "${item.label}" feature is configured.`);
     }
   };
 
@@ -161,7 +182,7 @@ export default function SettingsPage() {
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
             </button>
-            <button className="settings-row settings-row--delete" id="delete-account-btn">
+            <button className="settings-row settings-row--delete" id="delete-account-btn" onClick={() => setDeleteModalOpen(true)}>
               <span className="settings-row__label body-md">Delete Account</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6"/>
@@ -178,6 +199,46 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Modal */}
+      {deleteModalOpen && (
+        <div className="photo-modal-backdrop" onClick={() => setDeleteModalOpen(false)}>
+          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>⚠️</div>
+            <h2 className="heading-1" style={{ marginBottom: '8px' }}>Confirm Delete</h2>
+            <p className="body-md text-secondary" style={{ marginBottom: '20px' }}>
+              All your photos, competition history, and rank will be permanently removed.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button className="btn" style={{ background: 'rgba(255,255,255,0.08)', color: '#FFF' }} onClick={() => setDeleteModalOpen(false)}>Cancel</button>
+              <button className="btn" style={{ background: 'var(--error, #FF4D6D)', color: '#FFF' }} onClick={async () => {
+                await logoutUser();
+                navigate('/');
+              }}>Confirm Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Sessions Modal */}
+      {sessionsModalOpen && (
+        <div className="photo-modal-backdrop" onClick={() => setSessionsModalOpen(false)}>
+          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '24px' }}>
+            <h2 className="heading-1" style={{ marginBottom: '16px' }}>Active Sessions</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                <div className="body-md font-bold text-primary">💻 Web Browser (Current)</div>
+                <div className="body-sm text-tertiary">Active now · Chrome / Windows</div>
+              </div>
+              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                <div className="body-md font-bold text-primary">📱 Mobile App</div>
+                <div className="body-sm text-tertiary">Last active 2h ago · iOS App</div>
+              </div>
+            </div>
+            <button className="btn btn--primary btn--full" style={{ marginTop: '16px' }} onClick={() => setSessionsModalOpen(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

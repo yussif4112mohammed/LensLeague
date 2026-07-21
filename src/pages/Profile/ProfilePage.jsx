@@ -151,6 +151,9 @@ export default function ProfilePage() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false);
+  const [customMilestones, setCustomMilestones] = useState([]);
+  const [milestoneForm, setMilestoneForm] = useState({ title: '', desc: '', date: '', icon: '📷' });
   
   const [fetchedUser, setFetchedUser] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -421,26 +424,97 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'Timeline' && (
-          <div className="timeline">
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              No timeline events yet.
+          <div className="timeline-section animate-fade-in" style={{ padding: '16px 0' }}>
+            {isOwnProfile && (
+              <div style={{ marginBottom: '24px', textAlign: 'right' }}>
+                <SecondaryButton small onClick={() => setMilestoneModalOpen(true)} id="add-milestone-btn">
+                  + Add Career Milestone
+                </SecondaryButton>
+              </div>
+            )}
+            <div className="timeline-stem-wrap" style={{ position: 'relative', paddingLeft: '32px', borderLeft: '2px solid var(--border-subtle)' }}>
+              {[
+                ...customMilestones,
+                ...portfolioPhotos.map(p => ({
+                  id: `ph_${p.id}`,
+                  date: p.timestamp || 'Recently',
+                  icon: p.isVideo ? '🎥' : '📸',
+                  title: p.isVideo ? 'Uploaded Video Shoot' : 'Published New Photo Shoot',
+                  desc: p.caption || 'Added new visual work to portfolio.',
+                  photoUrl: p.url,
+                  gear: p.gear
+                })),
+                {
+                  id: 'joined',
+                  date: 'Member',
+                  icon: '✨',
+                  title: 'Joined LensLeague',
+                  desc: 'Created official creator profile and portfolio.'
+                }
+              ].map((item, idx) => (
+                <div key={item.id || idx} className="timeline-node-item" style={{ position: 'relative', marginBottom: '32px' }}>
+                  <div className="timeline-node-icon" style={{ position: 'absolute', left: '-45px', top: '0', width: '26px', height: '26px', borderRadius: '50%', background: 'var(--bg-elevated-2)', border: '2px solid var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
+                    {item.icon}
+                  </div>
+                  <div className="timeline-node-card" style={{ background: 'var(--card-bg)', padding: '16px', borderRadius: 'var(--radius-md, 12px)', border: '1px solid var(--border-subtle)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span className="heading-2" style={{ fontSize: '15px' }}>{item.title}</span>
+                      <span className="body-sm text-tertiary">{item.date}</span>
+                    </div>
+                    <p className="body-md text-secondary" style={{ marginBottom: item.photoUrl ? '12px' : '0' }}>{item.desc}</p>
+                    {item.photoUrl && (
+                      <img src={item.photoUrl} alt="" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px' }} />
+                    )}
+                    {item.gear && (
+                      <div className="body-sm text-tertiary" style={{ marginTop: '8px' }}>📷 {item.gear}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {activeTab === 'Achievements' && (
-          <div className="achievements-section animate-fade-in">
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              No achievements unlocked yet.
+          <div className="achievements-section animate-fade-in" style={{ padding: '16px 0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
+              {[
+                { id: 'a1', icon: '📸', name: 'First Upload', desc: 'Uploaded your first shoot', unlocked: portfolioPhotos.length >= 1 },
+                { id: 'a2', icon: '🏆', name: 'First Win', desc: 'Won your first battle vote', unlocked: (photographer.points || 0) > 0 },
+                { id: 'a3', icon: '⭐', name: 'Top Creator', desc: 'Earned 1,000+ creator points', unlocked: (photographer.points || 0) >= 1000 },
+                { id: 'a4', icon: '💎', name: 'Diamond Pro', desc: 'Earned 10,000+ points', unlocked: (photographer.points || 0) >= 10000 },
+                { id: 'a5', icon: '🔥', name: 'Prolific Creator', desc: 'Uploaded 5+ photos or videos', unlocked: portfolioPhotos.length >= 5 },
+                { id: 'a6', icon: '👑', name: 'League Leader', desc: 'Reached top 5 global rank', unlocked: (photographer.global_rank || 99) <= 5 }
+              ].map(ach => (
+                <div key={ach.id} style={{ opacity: ach.unlocked ? 1 : 0.45, background: 'var(--card-bg)', border: ach.unlocked ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <div style={{ fontSize: '28px' }}>{ach.icon}</div>
+                  <div>
+                    <div className="heading-2" style={{ fontSize: '14px' }}>{ach.name} {ach.unlocked && '✓'}</div>
+                    <div className="body-sm text-secondary">{ach.desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {activeTab === 'Reviews' && (
-          <div className="reviews-list">
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              No reviews yet.
-            </div>
+          <div className="reviews-list animate-fade-in" style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {REVIEWS.map(rev => (
+              <div key={rev.id} style={{ background: 'var(--card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img src={rev.reviewerAvatar} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+                    <div>
+                      <div className="body-md font-bold text-primary">{rev.reviewer}</div>
+                      <div className="body-sm text-tertiary">{rev.type} · {rev.date}</div>
+                    </div>
+                  </div>
+                  <div style={{ color: 'var(--accent-gold, #FFC24B)', fontWeight: '700' }}>{'★'.repeat(rev.rating)}</div>
+                </div>
+                <p className="body-md text-secondary">"{rev.body}"</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -596,6 +670,66 @@ export default function ProfilePage() {
               </div>
               <button type="submit" className="btn btn--primary btn--full" style={{ marginTop: 'var(--space-2)' }} disabled={isSavingEdit}>
                 {isSavingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Milestone Modal */}
+      {milestoneModalOpen && (
+        <div className="photo-modal-backdrop" onClick={() => setMilestoneModalOpen(false)}>
+          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', padding: '24px' }}>
+            <button className="photo-modal__close" onClick={() => setMilestoneModalOpen(false)}>✕</button>
+            <h2 className="heading-1" style={{ marginBottom: '16px' }}>Add Career Milestone</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!milestoneForm.title) return;
+              setCustomMilestones(prev => [{
+                id: `ms_${Date.now()}`,
+                title: milestoneForm.title,
+                desc: milestoneForm.desc,
+                date: milestoneForm.date || 'Present',
+                icon: milestoneForm.icon || '🏆'
+              }, ...prev]);
+              setMilestoneModalOpen(false);
+              setMilestoneForm({ title: '', desc: '', date: '', icon: '📷' });
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Milestone Title</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', height: '44px' }} 
+                  placeholder="e.g. Upgraded to Leica M11 Body" 
+                  value={milestoneForm.title} 
+                  onChange={e => setMilestoneForm(f => ({ ...f, title: e.target.value }))} 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Date / Period</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  style={{ width: '100%', height: '44px' }} 
+                  placeholder="e.g. Jul 2026" 
+                  value={milestoneForm.date} 
+                  onChange={e => setMilestoneForm(f => ({ ...f, date: e.target.value }))} 
+                />
+              </div>
+              <div>
+                <label className="label text-tertiary" style={{ display: 'block', marginBottom: '6px' }}>Description</label>
+                <textarea 
+                  className="form-textarea" 
+                  style={{ width: '100%', height: '80px', padding: '10px' }} 
+                  placeholder="Add details about this career highlight..." 
+                  value={milestoneForm.desc} 
+                  onChange={e => setMilestoneForm(f => ({ ...f, desc: e.target.value }))} 
+                />
+              </div>
+              <button type="submit" className="btn btn--primary btn--full" style={{ marginTop: '8px' }}>
+                Add to Timeline
               </button>
             </form>
           </div>

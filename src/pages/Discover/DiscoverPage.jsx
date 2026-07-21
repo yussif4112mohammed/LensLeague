@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import CommentSheet from '../../components/CommentSheet/CommentSheet';
 import { parseGearOrGetExif } from '../../utils/exif';
+import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import './DiscoverPage.css';
 
 const CATEGORIES = ['All', 'Portrait', 'Landscape', 'Street', 'Wedding', 'Product', 'Nature', 'Editorial', 'Architecture', 'Sports'];
@@ -30,7 +31,11 @@ function PhotoDetailModal({ photo, onClose }) {
         </button>
 
         <div className="post-modal__image-panel">
-          <img src={photo.url} alt={photo.caption} className="post-modal__image" />
+          {photo.isVideo ? (
+            <VideoPlayer src={photo.url} aspectRatio={photo.aspectRatio || '9/16'} autoPlay={true} />
+          ) : (
+            <img src={photo.url} alt={photo.caption} className="post-modal__image" />
+          )}
         </div>
 
         <div className="post-modal__info-panel">

@@ -50,15 +50,16 @@
 
 .lp-nav__signup {
   font-size: 13px; font-weight: 700;
-  color: #06141B;
-  background: var(--accent-gradient);
-  padding: 7px 15px;
-  border-radius: 8px;
+  color: #FFFFFF;
+  background: var(--accent-primary, #FF4D6D);
+  padding: 8px 18px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(255, 77, 109, 0.4);
   transition: filter 0.18s, box-shadow 0.18s;
 }
 .lp-nav__signup:hover {
   filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(136,189,242,0.35);
+  box-shadow: 0 0 20px rgba(255, 77, 109, 0.6);
 }
 
 /* ── HERO — Split ── */
@@ -83,9 +84,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(136, 189, 242, 0.08);
-  border: 2px solid var(--accent-primary);
-  color: var(--accent-primary);
+  background: rgba(255, 77, 109, 0.08);
+  border: 1.5px solid var(--accent-primary, #FF4D6D);
+  color: var(--accent-primary, #FF4D6D);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;

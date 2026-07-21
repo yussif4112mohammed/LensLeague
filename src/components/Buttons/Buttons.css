@@ -26,13 +26,14 @@
 
 /* Primary */
 .btn--primary {
-  background: var(--accent-gradient);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(255, 59, 112, 0.25), 0 0 1px rgba(0, 245, 255, 0.4);
+  background: var(--accent-primary, #FF4D6D);
+  color: #FFFFFF;
+  border-radius: var(--radius-full, 9999px);
+  box-shadow: 0 4px 18px rgba(255, 77, 109, 0.4);
   transition: transform var(--transition-micro), box-shadow var(--transition-fast), filter var(--transition-fast);
 }
 .btn--primary:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(255, 59, 112, 0.35), 0 0 10px rgba(0, 245, 255, 0.6);
+  box-shadow: 0 6px 24px rgba(255, 77, 109, 0.55);
   transform: translateY(-1px);
 }
 

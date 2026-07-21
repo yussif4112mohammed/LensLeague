@@ -5,43 +5,43 @@
 /* ── DARK MODE (default) ── */
 :root,
 [data-theme="dark"] {
-  /* Background layers - Cinematic Dark Gallery */
-  --bg-base:        #08090C;
-  --bg-elevated-1:  #12141B;
-  --bg-elevated-2:  #1C1F2B;
-  --bg-elevated-3:  #2B3042;
+  /* Background layers - Prototype OLED Dark */
+  --bg-base:        #0A0A0C;
+  --bg-elevated-1:  #131316;
+  --bg-elevated-2:  #1C1C20;
+  --bg-elevated-3:  #26262B;
 
   /* Borders */
-  --border-subtle:  rgba(255, 255, 255, 0.08);
-  --border-strong:  rgba(255, 255, 255, 0.18);
+  --border-subtle:  #1C1C20;
+  --border-strong:  #2A2A2E;
 
   /* Text */
-  --text-primary:   #F3F4F6;
-  --text-secondary: #9CA3AF;
-  --text-tertiary:  #6B7280;
-  --text-disabled:  #4B5563;
+  --text-primary:   #F5F5F7;
+  --text-secondary: #A1A1AA;
+  --text-tertiary:  #6E6E76;
+  --text-disabled:  #3A3A40;
 
   /* Nav & shell */
-  --nav-bg:         rgba(8, 9, 12, 0.85);
-  --nav-border:     rgba(255, 255, 255, 0.1);
+  --nav-bg:         rgba(10, 10, 12, 0.88);
+  --nav-border:     #1C1C20;
 
   /* Input */
-  --input-bg:       rgba(255, 255, 255, 0.05);
-  --input-border:   rgba(255, 255, 255, 0.12);
-  --input-focus-bg: rgba(255, 255, 255, 0.09);
+  --input-bg:       #131316;
+  --input-border:   #2A2A2E;
+  --input-focus-bg: #1C1C20;
 
   /* Card */
-  --card-bg:        rgba(18, 20, 27, 0.65);
-  --card-border:    rgba(255, 255, 255, 0.09);
+  --card-bg:        #131316;
+  --card-border:    #1C1C20;
 
   /* Button Secondary */
-  --btn-secondary-bg:           rgba(255, 255, 255, 0.06);
-  --btn-secondary-border:       rgba(255, 255, 255, 0.14);
-  --btn-secondary-hover-bg:     rgba(255, 255, 255, 0.12);
-  --btn-secondary-hover-border: rgba(255, 255, 255, 0.25);
+  --btn-secondary-bg:           #1C1C20;
+  --btn-secondary-border:       #2A2A2E;
+  --btn-secondary-hover-bg:     #26262B;
+  --btn-secondary-hover-border: #3A3A40;
 
   /* Shadows */
-  --shadow-card: 0 8px 32px rgba(0,0,0,0.75);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.85);
 }
 
 /* ── LIGHT MODE ── */
@@ -87,25 +87,25 @@
 
 /* ── Brand / Accent (same in both modes) ── */
 :root {
-  --accent-primary:   #88BDF2;
-  --accent-secondary: #6A89A7;
-  --accent-glow:      #BDDDFC;
+  --accent-primary:   #FF4D6D;
+  --accent-secondary: #6E5BFF;
+  --accent-glow:      rgba(255, 77, 109, 0.35);
   --accent-gold:      #FFC24B;
-  --accent-silver:    #9BA8AB;
+  --accent-silver:    #A1A1AA;
   --accent-bronze:    #D98C5F;
 
-  --accent-gradient: linear-gradient(135deg, #6A89A7 0%, #88BDF2 50%, #BDDDFC 100%);
-  --accent-glow-gradient: linear-gradient(135deg, rgba(106, 137, 167, 0.2) 0%, rgba(136, 189, 242, 0.2) 50%, rgba(189, 221, 252, 0.2) 100%);
+  --accent-gradient: linear-gradient(135deg, #FF4D6D 0%, #FF758F 100%);
+  --accent-glow-gradient: linear-gradient(135deg, rgba(255, 77, 109, 0.2) 0%, rgba(110, 91, 255, 0.2) 100%);
 
   /* Semantic */
-  --success:  #10B981;
-  --warning:  #F59E0B;
-  --error:    #EF4444;
-  --info:     #3B82F6;
+  --success:  #34D399;
+  --warning:  #FBBF24;
+  --error:    #FF4D6D;
+  --info:     #6E5BFF;
 
   /* Vote / Battle */
-  --vote-a:   #88BDF2;
-  --vote-b:   #6A89A7;
+  --vote-a:   #FF4D6D;
+  --vote-b:   #6E5BFF;
 
   /* Typography — overridden by ThemeContext JS */
   --font-ui:      'Inter', system-ui, sans-serif;

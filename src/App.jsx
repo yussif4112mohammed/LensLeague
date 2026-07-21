@@ -84,8 +84,12 @@ const router = createBrowserRouter([
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
+import PrototypeApp from './components/PrototypeApp/PrototypeApp';
+
 export default function App() {
   return (
-    <RouterProvider router={router} />
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      <PrototypeApp />
+    </div>
   );
 }

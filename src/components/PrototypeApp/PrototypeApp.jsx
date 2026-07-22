@@ -193,19 +193,211 @@ function Sidebar({ screen, setScreen, unreadMessages = 3 }) {
   );
 }
 
-function TopBar({ title }) {
+function TopBar({ title, onOpenAuth }) {
+  const { currentUser, logoutUser } = useApp();
+
   return (
-    <div className="flex items-center justify-between px-8 py-5 border-b border-[#1C1C20] shrink-0">
+    <div className="flex items-center justify-between px-8 py-5 border-b border-[#1C1C20] shrink-0 bg-[#0A0A0C]">
       <h1 className="text-[22px] font-bold text-[#F5F5F7] tracking-tight">{title}</h1>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 bg-[#131316] border border-[#2A2A2E] rounded-full px-4 py-2 w-[280px]">
           <Search size={15} color="#6E6E76" />
           <input placeholder="Search photographers, tags..." className="bg-transparent outline-none text-[13px] text-[#F5F5F7] placeholder-[#6E6E76] w-full" />
         </div>
-        <button className="relative w-9 h-9 rounded-full bg-[#131316] border border-[#2A2A2E] flex items-center justify-center">
-          <Bell size={16} color="#A1A1AA" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FF4D6D]" />
+
+        {currentUser ? (
+          <div className="flex items-center gap-3">
+            <button className="relative w-9 h-9 rounded-full bg-[#131316] border border-[#2A2A2E] flex items-center justify-center hover:border-[#3A3A40]">
+              <Bell size={16} color="#A1A1AA" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FF4D6D]" />
+            </button>
+            <button
+              onClick={logoutUser}
+              className="text-[12px] font-semibold text-[#F87171] bg-[#F87171]/10 px-3 py-1.5 rounded-full hover:bg-[#F87171]/20 transition-all"
+            >
+              Log out
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onOpenAuth?.('login')}
+              className="px-4 py-1.5 rounded-full text-[13px] font-semibold text-[#A1A1AA] hover:text-white"
+            >
+              Log in
+            </button>
+            <button
+              onClick={() => onOpenAuth?.('signup')}
+              className="px-4 py-1.5 rounded-full text-[13px] font-semibold text-[#0A0A0C] bg-[#FF4D6D] hover:brightness-110 shadow-[0_2px_10px_rgba(255,77,109,0.3)]"
+            >
+              Sign up
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------- Auth Modal -------------------------------- */
+
+function AuthModal({ mode, onClose, onSuccess }) {
+  const { signUpUser, loginUser } = useApp();
+  const [authMode, setAuthMode] = useState(mode); // 'login' | 'signup'
+  const [role, setRole] = useState('photographer'); // 'photographer' | 'client'
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [location, setLocation] = useState('Accra, Ghana');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setLoading(true);
+
+    if (authMode === 'signup') {
+      if (!name || !email || !password) {
+        setErrorMsg('Please fill out all required fields.');
+        setLoading(false);
+        return;
+      }
+      const res = await signUpUser({ name, email, password, role, location });
+      setLoading(false);
+      if (res.success) {
+        onSuccess?.();
+        onClose();
+      } else {
+        setErrorMsg(res.error || 'Sign up failed.');
+      }
+    } else {
+      if (!email || !password) {
+        setErrorMsg('Please enter email and password.');
+        setLoading(false);
+        return;
+      }
+      const res = await loginUser({ email, password });
+      setLoading(false);
+      if (res.success) {
+        onSuccess?.();
+        onClose();
+      } else {
+        setErrorMsg(res.error || 'Invalid email or password.');
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-md bg-[#131316] border border-[#2A2A2E] rounded-2xl p-6 relative" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-4 right-4 text-[#A1A1AA] hover:text-white">
+          <X size={20} />
         </button>
+
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF4D6D] to-[#6E5BFF] flex items-center justify-center">
+            <Camera size={16} color="#0A0A0C" strokeWidth={2.5} />
+          </div>
+          <span className="text-[#F5F5F7] font-bold text-[18px]">LensLeague</span>
+        </div>
+
+        <h2 className="text-[20px] font-bold text-[#F5F5F7] mb-1">
+          {authMode === 'signup' ? 'Create your account' : 'Welcome back'}
+        </h2>
+        <p className="text-[13px] text-[#A1A1AA] mb-6">
+          {authMode === 'signup' ? 'Join the home for photographers and clients.' : 'Log in to your LensLeague profile.'}
+        </p>
+
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] text-[13px]">
+            {errorMsg}
+          </div>
+        )}
+
+        {authMode === 'signup' && (
+          <div className="flex gap-2 mb-5">
+            <button
+              type="button"
+              onClick={() => setRole('photographer')}
+              className={`flex-1 py-2.5 rounded-xl text-[13px] font-semibold border transition-all ${role === 'photographer' ? 'bg-[#FF4D6D] border-[#FF4D6D] text-[#0A0A0C]' : 'bg-[#1C1C20] border-[#2A2A2E] text-[#A1A1AA]'}`}
+            >
+              📷 Photographer
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole('client')}
+              className={`flex-1 py-2.5 rounded-xl text-[13px] font-semibold border transition-all ${role === 'client' ? 'bg-[#FF4D6D] border-[#FF4D6D] text-[#0A0A0C]' : 'bg-[#1C1C20] border-[#2A2A2E] text-[#A1A1AA]'}`}
+            >
+              💼 Client
+            </button>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {authMode === 'signup' && (
+            <div>
+              <label className="text-[12px] text-[#A1A1AA] mb-1 block">Full Name</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Naledi Osei"
+                className="w-full bg-[#1C1C20] border border-[#2A2A2E] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none focus:border-[#FF4D6D]"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="text-[12px] text-[#A1A1AA] mb-1 block">Email address</label>
+            <input
+              type="email"
+              required
+              placeholder="you@example.com"
+              className="w-full bg-[#1C1C20] border border-[#2A2A2E] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none focus:border-[#FF4D6D]"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="text-[12px] text-[#A1A1AA] mb-1 block">Password</label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••••••"
+              className="w-full bg-[#1C1C20] border border-[#2A2A2E] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none focus:border-[#FF4D6D]"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+          </div>
+
+          {authMode === 'signup' && (
+            <div>
+              <label className="text-[12px] text-[#A1A1AA] mb-1 block">Location</label>
+              <input
+                type="text"
+                placeholder="e.g. Accra, Ghana"
+                className="w-full bg-[#1C1C20] border border-[#2A2A2E] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none focus:border-[#FF4D6D]"
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+              />
+            </div>
+          )}
+
+          <PrimaryButton full disabled={loading} className="mt-2">
+            {loading ? 'Authenticating...' : authMode === 'signup' ? 'Create Account' : 'Log In'}
+          </PrimaryButton>
+        </form>
+
+        <div className="mt-6 text-center text-[13px] text-[#A1A1AA]">
+          {authMode === 'signup' ? (
+            <>Already have an account? <button onClick={() => setAuthMode('login')} className="text-[#FF4D6D] font-semibold hover:underline">Log in</button></>
+          ) : (
+            <>Don't have an account? <button onClick={() => setAuthMode('signup')} className="text-[#FF4D6D] font-semibold hover:underline">Sign up</button></>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -214,66 +406,118 @@ function TopBar({ title }) {
 /* -------------------------------- Landing -------------------------------- */
 
 function Landing({ enter }) {
+  const [authModal, setAuthModal] = useState(null); // 'login' | 'signup' | null
+
   return (
     <div className="w-full h-full overflow-y-auto bg-[#0A0A0C]">
-      <div className="relative h-[640px] overflow-hidden">
-        <div className="absolute inset-0 grid grid-cols-4 gap-1 opacity-70">
+
+      {/* Top Header Nav */}
+      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 py-4 bg-[#0A0A0C]/80 backdrop-blur-xl border-b border-[#1C1C20]">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={enter}>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF4D6D] to-[#6E5BFF] flex items-center justify-center">
+            <Camera size={18} color="#0A0A0C" strokeWidth={2.5} />
+          </div>
+          <span className="text-[#F5F5F7] font-bold text-[19px] tracking-tight">LensLeague</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setAuthModal('login')}
+            className="px-5 py-2 rounded-full text-[14px] font-semibold text-[#A1A1AA] hover:text-white transition-colors"
+          >
+            Log in
+          </button>
+          <button
+            onClick={() => setAuthModal('signup')}
+            className="px-5 py-2 rounded-full text-[14px] font-semibold text-[#0A0A0C] bg-[#FF4D6D] shadow-[0_4px_16px_rgba(255,77,109,0.4)] hover:brightness-110 transition-all"
+          >
+            Sign up
+          </button>
+        </div>
+      </nav>
+
+      {/* Animated Hero */}
+      <div className="relative min-h-[680px] pt-20 overflow-hidden flex items-center justify-center">
+        <div className="absolute inset-0 grid grid-cols-4 gap-1 opacity-50 transition-opacity duration-1000 hover:opacity-75">
           {["h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8"].map((s, i) => (
-            <img key={s} src={img(s, 400, 500)} className="w-full h-full object-cover" style={{ gridRow: i % 2 === 0 ? "span 1" : "span 2" }} />
+            <img key={s} src={img(s, 400, 500)} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" style={{ gridRow: i % 2 === 0 ? "span 1" : "span 2" }} />
           ))}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/80 to-[#0A0A0C]/20" />
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF4D6D] to-[#6E5BFF] flex items-center justify-center">
-              <Camera size={20} color="#0A0A0C" strokeWidth={2.5} />
-            </div>
-            <span className="text-[#F5F5F7] font-bold text-[22px] tracking-tight">LensLeague</span>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/85 to-[#0A0A0C]/30" />
+
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 max-w-4xl mx-auto py-16">
+          
+          {/* Live vote ticker pill */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF4D6D]/10 border border-[#FF4D6D]/30 text-[#FF4D6D] text-[12px] font-bold tracking-wide uppercase mb-6 animate-pulse">
+            <Flame size={14} /> ⚡ 24,810 votes live right now
           </div>
-          <h1 className="text-[#F5F5F7] font-bold text-[52px] leading-[1.05] max-w-2xl tracking-tight">
-            Where your portfolio<br />has a scoreboard.
+
+          <h1 className="text-[#F5F5F7] font-bold text-[56px] leading-[1.05] tracking-tight mb-4">
+            Where your portfolio<br />
+            <span className="bg-gradient-to-r from-[#FF4D6D] via-[#FF758F] to-[#6E5BFF] bg-clip-text text-transparent">
+              has a scoreboard.
+            </span>
           </h1>
-          <p className="text-[#A1A1AA] text-[17px] mt-5 max-w-md">
-            Showcase your work, battle other photographers head-to-head, climb the rankings, and get discovered by clients who are actually looking.
+
+          <p className="text-[#A1A1AA] text-[18px] max-w-lg leading-relaxed mb-8">
+            Upload your best shots, compete head-to-head, rank up globally, and get booked directly by clients.
           </p>
-          <div className="flex items-center gap-3 mt-8">
-            <PrimaryButton onClick={enter} className="px-7 py-3.5 text-[15px]">I'm a Photographer</PrimaryButton>
-            <SecondaryButton onClick={enter} className="px-7 py-3.5 text-[15px]">Find a Photographer</SecondaryButton>
+
+          <div className="flex items-center gap-4">
+            <PrimaryButton onClick={() => setAuthModal('signup')} className="px-8 py-3.5 text-[15px] shadow-[0_6px_24px_rgba(255,77,109,0.4)]">
+              I'm a Photographer
+            </PrimaryButton>
+            <SecondaryButton onClick={enter} className="px-8 py-3.5 text-[15px]">
+              Find a Photographer
+            </SecondaryButton>
           </div>
         </div>
       </div>
 
+      {/* Feature Value Props */}
       <div className="max-w-5xl mx-auto px-8 py-20 grid grid-cols-3 gap-8">
         {[
           { icon: UploadIcon, title: "Upload", body: "Post your best work to a feed and curated portfolio built for photography, not squares." },
           { icon: Swords, title: "Compete", body: "Enter head-to-head battles judged by the community. Every vote moves your rank." },
           { icon: Trophy, title: "Get Hired", body: "Clients search by rank, category, and rating — ranked work gets found first." },
         ].map(({ icon: Icon, title, body }) => (
-          <div key={title} className="rounded-2xl border border-[#1C1C20] bg-[#131316] p-6">
-            <div className="w-10 h-10 rounded-lg bg-[#1C1C20] flex items-center justify-center mb-4">
-              <Icon size={18} color="#FF4D6D" />
+          <div key={title} className="rounded-2xl border border-[#1C1C20] bg-[#131316] p-6 hover:border-[#FF4D6D]/40 transition-all group cursor-pointer hover:-translate-y-1">
+            <div className="w-12 h-12 rounded-xl bg-[#1C1C20] border border-[#2A2A2E] flex items-center justify-center mb-5 group-hover:bg-[#FF4D6D]/10 transition-colors">
+              <Icon size={22} color="#FF4D6D" />
             </div>
-            <h3 className="text-[#F5F5F7] font-semibold text-[16px] mb-2">{title}</h3>
-            <p className="text-[#A1A1AA] text-[13px] leading-relaxed">{body}</p>
+            <h3 className="text-[#F5F5F7] font-semibold text-[17px] mb-2">{title}</h3>
+            <p className="text-[#A1A1AA] text-[14px] leading-relaxed">{body}</p>
           </div>
         ))}
       </div>
 
+      {/* Top Ranked Teaser */}
       <div className="max-w-5xl mx-auto px-8 pb-24">
-        <h2 className="text-[#F5F5F7] font-bold text-[20px] mb-5">This week's top ranked</h2>
+        <h2 className="text-[#F5F5F7] font-bold text-[22px] mb-6">This week's top ranked</h2>
         <div className="grid grid-cols-3 gap-5">
           {LEADERBOARD.slice(0, 3).map((p) => (
-            <div key={p.id} className="rounded-2xl border border-[#1C1C20] bg-[#131316] p-4 flex items-center gap-3">
-              <RankBadge rank={p.rank} size={36} />
-              <img src={p.avatar} className="w-11 h-11 rounded-full object-cover" />
+            <div key={p.id} className="rounded-2xl border border-[#1C1C20] bg-[#131316] p-5 flex items-center gap-4 hover:border-[#2A2A2E] transition-all">
+              <RankBadge rank={p.rank} size={38} />
+              <img src={p.avatar} className="w-12 h-12 rounded-full object-cover border border-[#2A2A2E]" />
               <div className="min-w-0">
-                <div className="text-[#F5F5F7] font-semibold text-[14px] truncate">{p.name}</div>
+                <div className="text-[#F5F5F7] font-semibold text-[15px] truncate">{p.name}</div>
                 <div className="text-[#6E6E76] text-[12px] truncate">{p.category} · {p.location}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Render Auth Modal */}
+      {authModal && (
+        <AuthModal
+          mode={authModal}
+          onClose={() => setAuthModal(null)}
+          onSuccess={() => {
+            setAuthModal(null);
+            enter();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1307,6 +1551,7 @@ function BookAppointment({ onDone }) {
 
 export default function PrototypeApp({ initialScreen = "landing" }) {
   const [screen, setScreen] = useState(initialScreen);
+  const [appAuthModal, setAppAuthModal] = useState(null); // 'login' | 'signup' | null
 
   const titles = {
     home: "Home", discover: "Discover", compete: "Compete",
@@ -1326,7 +1571,7 @@ export default function PrototypeApp({ initialScreen = "landing" }) {
     <div style={{ fontFamily: "Inter, ui-sans-serif, system-ui" }} className="w-full h-full bg-[#0A0A0C] flex overflow-hidden">
       <Sidebar screen={screen} setScreen={setScreen} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar title={titles[screen] || "LensLeague"} />
+        <TopBar title={titles[screen] || "LensLeague"} onOpenAuth={(mode) => setAppAuthModal(mode)} />
         <div className="flex-1 flex overflow-hidden">
           {screen === "home" && <HomeFeed goToCompete={() => setScreen("compete")} />}
           {screen === "discover" && <Discover />}
@@ -1339,6 +1584,14 @@ export default function PrototypeApp({ initialScreen = "landing" }) {
           {screen === "book" && <BookAppointment onDone={() => setScreen("profile")} />}
         </div>
       </div>
+
+      {appAuthModal && (
+        <AuthModal
+          mode={appAuthModal}
+          onClose={() => setAppAuthModal(null)}
+          onSuccess={() => setAppAuthModal(null)}
+        />
+      )}
     </div>
   );
 }

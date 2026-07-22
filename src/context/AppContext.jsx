@@ -77,9 +77,106 @@ export function AppProvider({ children }) {
   const [follows, setFollows] = useState([]);
   const [comments, setComments] = useState([]);
 
+  const signUpUser = async ({ name, email, password, role = 'photographer', location = 'Tokyo, Japan' }) => {
+    try {
+      let createdProfile = {
+        id: `usr_${Date.now()}`,
+        name,
+        username: email.split('@')[0].toLowerCase(),
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+        bio: role === 'photographer' ? 'LensLeague Photographer.' : 'Client on LensLeague.',
+        location,
+        role,
+        verified: false,
+        banned: false,
+        points: 100,
+        global_rank: 42
+      };
+
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name, role, location }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          createdProfile.id = data.user.id;
+          const { error: profileError } = await supabase.from('profiles').insert(createdProfile);
+          if (profileError) console.warn('Supabase profile creation note:', profileError.message);
+        }
+      }
+
+      setUserEmail(email);
+      setCurrentUser(createdProfile);
+      setCurrentRole(role);
+      localStorage.setItem('ll-user-email', email);
+      localStorage.setItem('ll-current-role', role);
+
+      await recordAuditLog('USER_SIGNUP', createdProfile.id, { role, email });
+      return { success: true, user: createdProfile };
+    } catch (err) {
+      console.error('SignUp Error:', err);
+      return { success: false, error: 'Sign up failed. Please check your credentials.' };
+    }
+  };
+
+  const loginUser = async ({ email, password }) => {
+    try {
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          return { success: false, error: 'Invalid email or password.' };
+        }
+
+        if (data.user) {
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+          if (profile) {
+            setUserEmail(email);
+            setCurrentUser(profile);
+            setCurrentRole(profile.role);
+            localStorage.setItem('ll-user-email', email);
+            localStorage.setItem('ll-current-role', profile.role);
+            await recordAuditLog('USER_LOGIN', profile.id, { email });
+            return { success: true, user: profile };
+          }
+        }
+      }
+
+      // Local fallback mock login if Supabase not connected or test mode
+      const mockProfile = {
+        id: `usr_${Date.now()}`,
+        name: email.split('@')[0],
+        username: email.split('@')[0].toLowerCase(),
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
+        bio: 'LensLeague Member',
+        location: 'Tokyo, JP',
+        role: 'photographer',
+        points: 250,
+        global_rank: 14
+      };
+
+      setUserEmail(email);
+      setCurrentUser(mockProfile);
+      localStorage.setItem('ll-user-email', email);
+      return { success: true, user: mockProfile };
+    } catch (err) {
+      return { success: false, error: 'Invalid email or password.' };
+    }
+  };
+
   // Fetch a user profile based on ID
   const fetchUserProfile = async (uid) => {
     try {
+      if (!isSupabaseConfigured) return;
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
@@ -90,70 +187,9 @@ export function AppProvider({ children }) {
         setCurrentUser(existingProfile);
         setCurrentRole(existingProfile.role);
         localStorage.setItem('ll-current-role', existingProfile.role);
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const meta = user.user_metadata || {};
-          const userRole = meta.role || 'photographer';
-          const newProfile = {
-            id: uid,
-            name: meta.name || 'Anonymous User',
-            username: meta.username || `user_${Date.now().toString(36)}`,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(meta.name || 'Anonymous')}&background=random&color=fff&size=128`,
-            bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
-            location: meta.location || 'Tokyo, Japan',
-            role: userRole,
-            verified: false,
-            banned: false,
-            points: 0,
-            global_rank: 99
-          };
-
-          const { error: seedError } = await supabase.from('profiles').insert(newProfile);
-          if (!seedError) {
-            setCurrentUser(newProfile);
-            setCurrentRole(userRole);
-            localStorage.setItem('ll-current-role', userRole);
-          } else {
-            console.warn('Profile insert failed (possible race condition), fetching instead:', seedError);
-            const { data: retryProfile } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
-            if (retryProfile) {
-              setCurrentUser(retryProfile);
-              setCurrentRole(retryProfile.role);
-              localStorage.setItem('ll-current-role', retryProfile.role);
-            } else {
-              console.error("Critical: Could not insert OR fetch profile. Falling back to auth user.");
-              // Fallback to raw auth user so the app doesn't break
-              setCurrentUser({
-                id: uid,
-                name: meta.name || 'Anonymous User',
-                username: meta.username || `user_${Date.now().toString(36)}`,
-                avatar: `https://images.unsplash.com/photo-${userRole === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
-                bio: 'LensLeague creator.',
-                location: meta.location || 'Tokyo, Japan',
-                role: userRole
-              });
-            }
-          }
-        }
       }
     } catch (err) {
-      console.error('Error fetching/seeding user profile:', err);
-      // Ensure we don't leave currentUser as null if network fails
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-          const meta = user.user_metadata || {};
-          setCurrentUser({
-            id: uid,
-            name: meta.name || 'Anonymous User',
-            username: meta.username || `user_${Date.now().toString(36)}`,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(meta.name || 'Anonymous')}&background=random&color=fff&size=128`,
-            bio: 'LensLeague creator.',
-            location: meta.location || 'Tokyo, Japan',
-            role: meta.role || 'photographer'
-          });
-        }
-      });
+      console.warn('Error fetching user profile:', err);
     }
   };
 
@@ -1035,6 +1071,8 @@ export function AppProvider({ children }) {
       updateProfile,
       castBattleVote,
       fetchPhotosPaginated,
+      signUpUser,
+      loginUser,
       logoutUser,
       follows,
       comments,

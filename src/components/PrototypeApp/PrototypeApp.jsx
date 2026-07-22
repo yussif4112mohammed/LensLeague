@@ -8,8 +8,10 @@ import {
   Send, Paperclip, UserCheck, UserPlus, Clock, Video, MapPin as PinIcon
 } from "lucide-react";
 
+import { useApp } from "../../context/AppContext";
+
 /* ------------------------------------------------------------------
-   LensLeague — Web Prototype
+   LensLeague — Web Prototype with Live Supabase Backend
    Design tokens pulled directly from blueprint Section 4.
 ------------------------------------------------------------------- */
 
@@ -122,6 +124,7 @@ function SecondaryButton({ children, onClick, className = "" }) {
 /* ------------------------------- Sidebar -------------------------------- */
 
 function Sidebar({ screen, setScreen, unreadMessages = 3 }) {
+  const { currentUser } = useApp();
   const items = [
     { key: "home", label: "Home", icon: Home },
     { key: "discover", label: "Discover", icon: Compass },
@@ -178,11 +181,11 @@ function Sidebar({ screen, setScreen, unreadMessages = 3 }) {
         >
           <SettingsIcon size={18} /> Settings
         </button>
-        <div className="flex items-center gap-3 px-3 py-3 mt-1">
-          <img src={PHOTOGRAPHERS[0].avatar} className="w-9 h-9 rounded-full object-cover" />
+        <div className="flex items-center gap-3 px-3 py-3 mt-1 cursor-pointer" onClick={() => setScreen("profile")}>
+          <img src={currentUser?.avatar || PHOTOGRAPHERS[0].avatar} className="w-9 h-9 rounded-full object-cover border border-[#2A2A2E]" />
           <div className="min-w-0">
-            <div className="text-[13px] font-semibold text-[#F5F5F7] truncate">{PHOTOGRAPHERS[0].name}</div>
-            <div className="text-[11px] text-[#6E6E76] truncate">{PHOTOGRAPHERS[0].handle}</div>
+            <div className="text-[13px] font-semibold text-[#F5F5F7] truncate">{currentUser?.name || PHOTOGRAPHERS[0].name}</div>
+            <div className="text-[11px] text-[#6E6E76] truncate">@{currentUser?.username || "me"}</div>
           </div>
         </div>
       </div>

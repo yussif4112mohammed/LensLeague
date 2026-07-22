@@ -242,3 +242,87 @@ CREATE POLICY "Allow authenticated users to write comments"
   ON public.comments FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE INDEX idx_comments_photo ON public.comments(photo_id);
+
+-- ── 11. LINKEDIN-STYLE MUTUAL CONNECTIONS ──
+CREATE TABLE public.connections (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_a_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  user_b_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+  requested_by UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  UNIQUE(user_a_id, user_b_id)
+);
+
+ALTER TABLE public.connections ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow users to read their connections"
+  ON public.connections FOR SELECT USING (auth.uid() = user_a_id OR auth.uid() = user_b_id);
+
+CREATE POLICY "Allow users to request connection"
+  ON public.connections FOR INSERT WITH CHECK (auth.uid() = requested_by);
+
+CREATE POLICY "Allow participants to update connection status"
+  ON public.connections FOR UPDATE USING (auth.uid() = user_a_id OR auth.uid() = user_b_id);
+
+
+-- ── 12. VERIFIED REVIEWS TABLE (COMPLETED BOOKINGS ONLY) ──
+CREATE TABLE public.reviews (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  booking_id UUID REFERENCES public.bookings(id) ON DELETE CASCADE NOT NULL,
+  reviewer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  reviewee_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5) NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to reviews"
+  ON public.reviews FOR SELECT USING (true);
+
+CREATE POLICY "Allow authenticated users to write reviews for completed bookings"
+  ON public.reviews FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
+
+
+-- ── 13. SAVED ITEMS & COLLECTIONS ──
+CREATE TABLE public.saved_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  photo_id UUID REFERENCES public.photos(id) ON DELETE CASCADE NOT NULL,
+  collection_name TEXT DEFAULT 'Favorites',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  UNIQUE(user_id, photo_id)
+);
+
+ALTER TABLE public.saved_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow users to read their saved items"
+  ON public.saved_items FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to save items"
+  ON public.saved_items FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow users to remove saved items"
+  ON public.saved_items FOR DELETE USING (auth.uid() = user_id);
+
+
+-- ── 14. CENTRAL SECURITY AUDIT LOGS ──
+CREATE TABLE public.audit_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated users to record audit logs"
+  ON public.audit_logs FOR INSERT WITH CHECK (auth.uid() = actor_id);
+
+CREATE POLICY "Allow admin to read audit logs"
+  ON public.audit_logs FOR SELECT USING (true);
+

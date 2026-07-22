@@ -938,6 +938,71 @@ export function AppProvider({ children }) {
     }
   };
 
+  // Audit Logging (OWASP Top 10 Transparency)
+  const recordAuditLog = async (action, target, metadata = {}) => {
+    const actorId = currentUser?.id;
+    if (!actorId) return;
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('audit_logs').insert({
+          actor_id: actorId,
+          action,
+          target,
+          metadata
+        });
+      } catch (err) {
+        console.warn('Audit log insert warning:', err.message);
+      }
+    }
+  };
+
+  // LinkedIn-style Mutual Connections State
+  const [connections, setConnections] = useState([]);
+
+  const requestConnection = async (targetUserId) => {
+    const userId = currentUser?.id;
+    if (!userId || userId === targetUserId) return;
+
+    const newConn = {
+      id: `conn_${Date.now()}`,
+      user_a_id: userId,
+      user_b_id: targetUserId,
+      status: 'pending',
+      requested_by: userId,
+      created_at: new Date().toISOString()
+    };
+
+    setConnections(prev => [...prev, newConn]);
+    await recordAuditLog('CONNECTION_REQUEST', targetUserId, { status: 'pending' });
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('connections').insert({
+          user_a_id: userId,
+          user_b_id: targetUserId,
+          status: 'pending',
+          requested_by: userId
+        });
+      } catch (err) {
+        console.warn('Supabase connection request error:', err.message);
+      }
+    }
+  };
+
+  const acceptConnection = async (connectionId) => {
+    setConnections(prev => prev.map(c => c.id === connectionId ? { ...c, status: 'accepted' } : c));
+    await recordAuditLog('CONNECTION_ACCEPT', connectionId, { status: 'accepted' });
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('connections').update({ status: 'accepted' }).eq('id', connectionId);
+      } catch (err) {
+        console.warn('Supabase connection accept error:', err.message);
+      }
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       currentRole,
@@ -973,6 +1038,10 @@ export function AppProvider({ children }) {
       logoutUser,
       follows,
       comments,
+      connections,
+      requestConnection,
+      acceptConnection,
+      recordAuditLog,
       followUser,
       unfollowUser,
       addPhotoComment

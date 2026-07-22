@@ -904,6 +904,50 @@ export function AppProvider({ children }) {
       return basePhotos.slice(start, end + 1);
     }
   };
+
+  const uploadPhoto = async ({ url, caption, category, destination = 'feed', alt_text = '' }) => {
+    const userId = currentUser?.id || 'anon_user';
+    const userName = currentUser?.name || 'Anonymous Photographer';
+    const userAvatar = currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
+
+    const newPhoto = {
+      id: `p_${Date.now()}`,
+      url,
+      owner_id: userId,
+      ownerId: userId,
+      ownerName: userName,
+      ownerAvatar: userAvatar,
+      caption: caption || 'New photography post',
+      category: category || 'Nature',
+      destination,
+      alt_text,
+      likes: 0,
+      comments: 0,
+      created_at: new Date().toISOString(),
+      timestamp: 'Just now'
+    };
+
+    setPhotos(prev => [newPhoto, ...prev]);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('photos').insert({
+          url,
+          owner_id: userId,
+          caption,
+          category,
+          destination,
+          alt_text
+        });
+      } catch (err) {
+        console.warn('Supabase photo upload note:', err.message);
+      }
+    }
+
+    await recordAuditLog('PHOTO_UPLOAD', newPhoto.id, { category, destination });
+    return newPhoto;
+  };
+
   const followUser = async (followingId) => {
     const followerId = currentUser?.id;
     if (!followerId) return;
@@ -1071,6 +1115,7 @@ export function AppProvider({ children }) {
       updateProfile,
       castBattleVote,
       fetchPhotosPaginated,
+      uploadPhoto,
       signUpUser,
       loginUser,
       logoutUser,

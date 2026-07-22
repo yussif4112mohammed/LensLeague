@@ -241,10 +241,10 @@ function TopBar({ title, onOpenAuth }) {
 
 /* -------------------------------- Auth Modal -------------------------------- */
 
-function AuthModal({ mode, onClose, onSuccess }) {
+function AuthModal({ mode, initialRole = 'photographer', onClose, onSuccess }) {
   const { signUpUser, loginUser } = useApp();
   const [authMode, setAuthMode] = useState(mode); // 'login' | 'signup'
-  const [role, setRole] = useState('photographer'); // 'photographer' | 'client'
+  const [role, setRole] = useState(initialRole); // 'photographer' | 'client'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -303,7 +303,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
         </div>
 
         <h2 className="text-[20px] font-bold text-[#F5F5F7] mb-1">
-          {authMode === 'signup' ? 'Create your account' : 'Welcome back'}
+          {authMode === 'signup' ? `Create your ${role} account` : 'Welcome back'}
         </h2>
         <p className="text-[13px] text-[#A1A1AA] mb-6">
           {authMode === 'signup' ? 'Join the home for photographers and clients.' : 'Log in to your LensLeague profile.'}
@@ -341,7 +341,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
               <input
                 type="text"
                 required
-                placeholder="e.g. Naledi Osei"
+                placeholder="e.g. Kofi Mensah"
                 className="w-full bg-[#1C1C20] border border-[#2A2A2E] rounded-xl px-4 py-2.5 text-[14px] text-white outline-none focus:border-[#FF4D6D]"
                 value={name}
                 onChange={e => setName(e.target.value)}
@@ -387,7 +387,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
           )}
 
           <PrimaryButton full disabled={loading} className="mt-2">
-            {loading ? 'Authenticating...' : authMode === 'signup' ? 'Create Account' : 'Log In'}
+            {loading ? 'Authenticating...' : authMode === 'signup' ? `Sign Up as ${role === 'client' ? 'Client' : 'Photographer'}` : 'Log In'}
           </PrimaryButton>
         </form>
 
@@ -406,14 +406,14 @@ function AuthModal({ mode, onClose, onSuccess }) {
 /* -------------------------------- Landing -------------------------------- */
 
 function Landing({ enter }) {
-  const [authModal, setAuthModal] = useState(null); // 'login' | 'signup' | null
+  const [authConfig, setAuthConfig] = useState(null); // { mode: 'login'|'signup', role: 'photographer'|'client' }
 
   return (
     <div className="w-full h-full overflow-y-auto bg-[#0A0A0C]">
 
       {/* Top Header Nav */}
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-8 py-4 bg-[#0A0A0C]/80 backdrop-blur-xl border-b border-[#1C1C20]">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={enter}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAuthConfig({ mode: 'signup', role: 'photographer' })}>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FF4D6D] to-[#6E5BFF] flex items-center justify-center">
             <Camera size={18} color="#0A0A0C" strokeWidth={2.5} />
           </div>
@@ -421,13 +421,13 @@ function Landing({ enter }) {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setAuthModal('login')}
+            onClick={() => setAuthConfig({ mode: 'login', role: 'photographer' })}
             className="px-5 py-2 rounded-full text-[14px] font-semibold text-[#A1A1AA] hover:text-white transition-colors"
           >
             Log in
           </button>
           <button
-            onClick={() => setAuthModal('signup')}
+            onClick={() => setAuthConfig({ mode: 'signup', role: 'photographer' })}
             className="px-5 py-2 rounded-full text-[14px] font-semibold text-[#0A0A0C] bg-[#FF4D6D] shadow-[0_4px_16px_rgba(255,77,109,0.4)] hover:brightness-110 transition-all"
           >
             Sign up
@@ -463,10 +463,10 @@ function Landing({ enter }) {
           </p>
 
           <div className="flex items-center gap-4">
-            <PrimaryButton onClick={() => setAuthModal('signup')} className="px-8 py-3.5 text-[15px] shadow-[0_6px_24px_rgba(255,77,109,0.4)]">
+            <PrimaryButton onClick={() => setAuthConfig({ mode: 'signup', role: 'photographer' })} className="px-8 py-3.5 text-[15px] shadow-[0_6px_24px_rgba(255,77,109,0.4)]">
               I'm a Photographer
             </PrimaryButton>
-            <SecondaryButton onClick={enter} className="px-8 py-3.5 text-[15px]">
+            <SecondaryButton onClick={() => setAuthConfig({ mode: 'signup', role: 'client' })} className="px-8 py-3.5 text-[15px]">
               Find a Photographer
             </SecondaryButton>
           </div>
@@ -508,12 +508,13 @@ function Landing({ enter }) {
       </div>
 
       {/* Render Auth Modal */}
-      {authModal && (
+      {authConfig && (
         <AuthModal
-          mode={authModal}
-          onClose={() => setAuthModal(null)}
+          mode={authConfig.mode}
+          initialRole={authConfig.role || 'photographer'}
+          onClose={() => setAuthConfig(null)}
           onSuccess={() => {
-            setAuthModal(null);
+            setAuthConfig(null);
             enter();
           }}
         />
@@ -976,7 +977,16 @@ function UploadFlow({ onDone }) {
     setTimeout(() => setModeration("clear"), 1400);
   };
 
-  const publish = () => {
+  const { uploadPhoto } = useApp();
+
+  const publish = async () => {
+    await uploadPhoto({
+      url: editedSrc,
+      caption,
+      category,
+      destination,
+      alt_text: altText
+    });
     setPublished(true);
     setTimeout(onDone, 1400);
   };

@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
             {currentSlide === 0 && (
               <div className="wrapped-slide">
                 <span className="wrapped-slide__icon">📸</span>
-                <h2 className="wrapped-slide__title text-primary">Your July<br/><span className="gradient-text" style={{ background: 'linear-gradient(135deg, #ff4d6d, #ff8fa3)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Wrapped</span></h2>
+                <h2 className="wrapped-slide__title text-primary">Your July<br/><span className="gradient-text" style={{ background: 'linear-gradient(135deg, #FFB020, #FFC24D)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Wrapped</span></h2>
                 <p className="wrapped-slide__desc text-secondary">Let's look back at your creative achievements this month on LensLeague.</p>
               </div>
             )}

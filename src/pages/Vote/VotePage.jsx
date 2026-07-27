@@ -26,7 +26,7 @@ export default function VotePage() {
       <div className="vote-done animate-fade-in">
         <div style={{ fontSize: 72 }}>🏆</div>
         <h2 className="display-lg">You're on fire!</h2>
-        <p className="body-lg">You voted on <strong style={{ color: '#FF4D6D' }}>{votedCount}</strong> battles today.</p>
+        <p className="body-lg">You voted on <strong style={{ color: '#FFB020' }}>{votedCount}</strong> battles today.</p>
         <p className="body-md">Come back tomorrow for fresh matchups.</p>
         <button
           className="vote-done__restart"
@@ -78,7 +78,7 @@ export default function VotePage() {
         <div className="vote-battle-meta">
           <span className="label">Category</span>
           <span className="vote-battle-meta__dot" />
-          <span className="body-md" style={{ color: '#FF4D6D', fontWeight: 700 }}>{battle.category}</span>
+          <span className="body-md" style={{ color: '#FFB020', fontWeight: 700 }}>{battle.category}</span>
           <div className="vote-meta-timer">
             ⏱ {battle.endsIn}
           </div>

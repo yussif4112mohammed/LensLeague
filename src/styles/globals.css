@@ -1,5 +1,5 @@
 /* ================================================================
-   LensLeague Global Styles — v2 (High-Contrast Redesign)
+   LensLeague Global Styles — v2.0 (The Leica Aperture Edition)
    ================================================================ */
 @import './tokens.css';
 
@@ -17,7 +17,7 @@ html {
 
 body {
   font-family: var(--font-ui);
-  background-color: var(--bg-base);
+  background-color: var(--bg-canvas);
   color: var(--text-primary);
   min-height: 100dvh;
   line-height: 1.5;
@@ -58,16 +58,17 @@ ul, ol {
   list-style: none;
 }
 
-/* ── Scrollbar ── */
+/* ── Scrollbar (Sleek Minimalist) ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
-/* ── Typography utilities ── */
+/* ── Typography Scale & Utility Classes ── */
 .display-xl {
   font-family: var(--font-display);
   font-size: var(--text-display-xl);
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.03em;
   background: var(--accent-gradient);
@@ -75,33 +76,102 @@ ul, ol {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-.display-lg { font-family: var(--font-display); font-size: var(--text-display-lg); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--text-primary); }
-.heading-1  { font-family: var(--font-display); font-size: 36px; font-weight: 500; line-height: 1.15; color: var(--text-primary); letter-spacing: -0.015em; }
-.heading-2  { font-family: var(--font-display); font-size: 26px; font-weight: 500; line-height: 1.2; color: var(--text-primary); letter-spacing: -0.01em; }
-.body-lg    { font-size: var(--text-body-lg); font-weight: 400; line-height: 1.6; color: var(--text-primary); }
-.body-md    { font-size: var(--text-body-md); font-weight: 400; line-height: 1.5; color: var(--text-primary); }
-.body-sm    { font-size: var(--text-body-sm); font-weight: 500; line-height: 1.4; color: var(--text-secondary); }
-.label      { font-size: var(--text-body-sm); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); }
 
-/* ── Color utilities ── */
+.display-lg {
+  font-family: var(--font-display);
+  font-size: var(--text-display-lg);
+  font-weight: 700;
+  line-height: 1.10;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.heading-1 {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-1);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.heading-2 {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-2);
+  font-weight: 600;
+  line-height: 1.20;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.heading-3 {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-3);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.body-lg { font-size: var(--text-body-lg); font-weight: 400; line-height: 1.60; color: var(--text-primary); }
+.body-md { font-size: var(--text-body-md); font-weight: 400; line-height: 1.50; color: var(--text-primary); }
+.body-sm { font-size: var(--text-body-sm); font-weight: 400; line-height: 1.40; color: var(--text-secondary); }
+.caption { font-size: var(--text-caption); font-weight: 400; line-height: 1.40; color: var(--text-tertiary); }
+
+.label {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Specialized EXIF Pill (Leica Camera Telemetry) ── */
+.exif-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(18, 18, 22, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.exif-pill--highlight {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+/* ── Color Utilities ── */
 .text-primary   { color: var(--text-primary) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-tertiary  { color: var(--text-tertiary) !important; }
 .text-accent    { color: var(--accent-primary) !important; }
-.text-violet    { color: var(--accent-secondary) !important; }
-.text-gold      { color: var(--accent-gold) !important; }
-.text-success   { color: var(--success) !important; }
-.text-error     { color: var(--error) !important; }
+.text-cyan      { color: var(--accent-cyan) !important; }
+.text-gold      { color: var(--accent-primary) !important; }
+.text-success   { color: var(--status-success) !important; }
+.text-error     { color: var(--status-error) !important; }
+.text-warning   { color: var(--status-warning) !important; }
 
-/* ── Layout utilities ── */
+/* ── Layout & Grid Utilities ── */
 .container {
   width: 100%;
-  max-width: 480px;
+  max-width: 680px;
   margin: 0 auto;
   padding: 0 var(--screen-px);
 }
 
-.container--wide { max-width: 1200px; }
+.container--wide {
+  max-width: 1240px;
+}
 
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
@@ -114,18 +184,47 @@ ul, ol {
 .gap-4 { gap: var(--space-4); }
 .gap-6 { gap: var(--space-6); }
 
-/* ── Card base (Glassmorphic by default) ── */
+/* ── Responsive Masonry Layout Engine ── */
+.masonry-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .masonry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .masonry-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1440px) {
+  .masonry-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ── Glassmorphic Surfaces (Layer 3 & 4) ── */
 .card, .glass-panel {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   overflow: hidden;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: var(--shadow-card);
+  transition: transform var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
 }
 
-/* ── Focus visible ── */
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.glass-header {
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-border);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* ── Focus Visible ── */
 :focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
@@ -136,26 +235,48 @@ ul, ol {
   height: 1px;
   background: var(--border-subtle);
   border: none;
+  width: 100%;
 }
 
-/* ── Gradient text ── */
+/* ── Gradient Text ── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ── Image scrim (bottom gradient overlay) ── */
+/* ── Image Scrim (Bottom Gradient Overlay) ── */
 .image-scrim::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10,10,12,0.92) 0%, rgba(10,10,12,0.3) 50%, transparent 100%);
+  background: linear-gradient(to top, rgba(8, 8, 10, 0.95) 0%, rgba(8, 8, 10, 0.35) 45%, transparent 100%);
   pointer-events: none;
 }
 
-/* ── Skeleton loader animation ── */
+/* ── Button Glow Effect (Primary Action) ── */
+.btn-primary-glow {
+  background: var(--accent-primary);
+  color: #08080A;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  box-shadow: 0 0 20px rgba(255, 176, 32, 0.35);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.btn-primary-glow:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 32px rgba(255, 176, 32, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-primary-glow:active {
+  transform: scale(0.98);
+}
+
+/* ── Skeleton Loader Shimmer (CLS-Free) ── */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -163,42 +284,51 @@ ul, ol {
 
 .skeleton {
   background: linear-gradient(90deg,
-    var(--bg-elevated-2) 25%,
-    var(--bg-elevated-3) 50%,
-    var(--bg-elevated-2) 75%
+    var(--bg-surface) 25%,
+    var(--bg-surface-elevated) 50%,
+    var(--bg-surface) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-md);
 }
 
-/* ── Animations ── */
+/* ── Phase 3 Choreographed Kinetic Animations ── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale3d(0.94, 0.94, 1); }
+  to   { opacity: 1; transform: scale3d(1, 1, 1); }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes heartBurst {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.4); }
-  60%  { transform: scale(0.9); }
-  100% { transform: scale(1); }
+  0%   { transform: scale3d(1, 1, 1); }
+  25%  { transform: scale3d(1.35, 1.35, 1); }
+  50%  { transform: scale3d(0.88, 0.88, 1); }
+  75%  { transform: scale3d(1.10, 1.10, 1); }
+  100% { transform: scale3d(1, 1, 1); }
 }
 
-.animate-fade-in  { animation: fadeIn var(--transition-normal) ease-out both; }
-.animate-scale-in { animation: scaleIn var(--transition-fast) ease-out both; }
+@keyframes trophyShimmer {
+  0%   { border-color: rgba(255, 255, 255, 0.12); }
+  50%  { border-color: var(--accent-primary); box-shadow: 0 0 24px rgba(255, 176, 32, 0.4); }
+  100% { border-color: rgba(255, 255, 255, 0.12); }
+}
 
-/* ── Reduced motion ── */
+.animate-fade-in  { animation: fadeIn var(--duration-normal) var(--ease-spring) both; }
+.animate-scale-in { animation: scaleIn var(--duration-fast) var(--ease-snappy) both; }
+.animate-heart    { animation: heartBurst 450ms var(--ease-spring) both; }
+.animate-trophy   { animation: trophyShimmer 2s infinite ease-in-out; }
+
+/* ── Reduced Motion (Accessibility) ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -206,7 +336,7 @@ ul, ol {
   }
 }
 
-/* ── App layout ── */
+/* ── App Shell & Responsive Layout ── */
 #root {
   display: flex;
   flex-direction: column;
@@ -219,39 +349,38 @@ ul, ol {
   min-height: 100dvh;
 }
 
-/* Mobile: page needs padding for bottom nav */
 .page-content {
   flex: 1;
-  padding-bottom: calc(var(--bottom-nav-height) + 16px);
+  padding-bottom: calc(var(--bottom-nav-height) + 20px);
 }
 
-/* Desktop: sidebar layout */
 @media (min-width: 1024px) {
   .app-shell {
     flex-direction: row;
   }
   .page-content {
     padding-bottom: var(--space-8);
-    margin-left: 240px;
+    margin-left: var(--sidebar-width);
   }
 }
 
-/* ── Form inputs (global baseline — higher contrast) ── */
+/* ── Form Inputs (Precision Milled Aesthetic) ── */
 .form-input, .form-textarea {
   background: var(--input-bg);
   border: 1.5px solid var(--input-border);
   color: var(--text-primary);
-  border-radius: 12px;
-  padding: 0 16px;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
   font-size: 15px;
-  transition: border-color 0.18s, background 0.18s;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+  width: 100%;
 }
 
 .form-input:focus, .form-textarea:focus {
   border-color: var(--accent-primary);
   background: var(--input-focus-bg);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255,77,109,0.1);
+  box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.15);
 }
 
 .form-input::placeholder,
@@ -259,44 +388,24 @@ ul, ol {
   color: var(--text-tertiary);
 }
 
-/* ── Section page wrapper (consistent padding for all inner pages) ── */
+/* ── Page Section Wrapper ── */
 .page-wrapper {
   max-width: 680px;
   margin: 0 auto;
-  padding: 24px 16px 80px;
+  padding: 24px 20px 80px;
 }
 
 .page-title {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   letter-spacing: -0.02em;
 }
 
 .page-subtitle {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-secondary);
-  margin-bottom: 24px;
-}
-
-/* ── Global animation keyframes ── */
-@keyframes backdrop-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes modal-scale-in {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-@keyframes animate-fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: animate-fade-in 0.28s ease forwards;
+  margin-bottom: 28px;
 }

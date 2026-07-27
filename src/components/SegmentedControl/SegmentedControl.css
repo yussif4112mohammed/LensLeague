@@ -29,8 +29,8 @@
 
 .segmented-control__btn--active {
   background: var(--accent-primary);
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(255,77,109,0.25);
+  color: #08080A;
+  box-shadow: 0 2px 8px rgba(255,176,32,0.25);
 }
 
 /* Full-width variant */

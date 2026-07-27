@@ -77,12 +77,31 @@ export function AppProvider({ children }) {
   const [follows, setFollows] = useState([]);
   const [comments, setComments] = useState([]);
 
-  const signUpUser = async ({ name, email, password, role = 'photographer', location = 'Tokyo, Japan' }) => {
+  // ── Username Availability Check (calls DB RPC) ──
+  const checkUsernameAvailable = async (username) => {
+    if (!username || username.length < 3) return false;
+    if (!isSupabaseConfigured) return true; // allow anything in mock mode
     try {
+      const { data, error } = await supabase.rpc('is_username_available', {
+        check_username: username.toLowerCase().trim()
+      });
+      if (error) { console.warn('Username check error:', error.message); return true; }
+      return data === true;
+    } catch (err) {
+      console.warn('Username check exception:', err); return true;
+    }
+  };
+
+  const signUpUser = async ({ name, email, password, username, role = 'photographer', location = 'Tokyo, Japan' }) => {
+    try {
+      // Derive username from email if not provided (backward compat)
+      const finalUsername = (username || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9_.]/g, '');
+
       let createdProfile = {
         id: `usr_${Date.now()}`,
         name,
-        username: email.split('@')[0].toLowerCase(),
+        username: finalUsername,
+        display_name: name,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
         bio: role === 'photographer' ? 'LensLeague Photographer.' : 'Client on LensLeague.',
         location,
@@ -90,24 +109,34 @@ export function AppProvider({ children }) {
         verified: false,
         banned: false,
         points: 100,
-        global_rank: 42
+        global_rank: 42,
+        onboarding_completed: false
       };
 
       if (isSupabaseConfigured) {
+        // The handle_new_user trigger auto-creates the profile row
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { name, role, location }
+            data: { username: finalUsername, display_name: name, name, role, location },
+            emailRedirectTo: window.location.origin
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase Auth Error:', error.message, error.status, error);
+          throw error;
+        }
 
         if (data.user) {
           createdProfile.id = data.user.id;
-          const { error: profileError } = await supabase.from('profiles').insert(createdProfile);
-          if (profileError) console.warn('Supabase profile creation note:', profileError.message);
+          // Fetch the trigger-created profile to get the canonical data
+          const { data: profile } = await supabase
+            .from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+          if (profile) {
+            createdProfile = { ...createdProfile, ...profile };
+          }
         }
       }
 
@@ -120,8 +149,10 @@ export function AppProvider({ children }) {
       await recordAuditLog('USER_SIGNUP', createdProfile.id, { role, email });
       return { success: true, user: createdProfile };
     } catch (err) {
-      console.error('SignUp Error:', err);
-      return { success: false, error: 'Sign up failed. Please check your credentials.' };
+      console.error('SignUp Error (full):', JSON.stringify(err, null, 2));
+      console.error('SignUp Error name:', err?.name, 'message:', err?.message, 'status:', err?.status);
+      const msg = err?.message || 'Sign up failed. Please check your credentials.';
+      return { success: false, error: msg };
     }
   };
 
@@ -156,12 +187,14 @@ export function AppProvider({ children }) {
         id: `usr_${Date.now()}`,
         name: email.split('@')[0],
         username: email.split('@')[0].toLowerCase(),
+        display_name: email.split('@')[0],
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
         bio: 'LensLeague Member',
         location: 'Tokyo, JP',
         role: 'photographer',
         points: 250,
-        global_rank: 14
+        global_rank: 14,
+        onboarding_completed: true  // Mock users skip onboarding
       };
 
       setUserEmail(email);
@@ -171,6 +204,81 @@ export function AppProvider({ children }) {
     } catch (err) {
       return { success: false, error: 'Invalid email or password.' };
     }
+  };
+
+  // ── Onboarding Helpers ──
+  const uploadAvatar = async (file) => {
+    const userId = currentUser?.id;
+    if (!userId || !file) return null;
+
+    if (!isSupabaseConfigured) {
+      // Mock: create local URL
+      const localUrl = URL.createObjectURL(file);
+      setCurrentUser(prev => ({ ...prev, avatar_url: localUrl, avatar: localUrl }));
+      return localUrl;
+    }
+
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${userId}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      await supabase.from('profiles').update({
+        avatar_url: publicUrl,
+        avatar: publicUrl,
+        updated_at: new Date().toISOString()
+      }).eq('id', userId);
+
+      setCurrentUser(prev => ({ ...prev, avatar_url: publicUrl, avatar: publicUrl }));
+      return publicUrl;
+    } catch (err) {
+      console.error('Avatar upload error:', err);
+      return null;
+    }
+  };
+
+  const setProfileCategories = async (categoryIds) => {
+    const userId = currentUser?.id;
+    if (!userId || !categoryIds?.length) return;
+
+    if (isSupabaseConfigured) {
+      try {
+        // Clear existing selections and insert new ones
+        await supabase.from('profile_categories').delete().eq('profile_id', userId);
+        const rows = categoryIds.map(cid => ({ profile_id: userId, category_id: cid }));
+        await supabase.from('profile_categories').insert(rows);
+      } catch (err) {
+        console.warn('Profile categories error:', err.message);
+      }
+    }
+  };
+
+  const completeOnboarding = async () => {
+    const userId = currentUser?.id;
+    if (!userId) return;
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('profiles').update({
+          onboarding_completed: true,
+          updated_at: new Date().toISOString()
+        }).eq('id', userId);
+      } catch (err) {
+        console.warn('Onboarding completion error:', err.message);
+      }
+    }
+
+    setCurrentUser(prev => ({ ...prev, onboarding_completed: true }));
   };
 
   // Fetch a user profile based on ID
@@ -846,6 +954,72 @@ export function AppProvider({ children }) {
     }
   };
 
+  const searchUsers = async (query) => {
+    if (!query || query.trim().length === 0) return [];
+    if (!isSupabaseConfigured) {
+      return users.filter(u =>
+        u.name?.toLowerCase().includes(query.toLowerCase()) ||
+        u.username?.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    try {
+      const { data, error } = await supabase.rpc('search_users', {
+        query: query.trim(),
+        p_limit: 20
+      });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('searchUsers error:', err.message);
+      return [];
+    }
+  };
+
+  const searchPosts = async (query) => {
+    if (!query || query.trim().length === 0) return [];
+    if (!isSupabaseConfigured) {
+      return photos.filter(p =>
+        p.caption?.toLowerCase().includes(query.toLowerCase()) ||
+        p.category?.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    try {
+      const { data, error } = await supabase.rpc('search_posts', {
+        query: query.trim(),
+        p_limit: 20
+      });
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.warn('searchPosts error:', err.message);
+      return [];
+    }
+  };
+
+  const toggleLikePost = async (postId) => {
+    const userId = currentUser?.id;
+    if (!userId) return;
+
+    if (isSupabaseConfigured && !userId.startsWith('usr_')) {
+      try {
+        const { data: existing } = await supabase
+          .from('likes')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('post_id', postId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase.from('likes').delete().eq('user_id', userId).eq('post_id', postId);
+        } else {
+          await supabase.from('likes').insert({ user_id: userId, post_id: postId });
+        }
+      } catch (err) {
+        console.warn('toggleLikePost error:', err.message);
+      }
+    }
+  };
+
   const fetchPhotosPaginated = async (start, end, filterType = 'for-you') => {
     let basePhotos = photos;
     if (filterType === 'following' && currentUser) {
@@ -858,6 +1032,27 @@ export function AppProvider({ children }) {
       return basePhotos.slice(start, end + 1);
     }
     try {
+      // Try get_feed RPC first for algorithmically ranked timeline
+      if (filterType === 'for-you' && currentUser?.id && !currentUser.id.startsWith('usr_')) {
+        const { data: feedPosts, error: rpcErr } = await supabase.rpc('get_feed', {
+          p_user_id: currentUser.id,
+          p_limit: end - start + 1
+        });
+        if (!rpcErr && feedPosts && feedPosts.length > 0) {
+          return feedPosts.map(p => ({
+            id: p.id,
+            url: p.image_url,
+            isVideo: p.image_url?.toLowerCase()?.includes('.mp4') || p.image_url?.includes('/video/'),
+            ownerId: p.author_id,
+            caption: p.caption,
+            likes: p.like_count || 0,
+            comments: p.comment_count || 0,
+            aspectRatio: '3/4',
+            timestamp: 'Just now'
+          }));
+        }
+      }
+
       let query = supabase.from('photos').select('*, profiles:owner_id(*)');
 
       if (filterType === 'following' && currentUser) {
@@ -905,14 +1100,40 @@ export function AppProvider({ children }) {
     }
   };
 
-  const uploadPhoto = async ({ url, caption, category, destination = 'feed', alt_text = '' }) => {
+  const uploadPhoto = async ({ file, url, caption, category, destination = 'feed', alt_text = '' }) => {
     const userId = currentUser?.id || 'anon_user';
-    const userName = currentUser?.name || 'Anonymous Photographer';
-    const userAvatar = currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
+    const userName = currentUser?.display_name || currentUser?.name || 'Anonymous Photographer';
+    const userAvatar = currentUser?.avatar_url || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
+
+    let finalUrl = url;
+
+    // Handle Storage File upload if a File object is provided
+    if (file && isSupabaseConfigured) {
+      try {
+        const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
+        const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+        const { error: uploadErr } = await supabase.storage
+          .from('post-media')
+          .upload(fileName, file, { contentType: file.type || 'image/jpeg' });
+
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage
+            .from('post-media')
+            .getPublicUrl(fileName);
+          if (urlData?.publicUrl) {
+            finalUrl = urlData.publicUrl;
+          }
+        } else {
+          console.warn('Storage upload warning:', uploadErr.message);
+        }
+      } catch (err) {
+        console.warn('Storage upload exception:', err);
+      }
+    }
 
     const newPhoto = {
       id: `p_${Date.now()}`,
-      url,
+      url: finalUrl,
       owner_id: userId,
       ownerId: userId,
       ownerName: userName,
@@ -931,14 +1152,26 @@ export function AppProvider({ children }) {
 
     if (isSupabaseConfigured) {
       try {
+        // Insert into legacy photos table for backward compatibility
         await supabase.from('photos').insert({
-          url,
+          url: finalUrl,
           owner_id: userId,
           caption,
           category,
           destination,
           alt_text
         });
+
+        // Also insert into new production `posts` table if authenticated
+        if (userId && !userId.startsWith('usr_') && !userId.startsWith('anon_')) {
+          await supabase.from('posts').insert({
+            author_id: userId,
+            image_url: finalUrl,
+            caption: caption || '',
+            location: currentUser?.location || '',
+            visibility: 'public'
+          });
+        }
       } catch (err) {
         console.warn('Supabase photo upload note:', err.message);
       }
@@ -1127,7 +1360,15 @@ export function AppProvider({ children }) {
       recordAuditLog,
       followUser,
       unfollowUser,
-      addPhotoComment
+      addPhotoComment,
+      // Phase 2 & 6 additions
+      checkUsernameAvailable,
+      uploadAvatar,
+      setProfileCategories,
+      completeOnboarding,
+      searchUsers,
+      searchPosts,
+      toggleLikePost
     }}>
       {children}
     </AppContext.Provider>

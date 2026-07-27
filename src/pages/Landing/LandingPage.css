@@ -51,7 +51,7 @@
 .lp-nav__signup {
   font-size: 13px; font-weight: 700;
   color: #FFFFFF;
-  background: var(--accent-primary, #FF4D6D);
+  background: var(--accent-primary, #FFB020);
   padding: 8px 18px;
   border-radius: 9999px;
   box-shadow: 0 4px 14px rgba(255, 77, 109, 0.4);
@@ -85,8 +85,8 @@
   align-items: center;
   gap: 8px;
   background: rgba(255, 77, 109, 0.08);
-  border: 1.5px solid var(--accent-primary, #FF4D6D);
-  color: var(--accent-primary, #FF4D6D);
+  border: 1.5px solid var(--accent-primary, #FFB020);
+  color: var(--accent-primary, #FFB020);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;

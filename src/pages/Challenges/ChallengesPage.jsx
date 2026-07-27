@@ -213,10 +213,10 @@ export default function ChallengesPage() {
                         <img src={url} alt={`Option ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         {selectedPhoto === url && (
                           <div style={{
-                            position: 'absolute', inset: 0, background: 'rgba(255,77,109,0.15)',
+                            position: 'absolute', inset: 0, background: 'rgba(255,176,32,0.15)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}>
-                            <span style={{ background: 'var(--accent-primary)', color: 'white', borderRadius: '50px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
+                            <span style={{ background: 'var(--accent-primary)', color: '#08080A', borderRadius: '50px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>✓</span>
                           </div>
                         )}
                       </div>

@@ -50,7 +50,7 @@
 
 .upload-dropzone:hover {
   border-color: var(--accent-primary);
-  background: rgba(255,77,109,0.04);
+  background: rgba(255,176,32,0.04);
 }
 
 .upload-dropzone__icon { font-size: 48px; }
@@ -98,7 +98,7 @@
 
 .destination-radio--selected {
   border-color: var(--accent-primary);
-  background: rgba(255,77,109,0.05);
+  background: rgba(255,176,32,0.05);
 }
 
 .destination-radio__dot {

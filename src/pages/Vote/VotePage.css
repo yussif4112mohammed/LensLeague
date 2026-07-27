@@ -87,7 +87,7 @@
 
 .vote-progress-bar__fill {
   height: 100%;
-  background: linear-gradient(90deg, #FF4D6D, #6E5BFF);
+  background: linear-gradient(90deg, #FFB020, #00E5FF);
   transition: width 0.4s ease;
   border-radius: 0 100px 100px 0;
 }
@@ -110,7 +110,7 @@
 
 .vote-done__restart {
   margin-top: 8px;
-  background: #FF4D6D;
+  background: #FFB020;
   color: white;
   font-size: 15px;
   font-weight: 700;
@@ -120,7 +120,7 @@
 }
 .vote-done__restart:hover {
   filter: brightness(1.1);
-  box-shadow: 0 0 20px rgba(255,77,109,0.4);
+  box-shadow: 0 0 20px rgba(255,176,32,0.4);
 }
 
 /* ── Aspect ratio info chips (visual indicator) ── */

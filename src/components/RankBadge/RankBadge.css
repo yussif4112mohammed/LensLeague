@@ -19,13 +19,13 @@
 
 /* Colors */
 .rank-badge--gold {
-  background: linear-gradient(135deg, #FFC24B, #FF9500);
-  color: #0A0A0C;
-  border-color: rgba(255, 194, 75, 0.4);
+  background: linear-gradient(135deg, #FFB020, #FF8C00);
+  color: #08080A;
+  border-color: rgba(255, 176, 32, 0.4);
 }
 .rank-badge--silver {
   background: linear-gradient(135deg, #C8CCD4, #9EA3AA);
-  color: #0A0A0C;
+  color: #08080A;
   border-color: rgba(200, 204, 212, 0.3);
 }
 .rank-badge--bronze {

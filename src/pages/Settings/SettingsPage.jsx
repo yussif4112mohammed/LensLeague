@@ -211,7 +211,7 @@ export default function SettingsPage() {
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button className="btn" style={{ background: 'rgba(255,255,255,0.08)', color: '#FFF' }} onClick={() => setDeleteModalOpen(false)}>Cancel</button>
-              <button className="btn" style={{ background: 'var(--error, #FF4D6D)', color: '#FFF' }} onClick={async () => {
+              <button className="btn" style={{ background: 'var(--error, #FFB020)', color: '#FFF' }} onClick={async () => {
                 await logoutUser();
                 navigate('/');
               }}>Confirm Delete</button>

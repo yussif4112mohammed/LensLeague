@@ -214,13 +214,13 @@ export default function BattleCard({ battle, onVote, onSkip }) {
             <div className="battle-card__bar-fill battle-card__bar-fill--b" style={{ width: `${pctB}%` }} />
           </div>
           <div className="battle-card__bar-labels">
-            <span className="body-sm" style={{ color: '#FF4D6D', fontWeight: 700 }}>
+            <span className="body-sm" style={{ color: '#FFB020', fontWeight: 700 }}>
               {(battle.photoA.votes + (voted === 'a' ? 1 : 0)).toLocaleString()} votes
             </span>
             <span className="body-sm" style={{ color: '#6E6E76' }}>
               {battle.totalVotes.toLocaleString()} total
             </span>
-            <span className="body-sm" style={{ color: '#6E5BFF', fontWeight: 700 }}>
+            <span className="body-sm" style={{ color: '#00E5FF', fontWeight: 700 }}>
               {(battle.photoB.votes + (voted === 'b' ? 1 : 0)).toLocaleString()} votes
             </span>
           </div>

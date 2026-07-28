@@ -169,13 +169,36 @@ export function AppProvider({ children }) {
         }
 
         if (data.user) {
-          const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+          let { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+          if (!profile) {
+            const meta = data.user.user_metadata || {};
+            const userRole = meta.role || 'photographer';
+            const newProfileData = {
+              id: data.user.id,
+              name: meta.name || meta.full_name || email.split('@')[0] || 'LensLeague User',
+              username: meta.username || `user_${Date.now().toString(36)}`,
+              avatar: null,
+              bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
+              location: meta.location || 'Accra, Ghana',
+              role: userRole,
+              points: 0,
+              wins: 0,
+              rating: 5.0,
+              followers: 0,
+              cover: null,
+              verified: false,
+              banned: false,
+              global_rank: 99
+            };
+            await supabase.from('profiles').insert(newProfileData);
+            profile = newProfileData;
+          }
           if (profile) {
             setUserEmail(email);
             setCurrentUser(profile);
-            setCurrentRole(profile.role);
+            setCurrentRole(profile.role || 'photographer');
             localStorage.setItem('ll-user-email', email);
-            localStorage.setItem('ll-current-role', profile.role);
+            localStorage.setItem('ll-current-role', profile.role || 'photographer');
             await recordAuditLog('USER_LOGIN', profile.id, { email });
             return { success: true, user: profile };
           }
@@ -1023,8 +1046,8 @@ export function AppProvider({ children }) {
   const fetchPhotosPaginated = async (start, end, filterType = 'for-you') => {
     let basePhotos = photos;
     if (filterType === 'following' && currentUser) {
-      const followedIds = follows.filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
-      basePhotos = photos.filter(p => followedIds.includes(p.ownerId));
+      const followedIds = (follows || []).filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
+      basePhotos = (photos || []).filter(p => followedIds.includes(p.ownerId));
     }
 
     if (!isSupabaseConfigured) {
@@ -1056,7 +1079,7 @@ export function AppProvider({ children }) {
       let query = supabase.from('photos').select('*, profiles:owner_id(*)');
 
       if (filterType === 'following' && currentUser) {
-        const followedIds = follows.filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
+        const followedIds = (follows || []).filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
         if (followedIds.length === 0) {
           return []; // return empty if not following anyone
         }

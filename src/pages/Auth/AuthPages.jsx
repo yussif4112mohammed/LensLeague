@@ -58,7 +58,7 @@ export function LoginPage() {
             id: data.user.id,
             name: meta.name || 'Anonymous User',
             username: meta.username || `user_${Date.now().toString(36)}`,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(meta.name || 'Anonymous')}&background=random&color=fff&size=128`,
+            avatar: null,
             bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
             location: meta.location || 'Tokyo, Japan',
             role: userRole,
@@ -97,6 +97,11 @@ export function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card animate-scale-in">
+        <div style={{ marginBottom: 16 }}>
+          <Link to="/feed" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            ← Back to Home
+          </Link>
+        </div>
         <div className="auth-logo">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
@@ -284,6 +289,11 @@ export function SignUpPage() {
   return (
     <div className="auth-page">
       <div className="auth-card animate-scale-in">
+        <div style={{ marginBottom: 16 }}>
+          <Link to="/feed" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            ← Back to Home
+          </Link>
+        </div>
         <div className="auth-logo">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
             <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>

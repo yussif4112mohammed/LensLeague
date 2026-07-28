@@ -5,7 +5,8 @@ import {
   Minus, MapPin, Star, Camera, Flame, Award, ArrowLeft, ArrowRight, X, Check,
   Image as ImageIcon, Tag, Lock, Bell as BellIcon, CreditCard, Shield, HelpCircle,
   LogOut, ChevronDown, Loader2, Sparkles, Trash2, MessageSquare, Calendar as CalendarIcon,
-  Send, Paperclip, UserCheck, UserPlus, Clock, Video, MapPin as PinIcon
+  Send, Paperclip, UserCheck, UserPlus, Clock, Video, MapPin as PinIcon,
+  Edit3, Share2, Eye, MoreHorizontal, Filter, Sliders, ExternalLink, RefreshCw, Copy, CheckCircle2, AlertCircle, Info, Grid, List, Plus, Play, Pause, Volume2, VolumeX, Maximize2, Minimize2
 } from "lucide-react";
 
 import { useApp } from "../../context/AppContext";
@@ -136,7 +137,7 @@ function Sidebar({ screen, setScreen, unreadMessages = 3 }) {
     { key: "profile", label: "Profile", icon: User },
   ];
   return (
-    <div className="w-[240px] shrink-0 h-full border-r border-[#1C1C22] flex flex-col py-6 px-4">
+    <div className="hidden md:flex w-[240px] shrink-0 h-full border-r border-[#1C1C22] flex-col py-6 px-4">
       <div className="flex items-center gap-2 px-2 mb-8">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FFB020] to-[#00E5FF] flex items-center justify-center">
           <Camera size={16} color="#08080A" strokeWidth={2.5} />
@@ -206,14 +207,53 @@ function Sidebar({ screen, setScreen, unreadMessages = 3 }) {
   );
 }
 
+function MobileBottomNav({ screen, setScreen, unreadMessages = 3 }) {
+  const items = [
+    { key: "home", label: "Home", icon: Home },
+    { key: "discover", label: "Discover", icon: Compass },
+    { key: "upload", label: "Upload", icon: UploadIcon, isAction: true },
+    { key: "compete", label: "Compete", icon: Swords },
+    { key: "profile", label: "Profile", icon: User },
+  ];
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#08080A]/95 backdrop-blur-lg border-t border-[#1C1C22] flex items-center justify-around px-2 z-40">
+      {items.map(({ key, label, icon: Icon, isAction }) => {
+        const active = screen === key;
+        if (isAction) {
+          return (
+            <button
+              key={key}
+              onClick={() => setScreen("upload")}
+              className="w-12 h-12 rounded-full bg-[#FFB020] flex items-center justify-center text-[#08080A] shadow-[0_2px_10px_rgba(255,176,32,0.4)] -mt-5 border-2 border-[#08080A] hover:scale-105 transition-transform"
+            >
+              <Icon size={22} strokeWidth={2.5} />
+            </button>
+          );
+        }
+        return (
+          <button
+            key={key}
+            onClick={() => setScreen(key)}
+            className="flex flex-col items-center justify-center gap-1 py-1 px-3 text-[11px] font-medium transition-colors"
+            style={{ color: active ? "#FFB020" : "#A1A1AA" }}
+          >
+            <Icon size={20} strokeWidth={active ? 2.4 : 1.8} />
+            <span>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function TopBar({ title, onOpenAuth }) {
   const { currentUser, logoutUser } = useApp();
 
   return (
-    <div className="flex items-center justify-between px-8 py-5 border-b border-[#1C1C22] shrink-0 bg-[#08080A]">
-      <h1 className="text-[22px] font-bold text-[#F5F5F7] tracking-tight">{title}</h1>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 bg-[#121216] border border-[#26262E] rounded-full px-4 py-2 w-[280px]">
+    <div className="flex items-center justify-between px-4 md:px-8 py-3.5 md:py-5 border-b border-[#1C1C22] shrink-0 bg-[#08080A]">
+      <h1 className="text-[19px] md:text-[22px] font-bold text-[#F5F5F7] tracking-tight truncate max-w-[180px] sm:max-w-none">{title}</h1>
+      <div className="flex items-center gap-2 sm:gap-4">
+        <div className="hidden md:flex items-center gap-2 bg-[#121216] border border-[#26262E] rounded-full px-4 py-2 w-[280px]">
           <Search size={15} color="#6E6E76" />
           <input placeholder="Search photographers, tags..." className="bg-transparent outline-none text-[13px] text-[#F5F5F7] placeholder-[#6E6E76] w-full" />
         </div>
@@ -340,9 +380,14 @@ function AuthModal({ mode, initialRole = 'photographer', onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in" onClick={onClose}>
       <div className="w-full max-w-md bg-[#121216] border border-[#26262E] rounded-2xl p-6 relative" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-[#A1A1AA] hover:text-white">
-          <X size={20} />
-        </button>
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={onClose} className="flex items-center gap-1.5 text-[13px] font-semibold text-[#FFB020] hover:underline">
+            <ArrowLeft size={16} /> Back to Home
+          </button>
+          <button onClick={onClose} className="text-[#A1A1AA] hover:text-white p-1">
+            <X size={20} />
+          </button>
+        </div>
 
         <div className="flex items-center gap-2 mb-6">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FFB020] to-[#00E5FF] flex items-center justify-center">
@@ -559,7 +604,7 @@ function Landing({ enter }) {
               01. Premier League for Photography
             </div>
 
-            <h1 className="text-white font-black text-[54px] md:text-[66px] leading-[1.04] tracking-tight mb-6">
+            <h1 className="text-white font-black text-[38px] sm:text-[48px] md:text-[66px] leading-[1.08] md:leading-[1.04] tracking-tight mb-6">
               Access Bright<br />
               <span className="bg-gradient-to-r from-[#FFB020] via-[#FFC24D] to-[#00E5FF] bg-clip-text text-transparent">
                 Photography Journey.
@@ -1091,9 +1136,9 @@ function Profile({ goToMessages, goToBook, goToSettings, goToUpload }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] to-transparent" />
       </div>
-      <div className="px-8 -mt-14 relative">
-        <div className="flex items-end justify-between">
-          <div className="flex items-end gap-4">
+      <div className="px-4 md:px-8 -mt-14 relative pb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-4">
             {p.avatar ? (
               <img src={p.avatar} className="w-28 h-28 rounded-2xl object-cover border-4 border-[#08080A] shadow-xl" />
             ) : (
@@ -1112,7 +1157,7 @@ function Profile({ goToMessages, goToBook, goToSettings, goToUpload }) {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2 w-full md:w-auto">
             {isMe ? (
               <>
                 <button
@@ -1153,7 +1198,7 @@ function Profile({ goToMessages, goToBook, goToSettings, goToUpload }) {
           </div>
         </div>
 
-        <div className="flex gap-3 mt-5">
+        <div className="flex flex-wrap gap-2 sm:gap-3 mt-5">
           <StatPill icon={User} label={`${p.followers} followers`} />
           <StatPill icon={Trophy} label={`${p.points.toLocaleString()} pts`} />
           <StatPill icon={Star} label={`${p.rating} rating`} />
@@ -1180,7 +1225,7 @@ function Profile({ goToMessages, goToBook, goToSettings, goToUpload }) {
         <div className="py-6 pb-12">
           {tab === "portfolio" && (
             portfolio.length > 0 ? (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {portfolio.map((src, i) => (
                   <img key={i} src={src} className="w-full aspect-[4/5] object-cover rounded-xl border border-[#1C1C22]" />
                 ))}
@@ -1194,7 +1239,7 @@ function Profile({ goToMessages, goToBook, goToSettings, goToUpload }) {
                 <p className="text-[13px] text-[#A1A1AA] max-w-sm mb-6">Your portfolio is currently empty. Upload your best photography to showcase your work to prospective clients.</p>
                 {goToUpload && (
                   <PrimaryButton onClick={goToUpload} className="flex items-center gap-2">
-                    <Upload size={16} /> Upload First Photo
+                    <UploadIcon size={16} /> Upload First Photo
                   </PrimaryButton>
                 )}
               </div>
@@ -2126,9 +2171,9 @@ export default function PrototypeApp({ initialScreen = "landing" }) {
   }
 
   return (
-    <div  className="w-full h-full bg-[#08080A] flex overflow-hidden">
+    <div className="w-full h-full bg-[#08080A] flex overflow-hidden relative">
       <Sidebar screen={screen} setScreen={setScreen} />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0 w-full min-w-0">
         <TopBar title={titles[screen] || "LensLeague"} onOpenAuth={(mode) => setAppAuthModal(mode)} />
         <div className="flex-1 flex overflow-hidden">
           {screen === "home" && <HomeFeed goToCompete={() => setScreen("compete")} />}
@@ -2142,6 +2187,7 @@ export default function PrototypeApp({ initialScreen = "landing" }) {
           {screen === "book" && <BookAppointment onDone={() => setScreen("profile")} />}
         </div>
       </div>
+      <MobileBottomNav screen={screen} setScreen={setScreen} />
 
       {appAuthModal && (
         <AuthModal

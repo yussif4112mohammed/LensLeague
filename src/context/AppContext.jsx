@@ -360,27 +360,28 @@ export function AppProvider({ children }) {
       const fetchedUsers = profilesData || [];
       setUsers(fetchedUsers);
 
-      // 2. Fetch photos - Limit to 100 for feed performance
+      // 2. Fetch photos (from portfolio_items)
       const { data: photosData } = await supabase
-        .from('photos')
-        .select('*')
+        .from('portfolio_items')
+        .select(`*, albums!inner(privacy_level), profiles:photographer_id(name, avatar_url)`)
+        .eq('albums.privacy_level', 'public')
         .order('created_at', { ascending: false })
         .limit(100);
         
       if (photosData) {
         const mappedPhotos = photosData.map(p => {
-          const owner = fetchedUsers.find(usr => usr.id === p.owner_id) || { name: 'Anonymous', avatar: '' };
+          const owner = p.profiles || { name: 'Anonymous', avatar_url: '' };
           return {
             id: p.id,
-            url: p.url,
-            ownerId: p.owner_id,
+            url: p.media_url,
+            ownerId: p.photographer_id,
             ownerName: owner.name || 'Anonymous',
-            ownerAvatar: owner.avatar || '',
+            ownerAvatar: owner.avatar_url || '',
             caption: p.caption,
-            category: p.category,
-            likes: p.votes || 0,
-            aspectRatio: p.aspect_ratio || '3/4',
-            timestamp: 'Just now'
+            category: p.categories?.[0] || 'General',
+            likes: 0,
+            aspectRatio: p.media_url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4',
+            timestamp: new Date(p.created_at).toLocaleDateString()
           };
         });
         setPhotos(mappedPhotos);
@@ -443,25 +444,29 @@ export function AppProvider({ children }) {
         // Bookings - only where user is client or photographer
         const { data: bookingsData } = await supabase
           .from('bookings')
-          .select('*')
+          .select(`
+            *,
+            client:client_id(name, avatar_url),
+            photographer:photographer_id(name, avatar_url)
+          `)
           .or(`client_id.eq.${currentUser.id},photographer_id.eq.${currentUser.id}`)
           .order('created_at', { ascending: false });
         
         if (bookingsData && bookingsData.length > 0) {
           const mappedBookings = bookingsData.map(b => {
-            const client = profilesData?.find(p => p.id === b.client_id) || { name: 'Unknown Client' };
-            const photographer = profilesData?.find(p => p.id === b.photographer_id) || { name: 'Unknown Photographer' };
+            const client = b.client || { name: 'Unknown Client' };
+            const photographer = b.photographer || { name: 'Unknown Photographer' };
             return {
               id: b.id,
               clientId: b.client_id,
               clientName: client.name,
               photographerId: b.photographer_id,
               photographerName: photographer.name,
-              photographerAvatar: photographer.avatar,
-              date: b.date,
-              budget: b.budget,
+              photographerAvatar: photographer.avatar_url,
+              date: b.event_date,
+              budget: '$' + (b.total_price || 0),
               location: b.location,
-              message: b.message,
+              message: b.notes,
               status: b.status,
               createdAt: b.created_at
             };
@@ -471,16 +476,32 @@ export function AppProvider({ children }) {
           setBookings([]);
         }
 
-        // Messages
-        const { data: messagesData } = await supabase
-          .from('messages')
-          .select('*')
-          .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-          .order('created_at', { ascending: true })
-          .limit(1000);
-        if (messagesData && messagesData.length > 0) {
-          const compiled = compileSupabaseThreads(messagesData, profilesData);
-          setThreads(compiled);
+        // Messages - Thread-based architecture (v3 schema)
+        const { data: myThreads } = await supabase
+          .from('thread_participants')
+          .select('thread_id')
+          .eq('user_id', currentUser.id);
+        
+        if (myThreads && myThreads.length > 0) {
+          const threadIds = myThreads.map(t => t.thread_id);
+          const { data: threadsData } = await supabase
+            .from('message_threads')
+            .select(`
+              id,
+              booking_id,
+              created_at,
+              thread_participants(user_id, profiles:user_id(id, name, avatar_url, account_type)),
+              messages(id, sender_id, body, read_at, created_at, profiles:sender_id(name, avatar_url))
+            `)
+            .in('id', threadIds)
+            .order('created_at', { ascending: false });
+          
+          if (threadsData) {
+            const compiled = compileSupabaseThreads(threadsData, currentUser.id);
+            setThreads(compiled);
+          } else {
+            setThreads([]);
+          }
         } else {
           setThreads([]);
         }
@@ -509,7 +530,7 @@ export function AppProvider({ children }) {
           const user = c.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
           return {
             id: c.id,
-            photo_id: c.photo_id,
+            photo_id: c.item_id,
             user_id: c.user_id,
             body: c.body,
             created_at: c.created_at,
@@ -538,37 +559,39 @@ export function AppProvider({ children }) {
   }, [currentUser]);
 
   // Helper: group flat Supabase messages list into structured UI threads
-  const compileSupabaseThreads = (messagesList, profiles) => {
-    const threadMap = {};
-    const myId = currentUser?.id || '1';
-    
-    messagesList.forEach(msg => {
-      if (msg.sender_id === 'system' || msg.recipient_id === 'system') return;
-      const partnerId = msg.sender_id === myId ? msg.recipient_id : msg.sender_id;
-      const partnerProfile = profiles?.find(p => p.id === partnerId) || photographers.find(p => p.id === partnerId) || { name: 'Sarah Jenkins', avatar: photographers[0].avatar };
-      const myProfile = profiles?.find(p => p.id === myId) || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
-
-      if (!threadMap[partnerId]) {
-        threadMap[partnerId] = {
-          id: `th_${partnerId}`,
-          photographerId: myRole() === 'photographer' ? myId : partnerId,
-          photographerName: myRole() === 'photographer' ? myProfile.name : partnerProfile.name,
-          photographerAvatar: myRole() === 'photographer' ? myProfile.avatar : partnerProfile.avatar,
-          clientId: myRole() === 'client' ? myId : partnerId,
-          clientName: myRole() === 'client' ? myProfile.name : partnerProfile.name,
-          messages: []
-        };
-      }
+  const compileSupabaseThreads = (threadsData, myId) => {
+    return threadsData.map(thread => {
+      // Find the other participant (not me)
+      const participants = thread.thread_participants || [];
+      const otherParticipant = participants.find(p => p.user_id !== myId);
+      const myParticipant = participants.find(p => p.user_id === myId);
       
-      threadMap[partnerId].messages.push({
-        id: msg.id,
-        senderId: msg.sender_id,
-        senderName: msg.sender_id === myId ? myProfile.name : partnerProfile.name,
-        body: msg.body,
-        timestamp: msg.timestamp
-      });
+      const otherProfile = otherParticipant?.profiles || { name: 'Unknown User', avatar_url: '' };
+      const myProfile = myParticipant?.profiles || { name: currentUser?.name || 'Me', avatar_url: '' };
+      
+      const isPhotographer = myProfile.account_type === 'photographer';
+      
+      // Sort messages chronologically
+      const sortedMessages = (thread.messages || []).sort((a, b) => 
+        new Date(a.created_at) - new Date(b.created_at)
+      );
+      
+      return {
+        id: thread.id, // Use real thread UUID
+        photographerId: isPhotographer ? myId : (otherParticipant?.user_id || ''),
+        photographerName: isPhotographer ? myProfile.name : otherProfile.name,
+        photographerAvatar: isPhotographer ? myProfile.avatar_url : otherProfile.avatar_url,
+        clientId: !isPhotographer ? myId : (otherParticipant?.user_id || ''),
+        clientName: !isPhotographer ? myProfile.name : otherProfile.name,
+        messages: sortedMessages.map(msg => ({
+          id: msg.id,
+          senderId: msg.sender_id,
+          senderName: msg.sender_id === myId ? myProfile.name : (msg.profiles?.name || otherProfile.name),
+          body: msg.body,
+          timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }))
+      };
     });
-    return Object.values(threadMap);
   };
 
   const myRole = () => currentUser?.role || currentRole;
@@ -576,12 +599,12 @@ export function AppProvider({ children }) {
   // Helper: push live incoming message from real-time channel to state array
   const appendRealtimeMessage = (m) => {
     const myId = currentUser?.id || '1';
-    const partnerId = m.sender_id === myId ? m.recipient_id : m.sender_id;
     setThreads(prev => {
-      const exists = prev.find(t => t.clientId === partnerId || t.photographerId === partnerId);
+      // Find the thread by thread_id (v3 schema)
+      const exists = prev.find(t => t.id === m.thread_id);
       if (exists) {
         return prev.map(t => {
-          if (t.id === exists.id) {
+          if (t.id === m.thread_id) {
             // Avoid duplicates
             if (t.messages.some(msg => msg.id === m.id)) return t;
             const senderProfile = users.find(u => u.id === m.sender_id) || { name: m.sender_id === myId ? 'Me' : 'Partner' };
@@ -592,7 +615,7 @@ export function AppProvider({ children }) {
                 senderId: m.sender_id,
                 senderName: senderProfile.name,
                 body: m.body,
-                timestamp: m.timestamp
+                timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               }]
             };
           }
@@ -682,13 +705,14 @@ export function AppProvider({ children }) {
     setBookings(prev => [newBooking, ...prev]);
 
     if (isSupabaseConfigured && String(photographerId).includes('-')) {
+      const priceVal = details.budget ? parseFloat(details.budget.replace(/[^0-9.]/g, '')) || 0 : 0;
       await supabase.from('bookings').insert({
         client_id: clientUid,
         photographer_id: photographerId,
-        date: details.date,
-        budget: details.budget,
+        event_date: details.date,
+        total_price: priceVal,
         location: details.location,
-        message: details.message,
+        notes: details.message,
         status: 'requested'
       });
     }
@@ -725,13 +749,23 @@ export function AppProvider({ children }) {
       return [newThread, ...prev];
     });
 
-    if (isSupabaseConfigured) {
-      await supabase.from('messages').insert({
-        sender_id: clientUid,
-        recipient_id: photographerId,
-        body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
+    if (isSupabaseConfigured && String(photographerId).includes('-') && String(clientUid).includes('-')) {
+      try {
+        // Use the get_or_create_thread RPC to find or create a thread
+        const { data: threadId } = await supabase.rpc('get_or_create_thread', {
+          user_a: clientUid,
+          user_b: photographerId
+        });
+        if (threadId) {
+          await supabase.from('messages').insert({
+            thread_id: threadId,
+            sender_id: clientUid,
+            body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`
+          });
+        }
+      } catch (err) {
+        console.warn('Thread/message creation error:', err.message);
+      }
     }
   };
 
@@ -813,16 +847,16 @@ export function AppProvider({ children }) {
       return t;
     }));
 
-    if (isSupabaseConfigured) {
-      const thread = threads.find(t => t.id === threadId);
-      if (thread) {
-        const recipientId = senderId === thread.photographerId ? thread.clientId : thread.photographerId;
+    if (isSupabaseConfigured && String(senderId).includes('-')) {
+      try {
+        // threadId is now a real UUID from message_threads
         await supabase.from('messages').insert({
+          thread_id: threadId,
           sender_id: senderId,
-          recipient_id: recipientId,
-          body,
-          timestamp
+          body
         });
+      } catch (err) {
+        console.warn('sendMessage error:', err.message);
       }
     }
   };
@@ -854,17 +888,48 @@ export function AppProvider({ children }) {
 
   // Admin actions
   const approvePhotoReport = async (reportId) => {
-    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'approved' } : rep));
+    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'dismissed' } : rep));
     if (isSupabaseConfigured) {
-      await supabase.from('reports').update({ status: 'approved' }).eq('id', reportId);
+      await supabase.from('reports').update({ status: 'dismissed', resolution_notes: 'Dismissed by moderator' }).eq('id', reportId);
     }
+    await recordAuditLog('REPORT_DISMISSED', reportId, { action: 'dismiss' });
   };
 
   const removeReportedPhoto = async (reportId) => {
-    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'removed' } : rep));
+    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'resolved' } : rep));
     if (isSupabaseConfigured) {
-      await supabase.from('reports').update({ status: 'removed' }).eq('id', reportId);
+      await supabase.from('reports').update({ status: 'resolved', resolution_notes: 'Content removed by moderator' }).eq('id', reportId);
     }
+    await recordAuditLog('REPORT_RESOLVED', reportId, { action: 'remove_content' });
+  };
+
+  // User-facing: submit a report against any entity
+  const submitReport = async (targetType, targetId, reason) => {
+    const userId = currentUser?.id;
+    if (!userId) return;
+    const newReport = {
+      id: `rep_${Date.now()}`,
+      reporter_id: userId,
+      target_type: targetType,
+      target_id: targetId,
+      reason,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+    setReports(prev => [newReport, ...prev]);
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('reports').insert({
+          reporter_id: userId,
+          target_type: targetType,
+          target_id: targetId,
+          reason
+        });
+      } catch (err) {
+        console.warn('submitReport error:', err.message);
+      }
+    }
+    await recordAuditLog('REPORT_SUBMITTED', targetId, { target_type: targetType, reason });
   };
 
   const verifyPhotographer = async (userId) => {
@@ -872,6 +937,7 @@ export function AppProvider({ children }) {
     if (isSupabaseConfigured) {
       await supabase.from('profiles').update({ verified: true }).eq('id', userId);
     }
+    await recordAuditLog('USER_VERIFIED', userId, { action: 'verify' });
   };
 
   const banPhotographer = async (userId) => {
@@ -882,6 +948,7 @@ export function AppProvider({ children }) {
     if (isSupabaseConfigured) {
       await supabase.from('profiles').update({ banned: nextBanned }).eq('id', userId);
     }
+    await recordAuditLog(nextBanned ? 'USER_BANNED' : 'USER_UNBANNED', userId, { action: nextBanned ? 'ban' : 'unban' });
   };
 
   const castBattleVote = async (battleId, side) => {
@@ -1029,13 +1096,13 @@ export function AppProvider({ children }) {
           .from('likes')
           .select('*')
           .eq('user_id', userId)
-          .eq('post_id', postId)
+          .eq('item_id', postId)
           .maybeSingle();
 
         if (existing) {
-          await supabase.from('likes').delete().eq('user_id', userId).eq('post_id', postId);
+          await supabase.from('likes').delete().eq('user_id', userId).eq('item_id', postId);
         } else {
-          await supabase.from('likes').insert({ user_id: userId, post_id: postId });
+          await supabase.from('likes').insert({ user_id: userId, item_id: postId });
         }
       } catch (err) {
         console.warn('toggleLikePost error:', err.message);
@@ -1241,7 +1308,7 @@ export function AppProvider({ children }) {
 
     const newComment = {
       id: `c_${Date.now()}`,
-      photo_id: photoId,
+      item_id: photoId,
       user_id: userId,
       body: body,
       created_at: new Date().toISOString(),
@@ -1254,7 +1321,7 @@ export function AppProvider({ children }) {
     if (isSupabaseConfigured) {
       try {
         await supabase.from('comments').insert({
-          photo_id: photoId,
+          item_id: photoId,
           user_id: userId,
           body: body
         });
@@ -1365,6 +1432,7 @@ export function AppProvider({ children }) {
       submitChallengeEntry,
       approvePhotoReport,
       removeReportedPhoto,
+      submitReport,
       verifyPhotographer,
       banPhotographer,
       resolveDispute,

@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Layouts
 import PhotographerShell from './layouts/PhotographerShell/PhotographerShell';
@@ -28,8 +29,6 @@ import InboxPage from './pages/Inbox/InboxPage';
 
 // Pages — Admin
 import AdminPage from './pages/Admin/AdminPage';
-
-
 
 const router = createBrowserRouter([
   // ────── Public routes ──────
@@ -84,12 +83,12 @@ const router = createBrowserRouter([
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 
-import PrototypeApp from './components/PrototypeApp/PrototypeApp';
-
 export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <PrototypeApp />
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
     </div>
   );
 }

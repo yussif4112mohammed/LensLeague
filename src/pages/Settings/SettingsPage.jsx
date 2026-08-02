@@ -1,244 +1,194 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
-import { useTheme } from '../../context/ThemeContext';
 import './SettingsPage.css';
 
-const SECTIONS = [
-  {
-    title: 'Account',
-    items: [
-      { id: 'theme-mode', label: 'Dark Mode', type: 'toggle' },
-      { id: 'email', label: 'Email', value: 'aria@lensleague.com', type: 'row' },
-      { id: 'analytics-link', label: 'View My Analytics 📈', value: 'Tap to view', type: 'row' },
-      { id: 'password', label: 'Password', value: '••••••••••••', type: 'row' },
-      { id: 'oauth', label: 'Linked Accounts', value: 'Google', type: 'row' },
-    ]
-  },
-  {
-    title: 'Notifications',
-    items: [
-      { id: 'notif-likes', label: 'Likes & Comments', type: 'toggle', default: true },
-      { id: 'notif-battles', label: 'Competition Results', type: 'toggle', default: true },
-      { id: 'notif-bookings', label: 'Booking Requests', type: 'toggle', default: true },
-      { id: 'notif-leaderboard', label: 'Rank Changes', type: 'toggle', default: false },
-      { id: 'notif-marketing', label: 'News & Updates', type: 'toggle', default: false },
-    ]
-  },
-  {
-    title: 'Privacy',
-    items: [
-      { id: 'privacy-profile', label: 'Profile Visibility', value: 'Public', type: 'row' },
-      { id: 'privacy-message', label: 'Who Can Message Me', value: 'Clients Only', type: 'row' },
-    ]
-  },
-  {
-    title: 'Security',
-    items: [
-      { id: '2fa', label: 'Two-Factor Authentication', value: 'Off', type: 'row' },
-      { id: 'sessions', label: 'Active Sessions', value: '2 devices', type: 'row' },
-      { id: 'download', label: 'Download My Data', value: '', type: 'row' },
-    ]
-  },
-  {
-    title: 'Support',
-    items: [
-      { id: 'help', label: 'Help Center', type: 'row', value: '' },
-      { id: 'report', label: 'Report a Problem', type: 'row', value: '' },
-    ]
-  },
-  {
-    title: 'Legal',
-    items: [
-      { id: 'tos', label: 'Terms of Service', type: 'row', value: '' },
-      { id: 'privacy-policy', label: 'Privacy Policy', type: 'row', value: '' },
-    ]
-  },
-];
+function ToggleSwitch({ on, onToggle }) {
+  return (
+    <button
+      className={`toggle-switch ${on ? 'toggle-switch--on' : ''}`}
+      onClick={onToggle}
+      aria-checked={on}
+      role="switch"
+      type="button"
+    >
+      <span className="toggle-switch__thumb" />
+    </button>
+  );
+}
+
+function SettingsRow({ icon, label, value, toggle, destructive, onClick, id }) {
+  return (
+    <button
+      className={`settings-row ${destructive ? 'settings-row--danger' : ''}`}
+      onClick={onClick}
+      id={id}
+      type="button"
+    >
+      <div className="flex items-center gap-3">
+        {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+        <span className="body-md" style={{ color: destructive ? 'inherit' : 'var(--text-primary)' }}>{label}</span>
+      </div>
+      <div className="settings-row__right">
+        {toggle !== undefined ? (
+          <ToggleSwitch on={toggle.value} onToggle={toggle.onToggle} />
+        ) : value ? (
+          <span className="body-sm" style={{ color: 'var(--text-tertiary)' }}>{value}</span>
+        ) : !destructive ? (
+          <span style={{ color: 'var(--text-tertiary)', fontSize: 18 }}>›</span>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+function SettingsSection({ title, children }) {
+  return (
+    <div className="settings-section">
+      {title && <div className="settings-section__title">{title}</div>}
+      <div className="settings-section__items">{children}</div>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { userEmail, setUserEmail, logoutUser } = useApp();
-  const { mode, toggleMode } = useTheme();
-  
-  const [toggles, setToggles] = useState({
-    'notif-likes': true, 'notif-battles': true, 'notif-bookings': true,
-    'notif-leaderboard': false, 'notif-marketing': false,
-  });
+  const { logout, profile } = useAuth();
+  const { currentRole } = useApp();
 
-  const handleToggle = (id) => {
-    if (id === 'theme-mode') {
-      toggleMode();
-      return;
-    }
-    setToggles(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const [pushNotifs, setPushNotifs] = useState(true);
+  const [emailNotifs, setEmailNotifs] = useState(true);
+  const [publicProfile, setPublicProfile] = useState(true);
+  const [availableForBookings, setAvailableForBookings] = useState(true);
 
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
-
-  const handleDownloadData = () => {
-    const dataObj = {
-      userEmail,
-      exportDate: new Date().toISOString(),
-      app: 'LensLeague Pro',
-      status: 'Verified Account Data'
-    };
-    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lensleague-data-${Date.now()}.json`;
-    a.click();
-  };
-
-  const handleRowClick = (item) => {
-    if (item.id === 'analytics-link') {
-      navigate('/analytics');
-    } else if (item.id === 'download') {
-      handleDownloadData();
-    } else if (item.id === 'sessions') {
-      setSessionsModalOpen(true);
-    } else {
-      alert(`The "${item.label}" feature is configured.`);
-    }
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
   return (
     <div className="settings-page">
+      {/* Header */}
       <div className="settings-header">
-        <button className="settings-back" onClick={() => navigate(-1)} id="settings-back-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="15 18 9 12 15 6"/>
+        <button className="settings-back" onClick={() => navigate(-1)} aria-label="Go back" id="settings-back-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h1 className="heading-1">Settings</h1>
+        <h1 className="heading-2" style={{ margin: 0 }}>Settings</h1>
       </div>
 
-      <div className="settings-body">
-        {SECTIONS.map(section => (
-          <div key={section.title} className="settings-section">
-            <div className="settings-section__title label">{section.title}</div>
-            <div className="settings-section__items">
-              {section.items.map(item => {
-                const isChecked = item.id === 'theme-mode' ? (mode === 'dark') : toggles[item.id];
-                
-                return (
-                  <div 
-                    key={item.id} 
-                    className={`settings-row ${item.type !== 'toggle' ? 'settings-row--clickable' : ''}`} 
-                    id={`settings-${item.id}`}
-                    style={item.type !== 'toggle' ? { cursor: 'pointer' } : {}}
-                    onClick={() => {
-                      if (item.type !== 'toggle') {
-                        handleRowClick(item);
-                      }
-                    }}
-                  >
-                    <span className="settings-row__label body-md">{item.label}</span>
-                    {item.type === 'toggle' ? (
-                      <button
-                        className={`toggle-switch ${isChecked ? 'toggle-switch--on' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggle(item.id);
-                        }}
-                        aria-checked={isChecked}
-                        role="switch"
-                      >
-                        <div className="toggle-switch__thumb" />
-                      </button>
-                    ) : (
-                    <div className="settings-row__right">
-                      {(item.id === 'email' ? userEmail : item.value) && <span className="body-sm text-secondary">{item.id === 'email' ? userEmail : item.value}</span>}
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="9 18 15 12 9 6"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+      {/* Profile Summary */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+        padding: 'var(--space-4) var(--screen-px)',
+        borderBottom: '1px solid var(--border-subtle)'
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'var(--accent-gradient)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center',
+          fontSize: 24, flexShrink: 0
+        }}>
+          {profile?.avatar_url
+            ? <img src={profile.avatar_url} alt="avatar" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} />
+            : '📸'}
+        </div>
+        <div>
+          <div className="heading-2" style={{ margin: 0 }}>{profile?.name || 'Your Name'}</div>
+          <div className="body-sm" style={{ color: 'var(--text-tertiary)' }}>
+            @{profile?.username || 'username'} · {currentRole === 'photographer' ? '📷 Photographer' : '🎯 Client'}
           </div>
         </div>
-      ))}
+        <button
+          className="ml-auto"
+          style={{
+            padding: '8px 16px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-default)',
+            color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer'
+          }}
+          onClick={() => navigate('/profile/me')}
+          id="settings-edit-profile-btn"
+        >
+          Edit Profile
+        </button>
+      </div>
+
+      {/* Settings body */}
+      <div className="settings-body">
+
+        {/* Account */}
+        <SettingsSection title="Account">
+          <SettingsRow id="settings-email" icon="✉️" label="Email" value={profile?.email || 'Not set'} onClick={() => {}} />
+          <SettingsRow id="settings-username" icon="🔖" label="Username" value={`@${profile?.username || 'not set'}`} onClick={() => {}} />
+          <SettingsRow id="settings-plan" icon="⭐" label="Plan" value="Free" onClick={() => {}} />
+        </SettingsSection>
+
+        {/* Privacy */}
+        <SettingsSection title="Privacy">
+          <SettingsRow
+            id="settings-public-profile"
+            icon="🌐"
+            label="Public Profile"
+            toggle={{ value: publicProfile, onToggle: () => setPublicProfile(v => !v) }}
+          />
+          {currentRole === 'photographer' && (
+            <SettingsRow
+              id="settings-available-bookings"
+              icon="📅"
+              label="Available for Bookings"
+              toggle={{ value: availableForBookings, onToggle: () => setAvailableForBookings(v => !v) }}
+            />
+          )}
+        </SettingsSection>
+
+        {/* Notifications */}
+        <SettingsSection title="Notifications">
+          <SettingsRow
+            id="settings-push-notifs"
+            icon="🔔"
+            label="Push Notifications"
+            toggle={{ value: pushNotifs, onToggle: () => setPushNotifs(v => !v) }}
+          />
+          <SettingsRow
+            id="settings-email-notifs"
+            icon="📧"
+            label="Email Notifications"
+            toggle={{ value: emailNotifs, onToggle: () => setEmailNotifs(v => !v) }}
+          />
+        </SettingsSection>
+
+        {/* Support */}
+        <SettingsSection title="Support">
+          <SettingsRow id="settings-help" icon="❓" label="Help Center" onClick={() => {}} />
+          <SettingsRow id="settings-privacy-policy" icon="🔒" label="Privacy Policy" onClick={() => {}} />
+          <SettingsRow id="settings-terms" icon="📄" label="Terms of Service" onClick={() => {}} />
+        </SettingsSection>
 
         {/* Danger zone */}
-        <div className="settings-section">
-          <div className="settings-section__title label" style={{ color: 'var(--error)' }}>Danger Zone</div>
-          <div className="settings-section__items">
-             <button 
-              className="settings-row settings-row--danger" 
-              id="logout-btn" 
-              onClick={async () => {
-                await logoutUser();
-                navigate('/');
-              }}
-            >
-              <span className="settings-row__label body-md">Log Out</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </button>
-            <button className="settings-row settings-row--delete" id="delete-account-btn" onClick={() => setDeleteModalOpen(true)}>
-              <span className="settings-row__label body-md">Delete Account</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </button>
-            {userEmail === 'admin@lensleague.com' && (
-              <button className="settings-row" id="admin-console-btn" onClick={() => navigate('/admin')}>
-                <span className="settings-row__label body-md" style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>🛡️ Admin Console (Mock)</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-primary)' }}>
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </button>
-            )}
-          </div>
+        <SettingsSection title="Account Actions">
+          <SettingsRow
+            id="settings-logout"
+            icon="🚪"
+            label="Log Out"
+            destructive
+            onClick={handleLogout}
+          />
+          <SettingsRow
+            id="settings-delete-account"
+            icon="🗑️"
+            label="Delete Account"
+            destructive
+            onClick={() => {}}
+          />
+        </SettingsSection>
+
+        {/* App version */}
+        <div style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 12, padding: 'var(--space-3) 0' }}>
+          LensLeague v0.1.0 · Built with 📸 and ☕
         </div>
       </div>
-
-      {/* Delete Account Modal */}
-      {deleteModalOpen && (
-        <div className="photo-modal-backdrop" onClick={() => setDeleteModalOpen(false)}>
-          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>⚠️</div>
-            <h2 className="heading-1" style={{ marginBottom: '8px' }}>Confirm Delete</h2>
-            <p className="body-md text-secondary" style={{ marginBottom: '20px' }}>
-              All your photos, competition history, and rank will be permanently removed.
-            </p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button className="btn" style={{ background: 'rgba(255,255,255,0.08)', color: '#FFF' }} onClick={() => setDeleteModalOpen(false)}>Cancel</button>
-              <button className="btn" style={{ background: 'var(--error, #FFB020)', color: '#FFF' }} onClick={async () => {
-                await logoutUser();
-                navigate('/');
-              }}>Confirm Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Active Sessions Modal */}
-      {sessionsModalOpen && (
-        <div className="photo-modal-backdrop" onClick={() => setSessionsModalOpen(false)}>
-          <div className="photo-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '24px' }}>
-            <h2 className="heading-1" style={{ marginBottom: '16px' }}>Active Sessions</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                <div className="body-md font-bold text-primary">💻 Web Browser (Current)</div>
-                <div className="body-sm text-tertiary">Active now · Chrome / Windows</div>
-              </div>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                <div className="body-md font-bold text-primary">📱 Mobile App</div>
-                <div className="body-sm text-tertiary">Last active 2h ago · iOS App</div>
-              </div>
-            </div>
-            <button className="btn btn--primary btn--full" style={{ marginTop: '16px' }} onClick={() => setSessionsModalOpen(false)}>Close</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

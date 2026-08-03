@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
   ArrowLeft, Mail, User, Star, Globe, Calendar, Bell, 
-  HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight
+  HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight, Camera
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

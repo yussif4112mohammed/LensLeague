@@ -85,7 +85,7 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div className="w-full min-h-screen">
       <ErrorBoundary>
         <RouterProvider router={router} />
       </ErrorBoundary>

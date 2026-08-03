@@ -1,5 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import './ClientShell.css';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 const CLIENT_NAV = [
   {
@@ -44,29 +43,40 @@ const CLIENT_NAV = [
   },
 ];
 
-
 export default function ClientShell() {
+  const navigate = useNavigate();
+
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar__logo">
+    <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col w-[260px] border-r border-border/40 bg-background/80 backdrop-blur-xl h-full p-6">
+        <div 
+          className="flex items-center gap-3 mb-10 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate('/client/home')}
+        >
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
-            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="white" opacity="0.9"/>
-            <circle cx="22" cy="10" r="3" fill="white"/>
+            <rect width="32" height="32" rx="8" fill="white"/>
+            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="black" opacity="0.9"/>
+            <circle cx="22" cy="10" r="3" fill="black"/>
           </svg>
-          <span className="sidebar__brand">LensLeague</span>
+          <span className="text-xl font-bold tracking-tight">LensLeague</span>
         </div>
-        <nav className="sidebar__nav">
+
+        <nav className="flex-1 flex flex-col gap-2">
           {CLIENT_NAV.map(item => (
             <NavLink
-              key={item.to} to={item.to} id={`client-sidebar-${item.id}`}
-              className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
+              key={item.to}
+              to={item.to}
+              id={`client-sidebar-${item.id}`}
+              className={({ isActive }) => `
+                flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                ${isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}
+              `}
             >
               {({ isActive }) => (
                 <>
-                  <span className="sidebar__icon">{item.icon(isActive)}</span>
-                  <span className="sidebar__label">{item.label}</span>
+                  <span>{item.icon(isActive)}</span>
+                  <span>{item.label}</span>
                 </>
               )}
             </NavLink>
@@ -74,22 +84,35 @@ export default function ClientShell() {
         </nav>
       </aside>
 
-      <main className="page-content"><Outlet /></main>
+      {/* Main content */}
+      <main className="flex-1 flex flex-col min-h-0 relative z-0">
+        <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto pb-24 md:pb-0 scroll-smooth">
+          <Outlet />
+        </div>
+      </main>
 
-      <nav className="bottom-nav" aria-label="Client navigation">
-        {CLIENT_NAV.map(item => (
-          <NavLink
-            key={item.to} to={item.to} id={item.id}
-            className={({ isActive }) => `bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`}
-          >
-            {({ isActive }) => (
-              <>
-                <span className="bottom-nav__icon">{item.icon(isActive)}</span>
-                <span className="bottom-nav__label">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+      {/* Mobile bottom tab bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/40 pb-safe">
+        <div className="flex justify-around items-center h-16">
+          {CLIENT_NAV.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              id={item.id}
+              className={({ isActive }) => `
+                flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors
+                ${isActive ? 'text-foreground' : 'text-muted-foreground'}
+              `}
+            >
+              {({ isActive }) => (
+                <>
+                  <span>{item.icon(isActive)}</span>
+                  <span className="text-[10px] font-medium tracking-wide">{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </nav>
     </div>
   );

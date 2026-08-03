@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { PrimaryButton } from '../../components/Buttons/Buttons';
 import { supabase } from '../../lib/supabaseClient';
-import './AuthPages.css';
-
 import { useApp } from '../../context/AppContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Camera, Search, ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ export function LoginPage() {
         if (!profile) {
           const meta = data.user.user_metadata || {};
           const userRole = meta.role || 'photographer';
-          const { error: seedError } = await supabase.from('profiles').insert({
+          const { error: seedError } = await supabase.from('profiles').upsert({
             id: data.user.id,
             name: meta.name || 'Anonymous User',
             username: meta.username || `user_${Date.now().toString(36)}`,
@@ -95,65 +96,87 @@ export function LoginPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card animate-scale-in">
-        <div style={{ marginBottom: 16 }}>
-          <Link to="/" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            ← Back to Home
-          </Link>
-        </div>
-        <div className="auth-logo">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
-            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="white" opacity="0.9"/>
-            <circle cx="22" cy="10" r="3" fill="white"/>
-          </svg>
-          <span className="display-lg">LensLeague</span>
-        </div>
-        <h1 className="heading-1">Welcome back</h1>
-        <p className="body-md text-secondary">Log in to continue to your account.</p>
-
-        <div className="auth-oauth">
-          <button className="oauth-btn" id="oauth-google" onClick={handleGoogleLogin}>
-            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-            Continue with Google
-          </button>
-        </div>
-
-        <div className="auth-divider"><span>or continue with email</span></div>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-field">
-            <label htmlFor="login-email" className="form-label">Email</label>
-            <input
-              id="login-email" type="email" className="form-input"
-              value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com" required autoComplete="email"
-              disabled={loading}
-            />
-          </div>
-          <div className="form-field">
-            <div className="form-label-row">
-              <label htmlFor="login-password" className="form-label">Password</label>
-              <Link to="/forgot-password" className="form-forgot">Forgot password?</Link>
+    <div className="min-h-screen bg-black flex flex-col pt-16 pb-24 sm:pt-24 sm:px-6 lg:px-8 bg-[url('https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat relative overflow-y-auto">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0 fixed" />
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <Link to="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium mb-8 ml-4 sm:ml-0">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
+        
+        <div className="bg-black/50 backdrop-blur-xl border border-zinc-800/50 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10">
+          
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-white text-black flex items-center justify-center rounded-xl shadow-lg">
+              <Camera className="w-6 h-6" />
             </div>
-            <input
-              id="login-password" type="password" className="form-input"
-              value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••••" required autoComplete="current-password"
-              disabled={loading}
-            />
+            <span className="text-2xl font-bold tracking-tight text-white">LensLeague</span>
           </div>
-          <PrimaryButton type="submit" fullWidth id="login-submit-btn" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log In'}
-          </PrimaryButton>
-        </form>
 
-        <p className="auth-switch body-md text-secondary">
-          Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link>
-        </p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-white mb-2">Welcome back</h2>
+          <p className="text-sm text-zinc-400 mb-8">Log in to continue to your account.</p>
+
+          <Button 
+            onClick={handleGoogleLogin} 
+            variant="outline" 
+            className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground border-none font-bold text-sm rounded-xl mb-6 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+          >
+            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Continue with Google
+          </Button>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-black px-4 text-zinc-500 uppercase tracking-widest font-semibold">Or continue with email</span>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-6">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="login-email" className="block text-sm font-medium text-zinc-300 mb-1.5">Email address</label>
+              <Input
+                id="login-email" type="email"
+                value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com" required autoComplete="email"
+                disabled={loading}
+                className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-zinc-500 focus:ring-zinc-500 text-white placeholder:text-zinc-600 rounded-xl"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="login-password" className="block text-sm font-medium text-zinc-300">Password</label>
+                <Link to="/forgot-password" className="text-xs font-medium text-zinc-400 hover:text-white transition-colors">Forgot password?</Link>
+              </div>
+              <Input
+                id="login-password" type="password"
+                value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••••" required autoComplete="current-password"
+                disabled={loading}
+                className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-zinc-500 focus:ring-zinc-500 text-white placeholder:text-zinc-600 rounded-xl"
+              />
+            </div>
+            
+            <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-2 shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? 'Logging in...' : 'Log In'}
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-zinc-400">
+            Don't have an account?{' '}
+            <Link to="/signup" className="font-semibold text-white hover:underline transition-all">Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -225,7 +248,6 @@ export function SignUpPage() {
         throw new Error('Username can only contain letters, numbers, underscores, and periods.');
       }
 
-      // Check if username is already taken
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('id')
@@ -236,7 +258,6 @@ export function SignUpPage() {
         throw new Error('This username is already taken. Please choose another one.');
       }
 
-      // 1. Sign Up in Supabase Auth passing metadata options
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -255,10 +276,8 @@ export function SignUpPage() {
 
       if (authData.user) {
         setUserEmail(form.email);
-
-        // If session is present immediately (e.g. Email Confirmation is disabled)
         if (authData.session) {
-          const { error: profileError } = await supabase.from('profiles').insert({
+          const { error: profileError } = await supabase.from('profiles').upsert({
             id: authData.user.id,
             name: form.name,
             username: cleanUsername,
@@ -275,7 +294,6 @@ export function SignUpPage() {
           if (profileError) throw profileError;
           navigate(role === 'client' ? '/client/home' : '/feed');
         } else {
-          // If verification email is sent, show success verification notice screen
           setShowVerifyNotice(true);
         }
       }
@@ -287,127 +305,186 @@ export function SignUpPage() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card animate-scale-in">
-        <div style={{ marginBottom: 16 }}>
-          <Link to="/" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            ← Back to Home
-          </Link>
-        </div>
-        <div className="auth-logo">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
-            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="white" opacity="0.9"/>
-            <circle cx="22" cy="10" r="3" fill="white"/>
-          </svg>
-          <span className="display-lg">LensLeague</span>
-        </div>
-
-        {showVerifyNotice ? (
-          <div className="verify-notice animate-fade-in" style={{ textAlign: 'center', padding: '24px 0' }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>📧</div>
-            <h1 className="heading-1">Confirm your email</h1>
-            <p className="body-md text-secondary" style={{ marginTop: 12, marginBottom: 24, lineHeight: 1.5 }}>
-              We've sent a verification link to <strong style={{ color: 'var(--text-primary)' }}>{form.email}</strong>.<br />
-              Please click the link in the email to activate your account, then log in!
-            </p>
-            <PrimaryButton onClick={() => navigate('/login')} id="to-login-btn">
-              Go to Log In
-            </PrimaryButton>
-          </div>
-        ) : (
-          <>
-            {/* Step dots */}
-            <div className="signup-steps">
-              {[1, 2, role === 'photographer' ? 3 : null].filter(Boolean).map(s => (
-                <div key={s} className={`signup-step-dot ${step >= s ? 'signup-step-dot--active' : ''}`} />
-              ))}
+    <div className="min-h-screen bg-black flex flex-col pt-16 pb-24 sm:pt-24 sm:px-6 lg:px-8 bg-[url('https://images.unsplash.com/photo-1552168324-d612d77725e3?q=80&w=2072&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat relative overflow-y-auto">
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-sm z-0 fixed" />
+      
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <Link to="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium mb-8 ml-4 sm:ml-0">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
+        
+        <div className="bg-black/60 backdrop-blur-xl border border-zinc-800/50 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10">
+          
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-white text-black flex items-center justify-center rounded-xl shadow-lg">
+              <Camera className="w-6 h-6" />
             </div>
+            <span className="text-2xl font-bold tracking-tight text-white">LensLeague</span>
+          </div>
 
-            {error && <div className="auth-error">{error}</div>}
+          {showVerifyNotice ? (
+            <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+              <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Mail className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4">Check your email</h2>
+              <p className="text-zinc-400 text-sm leading-relaxed mb-8">
+                We've sent a verification link to <strong className="text-white">{form.email}</strong>.<br />
+                Please click the link to activate your account.
+              </p>
+              <Button onClick={() => navigate('/login')} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                Go to Log In
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Progress dots */}
+              <div className="flex items-center gap-2 mb-8">
+                {[1, 2, role === 'photographer' ? 3 : null].filter(Boolean).map(s => (
+                  <div key={s} className={cn("h-1.5 flex-1 rounded-full transition-colors", step >= s ? "bg-white" : "bg-zinc-800")} />
+                ))}
+              </div>
 
-            {step === 1 && (
-              <>
-                <h1 className="heading-1">Join LensLeague</h1>
-                <p className="body-md text-secondary">Who are you joining as?</p>
-                <div className="role-cards">
-                  <button className={`role-card ${role === 'photographer' ? 'role-card--selected' : ''}`} id="role-photographer"
-                    onClick={() => { setRole('photographer'); setStep(2); }}>
-                    <span className="role-card__icon">📷</span>
-                    <div className="heading-2">I'm a Photographer</div>
-                    <div className="body-sm text-secondary">Build your portfolio, compete, and get discovered by clients.</div>
-                  </button>
-                  <button className={`role-card ${role === 'client' ? 'role-card--selected' : ''}`} id="role-client"
-                    onClick={() => { setRole('client'); setStep(2); }}>
-                    <span className="role-card__icon">🔍</span>
-                    <div className="heading-2">I'm Looking to Hire</div>
-                    <div className="body-sm text-secondary">Find and book top-ranked photographers for your projects.</div>
-                  </button>
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-6">
+                  {error}
                 </div>
-              </>
-            )}
+              )}
 
-            {step === 2 && (
-              <>
-                <h1 className="heading-1">Create your account</h1>
-                <form onSubmit={handleStep2Submit} className="auth-form">
-                  <div className="form-field">
-                    <label htmlFor="signup-name" className="form-label">Full Name</label>
-                    <input id="signup-name" type="text" className="form-input" placeholder="e.g. Aria Nakamura" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={loading} />
-                  </div>
-                  <div className="form-field">
-                    <label htmlFor="signup-username" className="form-label">Username</label>
-                    <input id="signup-username" type="text" className="form-input" placeholder="e.g. aria.lens" required value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} disabled={loading} />
-                  </div>
-                  <div className="form-field">
-                    <label htmlFor="signup-email" className="form-label">Email</label>
-                    <input id="signup-email" type="email" className="form-input" placeholder="you@example.com" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={loading} />
-                  </div>
-                  <div className="form-field">
-                    <label htmlFor="signup-password" className="form-label">Password</label>
-                    <input id="signup-password" type="password" className="form-input" placeholder="Min. 8 characters" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} disabled={loading} />
-                  </div>
-                  <PrimaryButton type="submit" fullWidth id="signup-submit-btn" disabled={loading}>
-                    {loading ? 'Creating...' : role === 'photographer' ? 'Continue →' : 'Create Account'}
-                  </PrimaryButton>
-                </form>
-              </>
-            )}
-
-            {step === 3 && role === 'photographer' && (
-              <>
-                <h1 className="heading-1">Your photography style</h1>
-                <p className="body-md text-secondary">Pick up to 3 categories. This seeds your leaderboard placement.</p>
-                <div className="category-chips">
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c}
-                      className={`category-chip ${categories.includes(c) ? 'category-chip--selected' : ''}`}
-                      onClick={() => toggleCategory(c)}
-                      id={`cat-${c.toLowerCase()}`}
-                      disabled={loading}
+              {step === 1 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <h2 className="text-2xl font-bold tracking-tight text-white mb-2">Join LensLeague</h2>
+                  <p className="text-sm text-zinc-400 mb-8">Choose how you want to use the platform.</p>
+                  
+                  <div className="space-y-4">
+                    <button 
+                      onClick={() => { setRole('photographer'); setStep(2); }}
+                      className={cn(
+                        "w-full flex items-start gap-4 p-5 rounded-2xl border text-left transition-all",
+                        role === 'photographer' ? "bg-zinc-900 border-zinc-700" : "bg-black/50 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50"
+                      )}
                     >
-                      {c}
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
+                        <Camera className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-white mb-1">I'm a Photographer</div>
+                        <div className="text-sm text-zinc-400 leading-snug">Build your portfolio, compete in battles, and get discovered by top clients.</div>
+                      </div>
                     </button>
-                  ))}
-                </div>
-                <div className="form-field">
-                  <label htmlFor="signup-location" className="form-label">Location (City, Country)</label>
-                  <input id="signup-location" type="text" className="form-input" placeholder="e.g. London, UK" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} disabled={loading} />
-                </div>
-                <PrimaryButton fullWidth id="signup-finish-btn" onClick={handleFinish} disabled={loading}>
-                  {loading ? 'Completing...' : 'Start Competing 🏆'}
-                </PrimaryButton>
-              </>
-            )}
 
-            <p className="auth-switch body-md text-secondary" style={{ marginTop: 12 }}>
-              Already have an account? <Link to="/login" className="auth-link">Log in</Link>
-            </p>
-          </>
-        )}
+                    <button 
+                      onClick={() => { setRole('client'); setStep(2); }}
+                      className={cn(
+                        "w-full flex items-start gap-4 p-5 rounded-2xl border text-left transition-all",
+                        role === 'client' ? "bg-zinc-900 border-zinc-700" : "bg-black/50 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50"
+                      )}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
+                        <Search className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-white mb-1">I'm Looking to Hire</div>
+                        <div className="text-sm text-zinc-400 leading-snug">Find and book top-ranked professional photographers for your next project.</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <h2 className="text-2xl font-bold tracking-tight text-white mb-6">Create your account</h2>
+                  <form onSubmit={handleStep2Submit} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1.5">Full Name</label>
+                      <Input
+                        type="text" required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} disabled={loading}
+                        placeholder="Aria Nakamura"
+                        className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1.5">Username</label>
+                      <Input
+                        type="text" required value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} disabled={loading}
+                        placeholder="aria.lens"
+                        className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1.5">Email</label>
+                      <Input
+                        type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={loading}
+                        placeholder="you@example.com"
+                        className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1.5">Password</label>
+                      <Input
+                        type="password" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} disabled={loading}
+                        placeholder="Min. 8 characters"
+                        className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-4 shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]" disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {role === 'photographer' ? 'Continue' : 'Create Account'}
+                    </Button>
+                  </form>
+                </div>
+              )}
+
+              {step === 3 && role === 'photographer' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                  <h2 className="text-2xl font-bold tracking-tight text-white mb-2">Your style</h2>
+                  <p className="text-sm text-zinc-400 mb-6">Pick up to 3 categories. This seeds your initial leaderboard placement.</p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {CATEGORIES.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => toggleCategory(c)}
+                        disabled={loading}
+                        className={cn(
+                          "px-4 py-2 rounded-full text-sm font-semibold transition-all border",
+                          categories.includes(c) 
+                            ? "bg-primary text-primary-foreground border-primary shadow-[0_0_10px_rgba(212,175,55,0.4)]" 
+                            : "bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200"
+                        )}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mb-8">
+                    <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1.5">Location</label>
+                    <Input
+                      type="text" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} disabled={loading}
+                      placeholder="e.g. Tokyo, Japan"
+                      className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
+                    />
+                  </div>
+
+                  <Button onClick={handleFinish} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Start Competing
+                  </Button>
+                </div>
+              )}
+
+              <p className="mt-8 text-center text-sm text-zinc-400">
+                Already have an account?{' '}
+                <Link to="/login" className="font-semibold text-white hover:underline transition-all">Log in</Link>
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-

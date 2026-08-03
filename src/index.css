@@ -1,16 +1,88 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #08080A;
-  color: #F5F5F7;
+@layer base {
+  :root {
+    --font-sans: 'Inter Variable', sans-serif;
+    
+    /* Strict Dark Mode UI/UX Pro Max tokens */
+    --background: 0 0% 0%;           /* #000000 */
+    --foreground: 0 0% 98%;          /* #FAFAFA */
+    
+    --card: 240 5.9% 10%;            /* #18181B */
+    --card-foreground: 0 0% 98%;     /* #FAFAFA */
+    
+    --popover: 240 5.9% 10%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 46 65% 52%;           /* Premium Gold #D4AF37 */
+    --primary-foreground: 0 0% 0%;   /* #000000 */
+    
+    --secondary: 240 3.7% 15.9%;     /* #27272A */
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 0 0% 9.4%;              /* #181818 */
+    --muted-foreground: 240 5% 64.9%;
+    
+    --accent: 210 40% 96.1%;         /* #F8FAFC */
+    --accent-foreground: 240 5.9% 10%;
+    
+    --destructive: 0 84.2% 60.2%;    /* #EF4444 */
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 3.7% 26.5%;        /* #3F3F46 */
+    --input: 240 3.7% 15.9%;         /* #27272A */
+    --ring: 240 5.9% 10%;            /* #18181B */
+    
+    --radius: 0.5rem;
+  }
 }
 
-#root {
-  width: 100%;
-  height: 100%;
+@layer base {
+  * {
+    @apply border-zinc-800/50 outline-zinc-500/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    @apply font-sans;
+  }
+  
+  /* Reset legacy button styles to avoid conflicts */
+  button {
+    cursor: pointer;
+    font-family: inherit;
+  }
+  
+  #root {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* Base kinetic animations */
+@layer utilities {
+  .animate-entrance {
+    animation: entrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

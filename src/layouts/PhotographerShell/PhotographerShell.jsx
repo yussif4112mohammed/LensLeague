@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import './PhotographerShell.css';
+import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   {
@@ -49,62 +49,67 @@ const NAV_ITEMS = [
   },
 ];
 
-
 export default function PhotographerShell() {
   const navigate = useNavigate();
   const { currentUser } = useApp();
-  const profileId = currentUser?.id || '1';
 
   return (
-    <div className="app-shell">
+    <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
       {/* Desktop sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar__logo" onClick={() => navigate('/feed')}>
+      <aside className="hidden md:flex flex-col w-[260px] border-r border-border/40 bg-background/80 backdrop-blur-xl h-full p-6">
+        <div 
+          className="flex items-center gap-3 mb-10 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate('/feed')}
+        >
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="var(--accent-primary)"/>
-            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="white" opacity="0.9"/>
-            <circle cx="22" cy="10" r="3" fill="white"/>
+            <rect width="32" height="32" rx="8" fill="white"/>
+            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="black" opacity="0.9"/>
+            <circle cx="22" cy="10" r="3" fill="black"/>
           </svg>
-          <span className="sidebar__brand">LensLeague</span>
+          <span className="text-xl font-bold tracking-tight">LensLeague</span>
         </div>
 
-        <nav className="sidebar__nav">
-          {NAV_ITEMS.map(item => {
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                id={`sidebar-${item.id}`}
-                className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''} ${item.featured ? 'sidebar__link--featured' : ''}`}
-              >
-                {({ isActive }) => (
-                  <>
-                    <span className="sidebar__icon">{item.icon(isActive)}</span>
-                    <span className="sidebar__label">{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
+        <nav className="flex-1 flex flex-col gap-2">
+          {NAV_ITEMS.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              id={`sidebar-${item.id}`}
+              className={({ isActive }) => `
+                flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                ${isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'}
+              `}
+            >
+              {({ isActive }) => (
+                <>
+                  <span className={item.featured && !isActive ? 'text-primary' : ''}>{item.icon(isActive)}</span>
+                  <span>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
         </nav>
 
-        <NavLink to="/upload" id="sidebar-upload" className="sidebar__upload-btn">
+        <Button 
+          className="w-full justify-start gap-3 mt-6 bg-white text-black hover:bg-gray-200"
+          onClick={() => navigate('/upload')}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Upload
-        </NavLink>
+        </Button>
 
-        <div className="sidebar__footer">
+        <div className="mt-8 pt-6 border-t border-border/40">
           {currentUser ? (
-            <NavLink to="/settings" id="sidebar-settings" className="sidebar__settings-link">
+            <NavLink to="/settings" className="flex items-center gap-4 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
               Settings
             </NavLink>
           ) : (
-            <NavLink to="/login" id="sidebar-login" className="sidebar__settings-link">
+            <NavLink to="/login" className="flex items-center gap-4 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-all">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
               </svg>
@@ -115,37 +120,47 @@ export default function PhotographerShell() {
       </aside>
 
       {/* Main content */}
-      <main className="page-content">
-        <Outlet />
+      <main className="flex-1 flex flex-col min-h-0 relative z-0">
+        <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto pb-24 md:pb-0 scroll-smooth">
+          <Outlet />
+        </div>
       </main>
 
       {/* Mobile bottom tab bar */}
-      <nav className="bottom-nav" aria-label="Main navigation">
-        {NAV_ITEMS.map(item => {
-          return (
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/40 pb-safe">
+        <div className="flex justify-around items-center h-16">
+          {NAV_ITEMS.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
               id={item.id}
-              className={({ isActive }) => `bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''} ${item.featured ? 'bottom-nav__item--featured' : ''}`}
+              className={({ isActive }) => `
+                flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors
+                ${isActive ? 'text-foreground' : 'text-muted-foreground'}
+              `}
             >
               {({ isActive }) => (
                 <>
-                  <span className="bottom-nav__icon">{item.icon(isActive)}</span>
-                  <span className="bottom-nav__label">{item.label}</span>
+                  <span className={item.featured && !isActive ? 'text-white' : ''}>{item.icon(isActive)}</span>
+                  <span className="text-[10px] font-medium tracking-wide">{item.label}</span>
                 </>
               )}
             </NavLink>
-          );
-        })}
+          ))}
+        </div>
       </nav>
 
       {/* Mobile FAB for upload */}
-      <NavLink to="/upload" id="fab-upload" className="fab" aria-label="Upload photo">
+      <Button 
+        size="icon"
+        className="md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-white text-black hover:bg-gray-200 shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50"
+        onClick={() => navigate('/upload')}
+        aria-label="Upload photo"
+      >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-      </NavLink>
+      </Button>
     </div>
   );
 }

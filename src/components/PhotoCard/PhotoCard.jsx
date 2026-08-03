@@ -5,11 +5,14 @@ import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import { parseGearOrGetExif } from '../../utils/exif';
 import { useApp } from '../../context/AppContext';
-import './PhotoCard.css';
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Camera } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 function getPhotoTitle(caption) {
   if (!caption) return 'Untitled';
-  // Strip emojis and punctuation
   const clean = caption
     .replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '')
     .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '')
@@ -71,7 +74,6 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
       onPhotoClick?.();
       return;
     }
-    // Double-tap detection for like
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       triggerLike();
@@ -105,215 +107,201 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
   const formatCount = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n;
 
-  // ── Compact grid tile (Profile / Discover) ──────────────────────
   if (compact) {
     return (
-      <div className="photo-tile" onClick={handleImageClick} id={`photo-tile-${photo.id}`}>
+      <div 
+        className="group relative aspect-square overflow-hidden bg-zinc-900 rounded-none md:rounded-xl cursor-pointer"
+        onClick={handleImageClick}
+        id={`photo-tile-${photo.id}`}
+      >
         <img
           src={getOptimizedImageUrl(photo.url, 400)}
           alt={photo.caption || `Photo by ${photo.ownerName}`}
-          className="photo-tile__img"
+          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           loading="lazy"
         />
-        <div className="photo-tile__hover">
-          <span className="photo-tile__stat">❤️ {formatCount(likeCount)}</span>
-          <span className="photo-tile__stat">💬 {formatCount(commentCount)}</span>
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-6">
+          <div className="flex items-center gap-2 text-white font-semibold">
+            <Heart className={cn("w-6 h-6", liked ? "fill-white" : "")} />
+            <span>{formatCount(likeCount)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-white font-semibold">
+            <MessageCircle className="w-6 h-6 fill-white" />
+            <span>{formatCount(commentCount)}</span>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ── Full Instagram-style post card ──────────────────────────────
   return (
     <>
-      <article className="post-card" id={`post-${photo.id}`}>
+      <article className="max-w-2xl mx-auto w-full mb-12 sm:border sm:border-zinc-800/50 sm:rounded-3xl overflow-hidden bg-black text-zinc-50" id={`post-${photo.id}`}>
         {/* Header */}
-        <div className="post-card__header">
+        <div className="flex items-center justify-between p-4 px-4 sm:px-6">
           <button
-            className="post-card__author"
+            className="flex items-center gap-3 text-left group"
             onClick={() => navigate(`/profile/${photo.ownerId || '1'}`)}
             id={`post-author-${photo.id}`}
           >
-            <div className="post-card__avatar-ring">
-              <img src={photo.ownerAvatar} alt={photo.ownerName} className="post-card__avatar" />
-            </div>
-            <div className="post-card__author-info">
-              <span className="post-card__name">{photo.ownerName}</span>
+            <Avatar className="w-10 h-10 ring-2 ring-zinc-800 group-hover:ring-zinc-600 transition-all">
+              <AvatarImage src={photo.ownerAvatar} alt={photo.ownerName} className="object-cover" />
+              <AvatarFallback className="bg-zinc-800 text-xs">{photo.ownerName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-semibold text-sm tracking-tight hover:underline">{photo.ownerName}</div>
               {photo.location && (
-                <span className="post-card__location">{photo.location}</span>
+                <div className="text-xs text-zinc-400 font-medium tracking-wide">{photo.location}</div>
               )}
             </div>
           </button>
-          <div className="post-card__header-right">
+          
+          <div className="flex items-center gap-3">
             {!isOwnPhoto && (
-              <button
-                className={`post-card__follow-btn ${isFollowing ? 'post-card__follow-btn--active' : ''}`}
+              <Button
+                variant={isFollowing ? "secondary" : "default"}
+                size="sm"
+                className={cn("h-8 px-4 rounded-full text-xs font-semibold tracking-wide transition-all", isFollowing ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300" : "bg-zinc-100 text-black hover:bg-white")}
                 onClick={handleFollowClick}
                 id={`follow-${photo.id}`}
               >
                 {isFollowing ? 'Following' : 'Follow'}
-              </button>
+              </Button>
             )}
-            <button className="post-card__more" aria-label="More options" id={`more-${photo.id}`}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
-              </svg>
+            <button className="text-zinc-500 hover:text-zinc-300 transition-colors">
+              <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Image or Video wrapped in Passepartout frame */}
-        <div className="post-card__image-wrap" onClick={handleTap}>
+        {/* Media Frame (Passepartout Inspired) */}
+        <div 
+          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950 flex items-center justify-center cursor-pointer group"
+          onClick={handleTap}
+        >
           {photo.isVideo ? (
             <VideoPlayer
               src={photo.url}
               aspectRatio={photo.aspectRatio || '9/16'}
               autoPlay={false}
+              className="w-full h-full"
             />
           ) : (
             <img
-              src={getOptimizedImageUrl(photo.url, 800)}
+              src={getOptimizedImageUrl(photo.url, 1080)}
               alt={photo.caption || `Photo by ${photo.ownerName}`}
-              className="post-card__image"
+              className="w-full h-full object-contain sm:object-cover"
               loading="lazy"
             />
           )}
-          {/* Double-tap heart overlay */}
+
+          {/* HUD Overlay for EXIF (Visible on Hover) */}
+          <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none flex flex-col justify-end">
+            <div className="flex items-end justify-between">
+              <div>
+                <h4 className="text-xl font-bold tracking-tight text-white mb-1 shadow-sm">“{photoTitle}”</h4>
+                <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium tracking-wide">
+                  <Camera className="w-3 h-3" />
+                  <span>{exif.camera}</span>
+                  <span className="opacity-50">•</span>
+                  <span>{exif.lens}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-right">
+                <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded border border-white/10 flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-widest">Focal</span>
+                  <span className="text-xs font-semibold text-zinc-100">{exif.focalLength}</span>
+                </div>
+                <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded border border-white/10 flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-widest">Aperture</span>
+                  <span className="text-xs font-semibold text-zinc-100">{exif.aperture}</span>
+                </div>
+                <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded border border-white/10 flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-widest">Shutter</span>
+                  <span className="text-xs font-semibold text-zinc-100">{exif.shutter}</span>
+                </div>
+                <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded border border-white/10 flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-widest">ISO</span>
+                  <span className="text-xs font-semibold text-zinc-100">{exif.iso}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Double-tap Heart Animation */}
           {showHeart && (
-            <div className={`post-card__heart-overlay ${heartBurst ? 'post-card__heart-overlay--burst' : ''}`}>
-              <svg viewBox="0 0 24 24" fill="white">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
+            <div className={cn("absolute inset-0 flex items-center justify-center pointer-events-none", heartBurst ? "animate-in zoom-in-50 duration-300" : "animate-out zoom-out-50 opacity-0 duration-500")}>
+              <Heart className="w-24 h-24 text-white fill-white drop-shadow-2xl" />
             </div>
           )}
-
-          {/* EXIF HUD Overlay */}
-          <div className="post-card__hud-overlay">
-            <div className="hud-exif-header">
-              <div className="hud-exif-camera">{exif.camera}</div>
-              <div className="hud-exif-lens">{exif.lens}</div>
-            </div>
-            <div className="hud-exif-grid">
-              <div className="hud-exif-pill">
-                <span className="hud-exif-pill__val">{exif.focalLength}</span>
-                <span className="hud-exif-pill__lbl">Focal</span>
-              </div>
-              <div className="hud-exif-pill">
-                <span className="hud-exif-pill__val">{exif.aperture}</span>
-                <span className="hud-exif-pill__lbl">Aperture</span>
-              </div>
-              <div className="hud-exif-pill">
-                <span className="hud-exif-pill__val">{exif.shutter}</span>
-                <span className="hud-exif-pill__lbl">Shutter</span>
-              </div>
-              <div className="hud-exif-pill">
-                <span className="hud-exif-pill__val">{exif.iso}</span>
-                <span className="hud-exif-pill__lbl">ISO</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Printed Passepartout Label */}
-          <div className="post-card__passepartout-label">
-            <div className="passepartout-title">“{photoTitle}”</div>
-            <div className="passepartout-exif">
-              {exif.camera} • {exif.lens}
-            </div>
-          </div>
         </div>
 
-        {/* Actions bar */}
-        <div className="post-card__actions">
-          <div className="post-card__actions-left">
-            {/* Like */}
-            <button
-              className={`post-card__action-btn ${liked ? 'post-card__action-btn--liked' : ''}`}
-              onClick={handleLike}
-              aria-label={liked ? 'Unlike' : 'Like'}
-              id={`like-btn-${photo.id}`}
+        {/* Actions & Info */}
+        <div className="p-4 px-4 sm:px-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={handleLike} 
+                className={cn("transition-transform active:scale-90", liked ? "text-red-500" : "text-zinc-100 hover:text-zinc-300")}
+              >
+                <Heart className={cn("w-6 h-6", liked ? "fill-current" : "")} strokeWidth={2} />
+              </button>
+              <button 
+                onClick={handleComment} 
+                className="text-zinc-100 hover:text-zinc-400 transition-transform active:scale-90"
+              >
+                <MessageCircle className="w-6 h-6" strokeWidth={2} />
+              </button>
+              <button 
+                onClick={handleShare} 
+                className="text-zinc-100 hover:text-zinc-400 transition-transform active:scale-90"
+              >
+                <Share className="w-6 h-6" strokeWidth={2} />
+              </button>
+            </div>
+            <button 
+              onClick={handleSave} 
+              className={cn("transition-transform active:scale-90", saved ? "text-zinc-100" : "text-zinc-100 hover:text-zinc-400")}
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-            </button>
-
-            {/* Comment */}
-            <button
-              className="post-card__action-btn"
-              onClick={handleComment}
-              aria-label="Comment"
-              id={`comment-btn-${photo.id}`}
-            >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </button>
-
-            {/* Share */}
-            <button
-              className="post-card__action-btn"
-              onClick={handleShare}
-              aria-label="Share"
-              id={`share-btn-${photo.id}`}
-            >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
+              <Bookmark className={cn("w-6 h-6", saved ? "fill-current" : "")} strokeWidth={2} />
             </button>
           </div>
 
-          {/* Save */}
-          <button
-            className={`post-card__action-btn ${saved ? 'post-card__action-btn--saved' : ''}`}
-            onClick={handleSave}
-            aria-label={saved ? 'Unsave' : 'Save'}
-            id={`save-btn-${photo.id}`}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-            </svg>
-          </button>
-        </div>
+          <div className="space-y-1">
+            {likeCount > 0 && (
+              <div className="font-semibold text-sm text-zinc-100">
+                {formatCount(likeCount)} {likeCount === 1 ? 'like' : 'likes'}
+              </div>
+            )}
 
-        {/* Like count */}
-        <div className="post-card__info">
-          {likeCount > 0 && (
-            <div className="post-card__like-count">
-              {formatCount(likeCount)} {likeCount === 1 ? 'like' : 'likes'}
+            {photo.caption && (
+              <div className="text-sm">
+                <span className="font-semibold mr-2 cursor-pointer hover:underline">{photo.ownerName}</span>
+                <span className="text-zinc-300">{photo.caption}</span>
+              </div>
+            )}
+
+            {commentCount > 0 && (
+              <button 
+                onClick={handleComment}
+                className="text-sm text-zinc-500 font-medium hover:text-zinc-300 transition-colors pt-1"
+              >
+                View all {formatCount(commentCount)} comments
+              </button>
+            )}
+
+            <div className="flex items-center gap-3 pt-2">
+              <span className="text-[11px] text-zinc-500 font-medium uppercase tracking-widest">{photo.timestamp || '2 HOURS AGO'}</span>
+              {photo.category && (
+                <Badge variant="secondary" className="bg-zinc-900 text-zinc-400 hover:bg-zinc-800 text-[10px] uppercase tracking-wider rounded border border-zinc-800">
+                  {photo.category}
+                </Badge>
+              )}
             </div>
-          )}
-
-          {/* Caption */}
-          {photo.caption && (
-            <div className="post-card__caption">
-              <span className="post-card__caption-name">{photo.ownerName}</span>
-              <span className="post-card__caption-text">{photo.caption}</span>
-            </div>
-          )}
-
-          {/* Comments link */}
-          {commentCount > 0 && (
-            <button
-              className="post-card__view-comments"
-              onClick={handleComment}
-              id={`view-comments-${photo.id}`}
-            >
-              View all {formatCount(commentCount)} comments
-            </button>
-          )}
-
-          {/* Category / gear */}
-          {photo.category && (
-            <span className="post-card__tag">#{photo.category?.toLowerCase()}</span>
-          )}
-
-          {/* Timestamp */}
-          <div className="post-card__timestamp">{photo.timestamp || '2 hours ago'}</div>
+          </div>
         </div>
       </article>
 
-      {/* Comment sheet */}
       {showComments && (
         <CommentSheet
           photo={photo}

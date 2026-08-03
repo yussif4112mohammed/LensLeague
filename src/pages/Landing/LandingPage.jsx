@@ -1,24 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import './LandingPage.css';
-
-const PHOTO_MOSAIC = [
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=85',
-  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=85',
-  'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=600&q=85',
-  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&q=85',
-  'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=600&q=85',
-  'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&q=85',
-];
-
-const STATS = [
-  { value: '48K+', label: 'Photographers' },
-  { value: '1,240', label: 'Competitions' },
-  { value: '12.8K', label: 'Bookings Made' },
-];
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const HOW_STEPS = [
-  { icon: '📷', step: '01', title: 'Upload Your Work', desc: 'Share photos to your portfolio, feed, or enter live competitions — all in one place.' },
-  { icon: '⚔️', step: '02', title: 'Compete & Get Voted', desc: 'Battle other photographers head-to-head. Community votes decide who rises on the leaderboard.' },
+  { icon: '📷', step: '01', title: 'Upload Your Work', desc: 'Share photos to your portfolio, feed, or enter live competitions.' },
+  { icon: '⚔️', step: '02', title: 'Compete & Get Voted', desc: 'Battle other photographers head-to-head. Community votes decide.' },
   { icon: '💼', step: '03', title: 'Get Hired', desc: 'Clients search by rank, style, and location. Your score is your credential.' },
 ];
 
@@ -32,244 +19,219 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full min-h-screen overflow-y-auto bg-[#08080A] text-white font-sans selection:bg-[#FFB020] selection:text-black">
-
-      {/* Top Header Nav — Alpine Style */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 bg-[#08080A]/60 backdrop-blur-2xl border-b border-white/10 transition-all">
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => navigate('/')}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#FFB020] to-[#00E5FF] flex items-center justify-center shadow-[0_0_15px_rgba(255,176,32,0.3)] group-hover:scale-105 transition-transform">
-              <span style={{ fontSize: 18 }}>📸</span>
+    <div className="w-full min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground">
+      
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/60 backdrop-blur-xl border-b border-border/40 animate-entrance">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+            <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+              <span className="text-xl">📸</span>
             </div>
-            <span className="text-[#F5F5F7] font-black text-[20px] tracking-tight">LensLeague</span>
+            <span className="font-black text-xl tracking-tight">LensLeague</span>
           </div>
 
-          <div className="hidden lg:flex items-center gap-8 text-[14px] font-medium text-[#D4D4D8]">
-            <button onClick={() => navigate('/signup?role=photographer')} className="hover:text-white transition-colors flex items-center bg-transparent border-0 text-inherit cursor-pointer">
-              <span>Photographers</span>
-              <span className="text-[11px] text-[#FFB020] font-mono ml-1 font-bold">⁽¹·⁴ᵏ⁾</span>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+            <button onClick={() => navigate('/signup?role=photographer')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer flex items-center gap-1.5">
+              Photographers <span className="text-xs bg-secondary px-1.5 py-0.5 rounded-full text-foreground">1.4k</span>
             </button>
-            <button onClick={() => navigate('/signup?role=photographer')} className="hover:text-white transition-colors flex items-center bg-transparent border-0 text-inherit cursor-pointer">
-              <span>Challenges</span>
-              <span className="text-[11px] text-[#FFB020] font-mono ml-1 font-bold">⁽²⁴⁾</span>
-            </button>
-            <button onClick={() => navigate('/signup?role=client')} className="hover:text-white transition-colors flex items-center bg-transparent border-0 text-inherit cursor-pointer">
-              <span>Leaderboard</span>
-              <span className="text-[11px] text-[#FFB020] font-mono ml-1 font-bold">⁽¹⁰⁰⁾</span>
-            </button>
-            <button onClick={() => navigate('/signup?role=client')} className="hover:text-white transition-colors text-[#00E5FF] font-semibold bg-transparent border-0 cursor-pointer">
-              Hire a Pro
+            <button onClick={() => navigate('/signup?role=client')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer">
+              Leaderboard
             </button>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/login')}
-            className="px-5 py-2 text-[14px] font-medium text-[#D4D4D8] hover:text-white transition-colors bg-transparent border-0 cursor-pointer"
-          >
-            Open
-          </button>
-          <button
-            onClick={() => navigate('/signup')}
-            className="px-6 py-2.5 rounded-full text-[14px] font-bold text-[#08080A] bg-white hover:bg-[#F5F5F7] shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 transition-all border-0 cursor-pointer"
-          >
-            Sign up
-          </button>
+          <Button variant="ghost" className="hidden sm:inline-flex" onClick={() => navigate('/login')}>
+            Sign In
+          </Button>
+          <Button onClick={() => navigate('/signup')} className="rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+            Get Started
+          </Button>
         </div>
       </nav>
 
-      {/* Hero Section — Alpine Style Full-Bleed Photo with Glassmorphism Card */}
-      <div className="relative min-h-[780px] w-full pt-24 overflow-hidden flex items-center justify-center">
-        {/* Full-bleed photography background */}
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-6 lg:pt-48 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[85vh]">
+        {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2000&q=85" 
-            alt="Alpine Hero" 
-            className="w-full h-full object-cover object-center scale-105 animate-[pulse_15s_ease-in-out_infinite]"
+            src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=2000&q=85" 
+            alt="Hero Photography Background" 
+            className="w-full h-full object-cover opacity-50 scale-105 animate-[pulse_15s_ease-in-out_infinite]"
           />
-          {/* Subtle directional gradient overlay so typography pops */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#08080A] via-[#08080A]/75 to-[#08080A]/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-[#08080A]/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/60 to-background" />
         </div>
 
-        {/* Hero Content — Split Columns */}
-        <div className="relative z-10 max-w-7xl w-full mx-auto px-8 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Left Typography Column */}
-          <div className="lg:col-span-7 text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFB020]/10 border border-[#FFB020]/30 text-[#FFB020] text-[11px] font-mono font-bold tracking-widest uppercase mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FFB020] animate-ping" />
-              01. Premier League for Photography
+        <div className="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="flex flex-col items-start animate-entrance" style={{ animationDelay: '0.1s' }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-mono font-medium tracking-wide uppercase mb-8 border border-border">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              The Premier League for Photography
             </div>
 
-            <h1 className="text-white font-black text-[54px] md:text-[66px] leading-[1.04] tracking-tight mb-6">
-              Access Bright<br />
-              <span className="bg-gradient-to-r from-[#FFB020] via-[#FFC24D] to-[#00E5FF] bg-clip-text text-transparent">
-                Photography Journey.
-              </span>
+            <h1 className="text-5xl lg:text-7xl font-black leading-[1.1] tracking-tighter mb-6">
+              Elevate Your <br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-yellow-200">Visual Legacy.</span>
             </h1>
 
-            <p className="text-[#D4D4D8] text-[16px] md:text-[18px] leading-relaxed max-w-xl mb-10 font-normal">
-              <span className="text-[#FFB020] font-mono font-bold mr-2">02.</span>
-              Journey where raw visual talent meets head-to-head competition. LensLeague is your gateway to the world's most breathtaking photography, where every turn is a new discovery and every shot has a scoreboard.
+            <p className="text-lg text-muted-foreground max-w-md leading-relaxed mb-10">
+              Where raw visual talent meets head-to-head competition. Join the global arena for elite photographers and high-end clients.
             </p>
 
-            <div className="flex flex-wrap items-center gap-5">
-              <button
-                onClick={() => navigate('/signup?role=photographer')}
-                className="inline-flex items-center gap-3 bg-[#121216] border border-white/20 hover:border-[#FFB020] text-white px-8 py-4 rounded-full font-bold text-[15px] shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:bg-[#1C1C22] transition-all group cursor-pointer"
-              >
-                <span>Get to know</span>
-                <span className="text-[#FFB020] font-mono text-[18px] group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform">↗</span>
-              </button>
-              
-              <div className="text-[13px] text-[#A1A1AA] flex items-center gap-2 pl-2">
-                <span className="w-2 h-2 rounded-full bg-[#00E5FF]" />
-                <span>⚡ 24,810 votes live right now</span>
-              </div>
-            </div>
-
-            {/* Sub-nav indicator pill below CTA */}
-            <div className="mt-16 inline-flex items-center gap-6 text-[13px] text-[#A1A1AA] border-b border-white/10 pb-2">
-              <span className="text-white font-mono font-bold">02</span>
-              <span className="text-[#F5F5F7] font-medium">LensLeague Adventure</span>
-              <span className="text-[#FFB020] font-mono text-[11px]">◉ Live Leaderboard</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <Button size="lg" className="rounded-full px-8 bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-base font-bold shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:-translate-y-0.5" onClick={() => navigate('/signup?role=photographer')}>
+                Start Competing
+              </Button>
+              <Button size="lg" variant="outline" className="rounded-full px-8 h-14 border-border text-foreground hover:bg-secondary text-base font-medium" onClick={() => navigate('/signup?role=client')}>
+                Hire a Pro
+              </Button>
             </div>
           </div>
 
-          {/* Right Column: Signature Glass Card Widget (Alpine Reference) */}
-          <div className="lg:col-span-5 flex justify-end">
-            <div className="w-full max-w-[440px] rounded-[32px] bg-[#121216]/70 backdrop-blur-2xl border border-white/15 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.8)] transition-all hover:border-[#FFB020]/50 relative group">
-              
-              {/* Card top bar */}
-              <div className="flex items-center justify-between text-[13px] font-medium text-[#A1A1AA] pb-4 mb-5 border-b border-white/10">
-                <div className="flex items-center gap-5">
-                  <span className="w-6 h-0.5 bg-white/40" />
-                  <span className="text-white font-bold">Sign in</span>
-                  <span className="hover:text-white cursor-pointer transition-colors" onClick={() => navigate('/signup?role=photographer')}>Open Account</span>
-                  <span className="hover:text-white cursor-pointer transition-colors" onClick={() => navigate('/signup?role=client')}>Explore</span>
-                </div>
-              </div>
-
-              {/* Card Title Header */}
-              <div className="text-left mb-6">
-                <div className="text-[12px] font-mono font-semibold text-[#FFB020] mb-1">02 · Tell us about yourself</div>
-                <h3 className="text-white text-[26px] font-extrabold tracking-tight mb-1">Curated ranking list</h3>
-                <p className="text-[#A1A1AA] text-[13px]">World's most breathtaking photography creators</p>
-              </div>
-
-              {/* Inner White/Light Glass Pill Card */}
-              <div className="rounded-[24px] bg-[#1C1C22]/90 border border-white/10 p-5 shadow-2xl transition-transform group-hover:scale-[1.02]">
-                <div className="flex items-center justify-between mb-4">
+          <div className="relative w-full max-w-md mx-auto lg:ml-auto animate-entrance" style={{ animationDelay: '0.3s' }}>
+            <Card className="bg-background/40 backdrop-blur-2xl border-white/10 shadow-2xl overflow-hidden rounded-[2rem]">
+              <CardContent className="p-0">
+                <div className="p-6 border-b border-border/40">
+                  <div className="text-xs font-mono text-muted-foreground mb-4 uppercase tracking-wider">Top Rated This Week</div>
                   <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=80" className="w-16 h-16 rounded-full object-cover border-2 border-[#FFB020] shadow-md" />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#FFB020] flex items-center justify-center text-[#08080A] text-[12px] font-extrabold shadow-lg">
-                        🛡️
-                      </div>
-                    </div>
-                    <div className="text-left">
-                      <h4 className="text-[19px] font-bold text-white leading-tight">435, Alps</h4>
-                      <p className="text-[12px] text-[#A1A1AA] mt-0.5">Mountain · Photography</p>
+                    <Avatar className="h-16 w-16 border-2 border-white/20">
+                      <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=80" />
+                      <AvatarFallback>AN</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="text-xl font-bold">Aria Nakamura</h3>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Available for Hire
+                      </p>
                     </div>
                   </div>
+                </div>
+                <div className="p-6 bg-secondary/30 flex justify-between items-center">
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Global Rank</div>
+                    <div className="text-2xl font-black">#1</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-muted-foreground">Elo Rating</div>
+                    <div className="text-2xl font-black">2,450</div>
+                  </div>
+                  <Button variant="secondary" size="sm" className="rounded-full" onClick={() => navigate('/signup')}>
+                    View Profile
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
 
+      {/* Features Section */}
+      <section className="py-24 px-6 bg-background relative z-10 border-t border-border/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-16 animate-entrance">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">Precision Engineered for Creatives</h2>
+            <p className="text-lg text-muted-foreground">Everything you need to compete, rank up globally, and get booked by high-paying clients.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {HOW_STEPS.map((step, i) => (
+              <Card key={step.step} className="bg-secondary/20 border-border/50 hover:border-border transition-colors animate-entrance" style={{ animationDelay: `${0.1 * i}s` }}>
+                <CardContent className="p-8">
+                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl mb-6">
+                    {step.icon}
+                  </div>
+                  <div className="text-xs font-mono text-muted-foreground mb-2">STEP {step.step}</div>
+                  <h3 className="text-xl font-bold mb-3">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Leaderboard Teaser */}
+      <section className="py-24 px-6 bg-background relative z-10 border-t border-border/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Live Standings</h2>
+              <p className="text-muted-foreground mt-2">The current heavyweights in the arena.</p>
+            </div>
+            <Button variant="outline" onClick={() => navigate('/signup')}>View Full Leaderboard</Button>
+          </div>
+
+          <div className="grid gap-4">
+            {TOP_PHOTOGRAPHERS.map((p, i) => (
+              <Card key={p.name} className="bg-secondary/10 border-border/40 hover:bg-secondary/30 transition-colors cursor-pointer animate-entrance" style={{ animationDelay: `${0.1 * i}s` }} onClick={() => navigate('/signup')}>
+                <CardContent className="p-4 sm:p-6 flex items-center gap-4 sm:gap-6">
+                  <div className="text-2xl font-black w-8 text-center text-muted-foreground">#{p.rank}</div>
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border border-border">
+                    <AvatarImage src={p.avatar} />
+                    <AvatarFallback>{p.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base sm:text-lg font-bold truncate">{p.name}</h4>
+                    <p className="text-sm text-muted-foreground truncate">{p.location}</p>
+                  </div>
                   <div className="text-right">
-                    <div className="text-[12px] text-[#A1A1AA] flex items-center justify-end gap-1 font-medium">
-                      <span className="text-[#FFB020]">📍</span> Alps, Europe
-                    </div>
-                    <div className="text-[34px] font-black text-white tracking-tighter leading-none mt-1">4.8</div>
+                    <div className="font-mono font-bold text-sm sm:text-base">{p.pts}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Points</div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                  <div className="text-left">
-                    <div className="text-[13px] font-bold text-white">★ 29k Rates</div>
-                    <div className="text-[11px] text-[#6E6E76]">Out of 142 categories</div>
-                  </div>
-                  
-                  <button
-                    onClick={() => navigate('/signup?role=client')}
-                    className="px-5 py-2 rounded-xl bg-[#08080A] hover:bg-black border border-[#26262E] text-white text-[13px] font-bold inline-flex items-center gap-2 shadow-lg transition-colors cursor-pointer"
-                  >
-                    <span>🗺️ Map</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Decorative floating chat/icon button at bottom right */}
-              <div className="absolute -right-4 -bottom-4 w-12 h-12 rounded-full bg-[#08080A] border border-white/20 flex items-center justify-center text-white shadow-2xl cursor-pointer hover:scale-110 transition-transform">
-                💬
-              </div>
+      {/* Fat Footer */}
+      <footer className="py-20 px-6 border-t border-border/40 bg-zinc-950 text-sm text-zinc-400">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center gap-2 font-black text-white text-xl mb-6">
+              <span className="text-2xl">📸</span> LensLeague
+            </div>
+            <p className="text-zinc-400 leading-relaxed max-w-sm mb-6">
+              The premier global arena for visual creatives. Battle head-to-head in photography challenges, climb the global Elo rankings, and get discovered by elite clients seeking unparalleled visual legacy.
+            </p>
+            <div className="flex items-center gap-4">
+              <a href="#" className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-white hover:text-black transition-colors">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-white hover:text-black transition-colors">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+              </a>
             </div>
           </div>
-
-        </div>
-      </div>
-
-      {/* ── Feature Value Props (Clean & Modern) ── */}
-      <div className="max-w-6xl mx-auto px-8 py-24">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-[32px] font-extrabold text-white tracking-tight mb-4">Why Top Photographers Choose LensLeague</h2>
-          <p className="text-[#A1A1AA] text-[16px]">Everything you need to compete, rank up globally, and get booked by high-paying clients.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            { icon: '📸', title: "01. Upload & Showcase", body: "Post your highest resolution work to a clean, full-bleed portfolio built specifically for photography, not compressed squares." },
-            { icon: '⚔️', title: "02. Head-to-Head Battles", body: "Enter live 1v1 battles judged by the global photography community. Every vote moves your real-time ranking and Elo score." },
-            { icon: '🏆', title: "03. Get Discovered & Hired", body: "Clients search directly by leaderboard rank, verified rating, and category. Top-ranked work gets found and booked first." },
-          ].map(({ icon, title, body }) => (
-            <div key={title} className="rounded-[24px] border border-white/10 bg-[#121216]/60 p-8 hover:border-[#FFB020]/50 transition-all group cursor-pointer hover:-translate-y-1.5 shadow-xl">
-              <div className="w-14 h-14 rounded-2xl bg-[#1C1C22] border border-white/10 flex items-center justify-center mb-6 group-hover:bg-[#FFB020]/15 group-hover:border-[#FFB020]/40 transition-all text-[26px]">
-                {icon}
-              </div>
-              <h3 className="text-white font-bold text-[20px] mb-3">{title}</h3>
-              <p className="text-[#A1A1AA] text-[14px] leading-relaxed font-light">{body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Top Ranked Teaser ── */}
-      <div className="max-w-6xl mx-auto px-8 pb-28">
-        <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="text-[12px] font-mono font-bold text-[#FFB020] uppercase tracking-wider mb-1">Live Standings</div>
-            <h2 className="text-white font-extrabold text-[28px] tracking-tight">This week's top ranked</h2>
+            <h4 className="text-white font-bold mb-6 tracking-wide">Platform</h4>
+            <ul className="space-y-4">
+              <li><a href="#" className="hover:text-white transition-colors">Photographers</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Clients</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Global Leaderboard</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Live Challenges</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Pricing & Plans</a></li>
+            </ul>
           </div>
-          <button onClick={() => navigate('/signup')} className="text-[#00E5FF] hover:underline text-[14px] font-semibold flex items-center gap-1 bg-transparent border-0 cursor-pointer">
-            <span>View Full Leaderboard</span>
-            <span>→</span>
-          </button>
+          <div>
+            <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
+            <ul className="space-y-4">
+              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Press & Media</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+            </ul>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TOP_PHOTOGRAPHERS.map((p) => (
-            <div key={p.name} onClick={() => navigate('/signup?role=photographer')} className="rounded-[20px] border border-white/10 bg-[#121216]/80 p-6 flex items-center gap-5 hover:border-[#FFB020]/40 cursor-pointer transition-all hover:scale-[1.02] shadow-lg">
-              <div className="text-[24px]">{p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : '🥉'}</div>
-              <img src={p.avatar} className="w-14 h-14 rounded-full object-cover border-2 border-white/20" />
-              <div className="min-w-0 flex-1">
-                <div className="text-white font-bold text-[16px] truncate">{p.name}</div>
-                <div className="text-[#FFB020] text-[13px] font-mono font-semibold mt-0.5">{p.pts} pts</div>
-                <div className="text-[#6E6E76] text-[12px] truncate mt-0.5">{p.location}</div>
-              </div>
-            </div>
-          ))}
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between pt-8 border-t border-zinc-900 gap-4">
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500" /> All systems operational</span>
+          </div>
+          <div>© {new Date().getFullYear()} LensLeague. Engineered for brilliance in Tokyo.</div>
         </div>
-      </div>
-
-      {/* ── FOOTER ── */}
-      <footer className="max-w-6xl mx-auto px-8 py-12 border-t border-white/10 flex flex-col md:flex-row items-center justify-between text-[13px] text-[#6E6E76] gap-4">
-        <div className="font-bold text-white text-[16px]">LensLeague</div>
-        <div className="flex items-center gap-6">
-          <a href="#" className="hover:text-white transition-colors">Privacy</a>
-          <a href="#" className="hover:text-white transition-colors">Terms</a>
-          <a href="#" className="hover:text-white transition-colors">Support</a>
-          <a href="#" className="hover:text-white transition-colors">Blog</a>
-        </div>
-        <p>© 2026 LensLeague. All rights reserved.</p>
       </footer>
     </div>
   );

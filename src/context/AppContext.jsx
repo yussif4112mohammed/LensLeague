@@ -129,6 +129,11 @@ export function AppProvider({ children }) {
           throw error;
         }
 
+        // If email confirmation is enabled in Supabase, data.session will be null
+        if (!data.session && data.user) {
+          return { success: true, requireVerification: true };
+        }
+
         if (data.user) {
           createdProfile.id = data.user.id;
           // Fetch the trigger-created profile to get the canonical data
@@ -165,6 +170,9 @@ export function AppProvider({ children }) {
         });
 
         if (error) {
+          if (error.message.toLowerCase().includes('email not confirmed')) {
+            return { success: false, requireVerification: true };
+          }
           return { success: false, error: 'Invalid email or password.' };
         }
 

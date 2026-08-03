@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useApp } from '../../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import Logo from '@/components/Logo';
 import { Camera, Search, ArrowLeft, Loader2, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +62,7 @@ export function LoginPage() {
             username: meta.username || `user_${Date.now().toString(36)}`,
             avatar: null,
             bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
-            location: meta.location || 'Tokyo, Japan',
+            location: meta.location || 'Global',
             role: userRole,
             verified: false,
             banned: false,
@@ -107,12 +108,7 @@ export function LoginPage() {
         
         <div className="bg-black/50 backdrop-blur-xl border border-zinc-800/50 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10">
           
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-white text-black flex items-center justify-center rounded-xl shadow-lg">
-              <Camera className="w-6 h-6" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-white">LensLeague</span>
-          </div>
+          <Logo withText={true} className="w-10 h-10 mb-8" />
 
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-white mb-2">Welcome back</h2>
           <p className="text-sm text-zinc-400 mb-8">Log in to continue to your account.</p>
@@ -266,7 +262,7 @@ export function SignUpPage() {
             name: form.name,
             username: cleanUsername,
             role: role,
-            location: form.location || 'Tokyo, Japan',
+            location: form.location || 'Global',
             categories: categories
           }
         }
@@ -283,7 +279,7 @@ export function SignUpPage() {
             username: cleanUsername,
             avatar: `https://images.unsplash.com/photo-${role === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
             bio: role === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
-            location: form.location || 'Tokyo, Japan',
+            location: form.location || 'Global',
             role: role,
             verified: false,
             banned: false,
@@ -316,12 +312,7 @@ export function SignUpPage() {
         
         <div className="bg-black/60 backdrop-blur-xl border border-zinc-800/50 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10">
           
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-white text-black flex items-center justify-center rounded-xl shadow-lg">
-              <Camera className="w-6 h-6" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-white">LensLeague</span>
-          </div>
+          <Logo withText={true} className="w-10 h-10 mb-6" />
 
           {showVerifyNotice ? (
             <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
@@ -465,7 +456,7 @@ export function SignUpPage() {
                     <label className="block text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1.5">Location</label>
                     <Input
                       type="text" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} disabled={loading}
-                      placeholder="e.g. Tokyo, Japan"
+                      placeholder="e.g. New York, NY"
                       className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
                     />
                   </div>

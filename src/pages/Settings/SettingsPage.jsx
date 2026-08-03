@@ -224,7 +224,7 @@ export default function SettingsPage() {
               <Camera className="w-6 h-6 text-zinc-500" />
             </div>
             <div className="text-xs font-bold tracking-widest text-zinc-600 uppercase mb-2">LensLeague v2.0.0</div>
-            <div className="text-[11px] text-zinc-700 font-medium">Designed in Tokyo • Built with React</div>
+            <div className="text-[11px] text-zinc-700 font-medium">Designed for Creators • Built with React</div>
           </div>
         </div>
       </main>

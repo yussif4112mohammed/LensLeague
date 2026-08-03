@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Logo from '@/components/Logo';
+import { ArrowUpRight, ArrowRight } from 'lucide-react';
 
 const HOW_STEPS = [
   { icon: '📷', step: '01', title: 'Upload Your Work', desc: 'Share photos to your portfolio, feed, or enter live competitions.' },
@@ -10,7 +12,7 @@ const HOW_STEPS = [
 ];
 
 const TOP_PHOTOGRAPHERS = [
-  { name: 'Aria Nakamura', rank: 1, location: 'Tokyo', pts: '48.2k', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80' },
+  { name: 'Aria Nakamura', rank: 1, location: 'New York', pts: '48.2k', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80' },
   { name: 'Marcus Osei', rank: 2, location: 'Lagos', pts: '42.1k', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80' },
   { name: 'Sofia Reyes', rank: 3, location: 'Mexico City', pts: '38.7k', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&q=80' },
 ];
@@ -25,10 +27,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/60 backdrop-blur-xl border-b border-border/40 animate-entrance">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
-            <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-              <span className="text-xl">📸</span>
-            </div>
-            <span className="font-black text-xl tracking-tight">LensLeague</span>
+            <Logo withText={true} className="w-8 h-8" />
           </div>
 
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
@@ -186,51 +185,103 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Fat Footer */}
-      <footer className="py-20 px-6 border-t border-border/40 bg-zinc-950 text-sm text-zinc-400">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 font-black text-white text-xl mb-6">
-              <span className="text-2xl">📸</span> LensLeague
+      {/* New Dribbble-style Footer */}
+      <footer className="bg-zinc-950 py-16 px-4 sm:px-6 relative z-10 border-t border-zinc-900">
+        <div className="max-w-6xl mx-auto">
+          
+          {/* CTA Card */}
+          <div className="bg-zinc-900 rounded-[2.5rem] border border-zinc-800/50 p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12 mb-20 overflow-hidden relative shadow-2xl">
+            {/* Background concentric circles for effect */}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none hidden md:block">
+               <div className="w-[600px] h-[600px] border border-white rounded-full flex items-center justify-center">
+                  <div className="w-[400px] h-[400px] border border-white rounded-full flex items-center justify-center">
+                    <div className="w-[200px] h-[200px] border border-white rounded-full"></div>
+                  </div>
+               </div>
             </div>
-            <p className="text-zinc-400 leading-relaxed max-w-sm mb-6">
-              The premier global arena for visual creatives. Battle head-to-head in photography challenges, climb the global Elo rankings, and get discovered by elite clients seeking unparalleled visual legacy.
-            </p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-white hover:text-black transition-colors">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-white hover:text-black transition-colors">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-              </a>
+
+            <div className="md:w-1/2 relative z-10">
+              <div className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-4">Start your journey</div>
+              <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
+                Join the LensLeague Arena
+              </h2>
+              <p className="text-zinc-400 text-lg mb-8 max-w-md">
+                Battle head-to-head in photography challenges, climb the global rankings, and get discovered by elite clients.
+              </p>
+              <Button onClick={() => navigate('/signup')} className="rounded-full bg-white text-black hover:bg-zinc-200 px-8 py-6 text-base font-bold group">
+                Get Started 
+                <ArrowUpRight className="w-5 h-5 ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Button>
+            </div>
+
+            <div className="md:w-1/2 h-[300px] relative hidden md:block">
+               {/* Abstract Avatars on concentric circles */}
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-zinc-700/30 rounded-full flex items-center justify-center">
+                 <div className="w-[250px] h-[250px] border border-zinc-700/30 rounded-full flex items-center justify-center">
+                    <div className="w-[100px] h-[100px] border border-zinc-700/30 rounded-full flex items-center justify-center bg-zinc-950 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                       <Logo className="w-8 h-8" />
+                    </div>
+                 </div>
+               </div>
+               
+               {/* Avatars */}
+               <Avatar className="absolute top-[20%] left-[20%] w-12 h-12 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute bottom-[20%] right-[30%] w-10 h-10 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute top-[40%] right-[10%] w-14 h-14 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute bottom-[30%] left-[15%] w-10 h-10 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&q=80" /></Avatar>
             </div>
           </div>
-          <div>
-            <h4 className="text-white font-bold mb-6 tracking-wide">Platform</h4>
-            <ul className="space-y-4">
-              <li><a href="#" className="hover:text-white transition-colors">Photographers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Clients</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Global Leaderboard</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Live Challenges</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Pricing & Plans</a></li>
-            </ul>
+
+          {/* Links Section */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16 px-4">
+            <div className="md:col-span-4">
+              <div className="flex items-center gap-2 mb-6">
+                 <Logo withText={true} className="w-8 h-8" />
+              </div>
+              <p className="text-zinc-500 text-sm max-w-xs leading-relaxed">
+                The premier global arena for visual creatives. Compete, rank up, and build your legacy.
+              </p>
+            </div>
+
+            <div className="md:col-span-2">
+               <h4 className="text-white font-bold mb-6 text-sm">Platform</h4>
+               <ul className="space-y-4 text-sm font-medium text-zinc-400">
+                 <li><a href="#" className="hover:text-white transition-colors flex items-center gap-1 group">Photographers <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 <li><a href="#" className="hover:text-white transition-colors flex items-center gap-1 group">Clients <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 <li><a href="#" className="hover:text-white transition-colors flex items-center gap-1 group">Leaderboard <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+               </ul>
+            </div>
+
+            <div className="md:col-span-2">
+               <h4 className="text-white font-bold mb-6 text-sm">Socials</h4>
+               <ul className="space-y-4 text-sm font-medium text-zinc-400">
+                 <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between group">Instagram <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-white transition-colors" /></a></li>
+                 <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between group">Twitter/X <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-white transition-colors" /></a></li>
+                 <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between group">YouTube <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-white transition-colors" /></a></li>
+               </ul>
+            </div>
+
+            <div className="md:col-span-4">
+               <h4 className="text-white font-bold mb-6 text-sm">Newsletter</h4>
+               <p className="text-zinc-500 text-sm mb-4 leading-relaxed">
+                 Receive product updates, exclusive photography tips, and early access to challenges.
+               </p>
+               <div className="relative">
+                 <input type="email" placeholder="Enter your email..." className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3.5 pl-5 pr-14 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600" />
+                 <button className="absolute right-1.5 top-1.5 bottom-1.5 w-10 rounded-full bg-white flex items-center justify-center hover:bg-zinc-200 transition-colors">
+                   <ArrowRight className="w-4 h-4 text-black" />
+                 </button>
+               </div>
+            </div>
           </div>
-          <div>
-            <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
-            <ul className="space-y-4">
-              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Press & Media</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-            </ul>
+
+          {/* Bottom Row */}
+          <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-zinc-900/50 px-4 text-xs font-medium text-zinc-500 gap-4">
+             <div>© {new Date().getFullYear()} LensLeague. All rights reserved. Engineered for visual creators worldwide.</div>
+             <div className="flex items-center gap-6">
+                <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> All systems operational</span>
+             </div>
           </div>
-        </div>
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between pt-8 border-t border-zinc-900 gap-4">
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500" /> All systems operational</span>
-          </div>
-          <div>© {new Date().getFullYear()} LensLeague. Engineered for brilliance in Tokyo.</div>
         </div>
       </footer>
     </div>

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import RankBadge from '../../components/RankBadge/RankBadge';
-import { PrimaryButton } from '../../components/Buttons/Buttons';
-import './ClientSearch.css';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, Star, MapPin, MessageSquare, Verified, Trophy } from 'lucide-react';
 
+const CATEGORIES = ['All', 'Portrait', 'Wedding', 'Commercial', 'Street', 'Nature'];
 const SORT_OPTS = ['Top Rated', 'Most Booked', 'Nearest', 'Price'];
 
 export default function ClientSearch() {
@@ -15,113 +18,191 @@ export default function ClientSearch() {
   const [sort, setSort] = useState('Top Rated');
 
   const { users } = useApp();
-  const CATEGORIES = ['All', 'Portrait', 'Wedding', 'Commercial', 'Street', 'Nature'];
 
-  const mappedUsers = users.map(u => ({ ...u, avgRating: 5.0, globalRank: u.global_rank || 1, categories: ['Portrait'], startingPrice: '$500', wins: 0, photos: [] }));
+  const safeLower = (str) => (str || '').toLowerCase();
+  const searchLower = safeLower(search);
+
+  // Hydrate users with mock data for the client search experience
+  const mappedUsers = users.map(u => ({ 
+    ...u, 
+    avgRating: u.rating || 5.0, 
+    globalRank: u.global_rank || 1, 
+    categories: u.categories || ['Portrait'], 
+    startingPrice: u.startingPrice || '$500', 
+    wins: u.wins || 0,
+    location: u.location || 'Global'
+  }));
 
   const filtered = mappedUsers.filter(p =>
     (category === 'All' || p.categories.includes(category)) &&
     p.avgRating >= minRating &&
-    (search === '' || p.name.toLowerCase().includes(search.toLowerCase()) || p.location.toLowerCase().includes(search.toLowerCase()))
+    (searchLower === '' || 
+      safeLower(p.name).includes(searchLower) || 
+      safeLower(p.location).includes(searchLower) ||
+      p.categories.some(c => safeLower(c).includes(searchLower))
+    )
   );
 
   return (
-    <div className="client-search">
-      <div className="client-search__header">
-        <h1 className="display-lg">Find a Photographer</h1>
-        <p className="body-md text-secondary">Search by style, location, or name.</p>
-      </div>
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 animate-in fade-in duration-500">
+      
+      {/* Header & Search Bar */}
+      <div className="max-w-5xl mx-auto mb-10">
+        <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-4 text-white">
+          Find a Photographer
+        </h1>
+        <p className="text-zinc-400 mb-8 max-w-lg">
+          Search our global network of elite visual creators by style, location, or name.
+        </p>
 
-      <div className="client-search__bar-wrap">
-        <svg className="client-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          id="client-search-input"
-          className="client-search__input"
-          type="search"
-          placeholder="Search by name, location, or style..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="client-filters">
-        <div className="client-filter-row">
-          {CATEGORIES.map(c => (
-            <button key={c} className={`discover-cat ${category === c ? 'discover-cat--active' : ''}`} onClick={() => setCategory(c)} id={`client-cat-${c.toLowerCase()}`}>{c}</button>
-          ))}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, location, or style..."
+            className="w-full h-14 pl-12 bg-zinc-900/80 border-zinc-800 text-lg rounded-2xl placeholder:text-zinc-500 focus-visible:ring-primary shadow-xl"
+          />
         </div>
-        <div className="client-filter-row" style={{ marginTop: 'var(--space-2)' }}>
-          <span className="body-sm text-secondary">Min Rating:</span>
-          {[0, 4, 4.5, 4.8].map(r => (
-            <button key={r} className={`client-rating-btn ${minRating === r ? 'client-rating-btn--active' : ''}`} onClick={() => setMinRating(r)} id={`rating-filter-${r}`}>
-              {r === 0 ? 'Any' : `${r}★+`}
-            </button>
-          ))}
-          <div className="client-sort-wrap">
-            <select className="client-sort" value={sort} onChange={e => setSort(e.target.value)} id="client-sort-select">
+      </div>
+
+      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
+        
+        {/* Filters Sidebar */}
+        <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-8">
+          <div>
+            <h3 className="text-sm font-bold tracking-widest text-zinc-500 uppercase mb-4">Categories</h3>
+            <div className="flex flex-wrap lg:flex-col gap-2">
+              {CATEGORIES.map(c => (
+                <button 
+                  key={c} 
+                  onClick={() => setCategory(c)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all text-left ${
+                    category === c 
+                      ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(212,175,55,0.2)]' 
+                      : 'bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold tracking-widest text-zinc-500 uppercase mb-4">Min Rating</h3>
+            <div className="flex flex-wrap gap-2">
+              {[0, 4, 4.5, 4.8].map(r => (
+                <button 
+                  key={r} 
+                  onClick={() => setMinRating(r)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    minRating === r 
+                      ? 'bg-white text-black' 
+                      : 'bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  }`}
+                >
+                  {r === 0 ? 'Any' : `${r}★+`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold tracking-widest text-zinc-500 uppercase mb-4">Sort By</h3>
+            <select 
+              value={sort} 
+              onChange={e => setSort(e.target.value)}
+              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+            >
               {SORT_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-        </div>
-      </div>
+        </aside>
 
-      {/* Results */}
-      <div className="search-results">
-        {filtered.length === 0 ? (
-          <div className="discover-empty">
-            <div style={{ fontSize: 48 }}>😔</div>
-            <p className="heading-2">No photographers found</p>
-            <p className="body-md text-secondary">Try broadening your filters.</p>
-          </div>
-        ) : (
-          filtered.map(p => (
-            <div key={p.id} className="photographer-result-card" id={`result-${p.id}`}>
-              <div className="result-card__header">
-                <img src={p.avatar} alt={p.name} className="result-card__avatar" />
-                <div className="result-card__info">
-                  <div className="result-card__name-row">
-                    <span className="heading-2">{p.name}</span>
-                    {p.verified && <span className="verified-badge" style={{ width: 18, height: 18, fontSize: 10 }}>✓</span>}
-                    <RankBadge rank={p.globalRank} size="sm" />
-                  </div>
-                  <div className="body-sm text-secondary">{p.categories.join(' · ')} · {p.location}</div>
-                  <div className="result-card__rating">
-                    <span className="text-gold">{'★'.repeat(Math.round(p.avgRating))}</span>
-                    <span className="body-sm text-secondary">{p.avgRating} ({p.wins} reviews)</span>
-                  </div>
-                </div>
-                <div className="result-card__price body-md" style={{ fontWeight: 700 }}>from {p.startingPrice}</div>
+        {/* Results List */}
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/20">
+              <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 text-zinc-600" />
               </div>
-
-              {/* Portfolio thumbnails */}
-              <div className="result-card__thumbs">
-                {[0, 2, 4].map(i => (
-                  <img
-                    key={i}
-                    src={`https://images.unsplash.com/photo-${['1506905925346-21bda4d32df4', '1426604966848-d7adac402bff', '1447752875215-b2761acb3c5d'][i/2]}?w=200&q=80`}
-                    alt="Portfolio thumbnail"
-                    className="result-card__thumb"
-                  />
-                ))}
-              </div>
-
-              <div className="result-card__actions">
-                <PrimaryButton small onClick={() => navigate(`/profile/${p.id}`)} id={`view-profile-${p.id}`}>
-                  View Portfolio
-                </PrimaryButton>
-                <button className="result-card__message-btn" id={`message-${p.id}`}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  Message
-                </button>
-              </div>
+              <h3 className="text-xl font-bold text-white mb-2">No photographers found</h3>
+              <p className="text-zinc-400 max-w-sm mb-6">
+                Try broadening your filters or searching for something else.
+              </p>
+              <Button variant="outline" onClick={() => { setSearch(''); setCategory('All'); setMinRating(0); }} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                Clear all filters
+              </Button>
             </div>
-          ))
-        )}
+          ) : (
+            filtered.map(p => (
+              <Card key={p.id} className="bg-zinc-900/40 border-zinc-800/50 overflow-hidden hover:bg-zinc-900/80 transition-colors">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    
+                    {/* Photographer Info */}
+                    <div className="flex flex-1 gap-4">
+                      <Avatar className="w-20 h-20 border-2 border-zinc-800 shadow-xl">
+                        <AvatarImage src={p.avatar} className="object-cover" />
+                        <AvatarFallback className="bg-zinc-800 text-xl">{p?.name?.charAt(0) || 'U'}</AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1 flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h2 className="text-xl font-bold text-white hover:underline cursor-pointer" onClick={() => navigate(`/profile/${p.id}`)}>
+                            {p.name}
+                          </h2>
+                          {p.verified && <Verified className="w-5 h-5 text-blue-500 fill-blue-500/20" />}
+                        </div>
+                        
+                        <div className="flex items-center gap-3 text-sm text-zinc-400 mb-3">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-4 h-4" />
+                            {p.location}
+                          </div>
+                          <div className="w-1 h-1 rounded-full bg-zinc-700" />
+                          <div className="flex items-center gap-1 text-gold">
+                            <Star className="w-4 h-4 fill-gold" />
+                            <span className="font-medium">{p.avgRating}</span>
+                            <span className="text-zinc-500 ml-1">({p.wins})</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {p.categories.map(cat => (
+                            <span key={cat} className="px-2.5 py-1 rounded-md bg-zinc-800 text-xs font-medium text-zinc-300">
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions & Price */}
+                    <div className="flex flex-col md:items-end justify-between gap-4 md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-zinc-800 pt-4 md:pt-0 md:pl-6">
+                      <div className="text-left md:text-right w-full">
+                        <div className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1">Starting at</div>
+                        <div className="text-2xl font-black text-white">{p.startingPrice}</div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2 w-full">
+                        <Button onClick={() => navigate(`/profile/${p.id}`)} className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90">
+                          View Portfolio
+                        </Button>
+                        <Button variant="outline" className="w-full border-zinc-700 text-white hover:bg-zinc-800">
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          Message
+                        </Button>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

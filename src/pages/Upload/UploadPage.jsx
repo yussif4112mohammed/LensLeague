@@ -255,7 +255,7 @@ export default function UploadPage() {
               <input id="upload-aperture" type="text" className="form-input" placeholder="Aperture (e.g. 1.4)" value={aperture} onChange={e => setAperture(e.target.value)} />
               <input id="upload-shutter" type="text" className="form-input" placeholder="Shutter (e.g. 1/1000)" value={shutter} onChange={e => setShutter(e.target.value)} />
               <input id="upload-iso" type="text" className="form-input" placeholder="ISO (e.g. 100)" value={iso} onChange={e => setIso(e.target.value)} />
-              <input id="upload-location" type="text" className="form-input" placeholder="Location (e.g. Tokyo)" value={location} onChange={e => setLocation(e.target.value)} />
+              <input id="upload-location" type="text" className="form-input" placeholder="Location (e.g. Paris)" value={location} onChange={e => setLocation(e.target.value)} />
             </div>
           </div>
 

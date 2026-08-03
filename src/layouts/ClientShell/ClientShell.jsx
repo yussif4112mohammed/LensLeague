@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
+import Logo from '@/components/Logo';
 
 const CLIENT_NAV = [
   {
@@ -50,17 +51,9 @@ export default function ClientShell() {
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-[260px] border-r border-border/40 bg-background/80 backdrop-blur-xl h-full p-6">
-        <div 
-          className="flex items-center gap-3 mb-10 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate('/client/home')}
-        >
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="white"/>
-            <path d="M8 22l6-8 4 5 3-3 5 6H8z" fill="black" opacity="0.9"/>
-            <circle cx="22" cy="10" r="3" fill="black"/>
-          </svg>
-          <span className="text-xl font-bold tracking-tight">LensLeague</span>
-        </div>
+        <Link to="/client/home" className="flex items-center gap-3 mb-10 hover:opacity-80 transition-opacity">
+          <Logo withText={true} className="w-8 h-8" />
+        </Link>
 
         <nav className="flex-1 flex flex-col gap-2">
           {CLIENT_NAV.map(item => (

@@ -92,7 +92,7 @@ export function AppProvider({ children }) {
     }
   };
 
-  const signUpUser = async ({ name, email, password, username, role = 'photographer', location = 'Tokyo, Japan' }) => {
+  const signUpUser = async ({ name, email, password, username, role = 'photographer', location = 'New York, USA' }) => {
     try {
       // Derive username from email if not provided (backward compat)
       const finalUsername = (username || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9_.]/g, '');
@@ -213,7 +213,7 @@ export function AppProvider({ children }) {
         display_name: email.split('@')[0],
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
         bio: 'LensLeague Member',
-        location: 'Tokyo, JP',
+        location: 'Global',
         role: 'photographer',
         points: 250,
         global_rank: 14,

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import BattleCard from '../../components/BattleCard/BattleCard';
 import ProgressRing from '../../components/ProgressRing/ProgressRing';
 import { useApp } from '../../context/AppContext';
-import './VotePage.css';
+import { Button } from '@/components/ui/button';
+import { Trophy, Timer, ArrowRight, RefreshCcw } from 'lucide-react';
 
 const TOTAL_DAILY = 20;
 
@@ -13,7 +14,7 @@ function formatAspectRatio(ratio) {
 }
 
 export default function VotePage() {
-  const { battles, castBattleVote } = useApp();
+  const { battles } = useApp();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [votedCount, setVotedCount]     = useState(0);
   const [skipped, setSkipped]           = useState([]);
@@ -23,18 +24,24 @@ export default function VotePage() {
   // Victory screen
   if (currentIndex >= remaining.length) {
     return (
-      <div className="vote-done animate-fade-in">
-        <div style={{ fontSize: 72 }}>🏆</div>
-        <h2 className="display-lg">You're on fire!</h2>
-        <p className="body-lg">You voted on <strong style={{ color: '#FFB020' }}>{votedCount}</strong> battles today.</p>
-        <p className="body-md">Come back tomorrow for fresh matchups.</p>
-        <button
-          className="vote-done__restart"
-          onClick={() => { setCurrentIndex(0); setVotedCount(0); setSkipped([]); }}
-          id="restart-voting-btn"
-        >
-          Vote again →
-        </button>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 animate-in fade-in duration-700">
+        <div className="max-w-md w-full text-center">
+          <div className="w-24 h-24 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_40px_rgba(212,175,55,0.15)]">
+            <Trophy className="w-12 h-12 text-gold" />
+          </div>
+          <h2 className="text-4xl font-black text-white mb-4 tracking-tight">You're on fire!</h2>
+          <p className="text-lg text-zinc-400 mb-2">
+            You voted on <strong className="text-gold font-bold">{votedCount}</strong> battles today.
+          </p>
+          <p className="text-zinc-500 mb-8">Come back tomorrow for fresh matchups.</p>
+          <Button
+            onClick={() => { setCurrentIndex(0); setVotedCount(0); setSkipped([]); }}
+            className="w-full h-12 bg-primary text-primary-foreground font-bold hover:bg-primary/90 text-lg shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+          >
+            <RefreshCcw className="w-5 h-5 mr-2" />
+            Vote again
+          </Button>
+        </div>
       </div>
     );
   }
@@ -55,13 +62,15 @@ export default function VotePage() {
   const ratioB = formatAspectRatio(battle.photoB.aspectRatio);
 
   return (
-    <div className="vote-page">
-
+    <div className="min-h-screen bg-black pb-24 relative flex flex-col items-center">
+      
       {/* Header + progress ring */}
-      <div className="vote-header">
+      <header className="w-full max-w-4xl px-4 py-6 flex items-center justify-between sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-zinc-900">
         <div>
-          <h1 className="heading-1">Vote</h1>
-          <p className="body-sm">Battle {currentIndex + 1} of {remaining.length}</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Vote</h1>
+          <p className="text-sm font-medium text-zinc-500 uppercase tracking-widest mt-1">
+            Battle {currentIndex + 1} of {remaining.length}
+          </p>
         </div>
         <ProgressRing
           progress={votedCount / TOTAL_DAILY}
@@ -70,51 +79,61 @@ export default function VotePage() {
           label={`${votedCount}`}
           sublabel={`/ ${TOTAL_DAILY}`}
         />
-      </div>
+      </header>
 
-      <div className="vote-battle-wrap animate-fade-in" key={battle.id}>
-
+      <main className="w-full max-w-4xl px-4 py-8 animate-in fade-in slide-in-from-bottom-8 duration-500" key={battle.id}>
+        
         {/* Battle meta */}
-        <div className="vote-battle-meta">
-          <span className="label">Category</span>
-          <span className="vote-battle-meta__dot" />
-          <span className="body-md" style={{ color: '#FFB020', fontWeight: 700 }}>{battle.category}</span>
-          <div className="vote-meta-timer">
-            ⏱ {battle.endsIn}
+        <div className="flex flex-wrap items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-zinc-900 rounded-md text-xs font-bold text-zinc-400 uppercase tracking-widest">
+              Category
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
+            <span className="text-lg font-bold text-gold tracking-tight">{battle.category}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm font-semibold text-zinc-300">
+            <Timer className="w-4 h-4 text-zinc-500" />
+            {battle.endsIn}
           </div>
         </div>
 
-        {/* Aspect ratio labels — transparent info so voters know both photos are shown in full */}
+        {/* Aspect ratio labels */}
         {(ratioA || ratioB) && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {ratioA && <span className="vote-aspect-chip">📷 A: {ratioA}</span>}
-            {ratioB && <span className="vote-aspect-chip">📷 B: {ratioB}</span>}
-            <span className="vote-aspect-chip" style={{ color: '#34D399', borderColor: 'rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.06)' }}>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {ratioA && <span className="px-3 py-1 bg-zinc-900/50 border border-zinc-800 rounded-full text-xs font-medium text-zinc-400">📷 A: {ratioA}</span>}
+            {ratioB && <span className="px-3 py-1 bg-zinc-900/50 border border-zinc-800 rounded-full text-xs font-medium text-zinc-400">📷 B: {ratioB}</span>}
+            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium">
               ✓ Full photos shown
             </span>
           </div>
         )}
 
         {/* The battle card */}
-        <BattleCard battle={battle} onVote={handleVote} onSkip={handleSkip} />
+        <div className="mb-6">
+          <BattleCard battle={battle} onVote={handleVote} onSkip={handleSkip} />
+        </div>
 
         {/* Mobile Swipe / Tap instructions */}
-        <div style={{ textAlign: 'center', marginTop: '12px' }}>
-          <span className="vote-aspect-chip" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
+        <div className="text-center mb-8">
+          <span className="px-4 py-2 bg-zinc-900/40 border border-zinc-800/50 rounded-full text-xs font-medium text-zinc-500 inline-block">
             ☝️ Tap to vote now · Swipe up to skip
           </span>
         </div>
 
         {/* Skip */}
-        <button className="vote-skip" onClick={handleSkip} id="skip-battle-btn">
-          Skip this one
-        </button>
-      </div>
+        <div className="flex justify-center">
+          <Button variant="ghost" onClick={handleSkip} className="text-zinc-500 hover:text-white hover:bg-zinc-900 transition-colors">
+            Skip this match
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </main>
 
       {/* Progress bar at bottom of screen */}
-      <div className="vote-progress-bar">
+      <div className="fixed bottom-0 left-0 right-0 h-1.5 bg-zinc-900 z-50">
         <div
-          className="vote-progress-bar__fill"
+          className="h-full bg-primary transition-all duration-300 ease-out"
           style={{ width: `${(currentIndex / remaining.length) * 100}%` }}
         />
       </div>

@@ -8,6 +8,7 @@ import { PlusSquare, Inbox, Bell, Loader2, Sparkles, ChevronRight, Zap, Camera }
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import Logo from '@/components/Logo';
 import { cn } from '@/lib/utils';
 
 function BattleSpotlightCard({ battle }) {
@@ -145,10 +146,7 @@ export default function FeedPage() {
       {/* ── Mobile/Tablet Sticky Header ── */}
       <header className="sticky top-0 z-40 md:hidden flex items-center justify-between p-4 bg-black/70 backdrop-blur-xl border-b border-zinc-900">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-zinc-100 text-black flex items-center justify-center rounded-lg">
-            <Camera className="w-5 h-5" />
-          </div>
-          <span className="font-bold text-lg tracking-tight">LensLeague</span>
+          <Logo withText={true} className="w-6 h-6" />
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/upload')} className="text-zinc-100 hover:text-zinc-300 transition-colors">

@@ -276,11 +276,11 @@ export default function FeedPage() {
               >
                 <Avatar className="w-12 h-12 ring-2 ring-transparent group-hover:ring-zinc-700 transition-all">
                   <AvatarImage src={currentUser.avatar} alt={currentUser.name} className="object-cover" />
-                  <AvatarFallback className="bg-zinc-800">{currentUser.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="bg-zinc-800">{currentUser?.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <div className="text-left">
-                  <div className="font-bold text-sm group-hover:underline">{currentUser.name}</div>
-                  <div className="text-zinc-400 text-xs">@{currentUser.handle || currentUser.name.toLowerCase().replace(' ', '')}</div>
+                  <div className="font-bold text-sm group-hover:underline">{currentUser?.name || 'User'}</div>
+                  <div className="text-zinc-400 text-xs">@{currentUser?.handle || currentUser?.name?.toLowerCase().replace(' ', '') || 'user'}</div>
                 </div>
               </button>
               <button className="text-xs font-semibold text-blue-500 hover:text-white transition-colors">Switch</button>
@@ -354,7 +354,7 @@ export default function FeedPage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10 border border-zinc-800">
                         <AvatarImage src={p.avatar} alt={p.name} className="object-cover" />
-                        <AvatarFallback className="bg-zinc-800 text-xs">{p.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-zinc-800 text-xs">{p?.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-semibold text-sm text-zinc-200 group-hover:text-white">{p.name}</div>

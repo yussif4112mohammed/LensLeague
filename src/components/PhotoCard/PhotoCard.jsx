@@ -146,7 +146,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
           >
             <Avatar className="w-10 h-10 ring-2 ring-zinc-800 group-hover:ring-zinc-600 transition-all">
               <AvatarImage src={photo.ownerAvatar} alt={photo.ownerName} className="object-cover" />
-              <AvatarFallback className="bg-zinc-800 text-xs">{photo.ownerName.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="bg-zinc-800 text-xs">{photo.ownerName?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
               <div className="font-semibold text-sm tracking-tight hover:underline">{photo.ownerName}</div>

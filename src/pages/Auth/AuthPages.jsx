@@ -98,7 +98,7 @@ export function LoginPage() {
     <div className="auth-page">
       <div className="auth-card animate-scale-in">
         <div style={{ marginBottom: 16 }}>
-          <Link to="/feed" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link to="/" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             ← Back to Home
           </Link>
         </div>
@@ -290,7 +290,7 @@ export function SignUpPage() {
     <div className="auth-page">
       <div className="auth-card animate-scale-in">
         <div style={{ marginBottom: 16 }}>
-          <Link to="/feed" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link to="/" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             ← Back to Home
           </Link>
         </div>

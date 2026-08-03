@@ -59,7 +59,7 @@ export default function FeedPage() {
   const [tab, setTab] = useState('For You');
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
-  const { fetchPhotosPaginated, battles, challenges, users } = useApp();
+  const { fetchPhotosPaginated, battles, challenges, users, currentUser } = useApp();
 
   const [feedPhotos, setFeedPhotos] = useState([]);
   const [page, setPage] = useState(0);

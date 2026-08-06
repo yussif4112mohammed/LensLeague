@@ -62,7 +62,7 @@ export default function DiscoverPage() {
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeCategory === cat 
-                  ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(212,175,55,0.2)]' 
+                  ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
               }`}
             >

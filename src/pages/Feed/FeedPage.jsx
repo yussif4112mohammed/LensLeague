@@ -230,7 +230,7 @@ export default function FeedPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   <Button 
                     onClick={() => navigate('/upload')}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-full px-8 shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all hover:shadow-[0_0_20px_rgba(212,175,55,0.5)]"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-full px-8 shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"
                   >
                     Upload Shoot
                   </Button>

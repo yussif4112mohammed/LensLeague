@@ -43,7 +43,7 @@ export default function LeaderboardPage() {
       <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-zinc-900 px-4 py-6 md:px-8">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
           <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
-            <Crown className="w-8 h-8 text-gold" />
+            <Crown className="w-8 h-8 text-white" />
             Leaderboard
           </h1>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -68,12 +68,12 @@ export default function LeaderboardPage() {
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         
         {/* My Rank Card */}
-        <div className="bg-gradient-to-r from-zinc-900 to-black border border-gold/20 rounded-2xl p-6 mb-12 flex items-center justify-between shadow-[0_0_30px_rgba(212,175,55,0.1)]">
+        <div className="bg-gradient-to-r from-zinc-900 to-black border border-white/20 rounded-2xl p-6 mb-12 flex items-center justify-between shadow-[0_0_30px_rgba(255,255,255,0.1)]">
           <div className="flex items-center gap-4">
             <RankBadge rank={myRank.global} size="lg" />
             <div>
               <div className="text-lg md:text-xl font-bold text-white">You're #{myRank.global} globally</div>
-              <div className="text-sm font-medium text-gold">{myRank.weeklyChange}</div>
+              <div className="text-sm font-medium text-white">{myRank.weeklyChange}</div>
             </div>
           </div>
           <div className="flex flex-col items-end">
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
           >
             <div className="relative mb-4">
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-4xl animate-bounce">👑</div>
-              <Avatar className="w-20 h-20 md:w-32 md:h-32 border-4 border-gold shadow-[0_0_40px_rgba(212,175,55,0.4)] group-hover:scale-105 transition-transform">
+              <Avatar className="w-20 h-20 md:w-32 md:h-32 border-4 border-white shadow-[0_0_40px_rgba(255,255,255,0.4)] group-hover:scale-105 transition-transform">
                 <AvatarImage src={entries[0]?.avatar} className="object-cover" />
                 <AvatarFallback className="bg-zinc-800 text-2xl">{entries[0]?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
@@ -122,9 +122,9 @@ export default function LeaderboardPage() {
               </div>
             </div>
             <div className="text-center font-black text-white text-lg truncate w-full px-2 mb-1">{entries[0]?.name?.split(' ')[0]}</div>
-            <div className="text-sm font-bold text-gold mb-4">{((entries[0]?.points||0)/1000).toFixed(1)}k pts</div>
-            <div className="w-full h-40 md:h-52 bg-gradient-to-t from-gold/20 to-gold/5 rounded-t-xl border-t-2 border-gold/40 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gold shadow-[0_0_10px_rgba(212,175,55,1)]" />
+            <div className="text-sm font-bold text-white mb-4">{((entries[0]?.points||0)/1000).toFixed(1)}k pts</div>
+            <div className="w-full h-40 md:h-52 bg-gradient-to-t from-gold/20 to-gold/5 rounded-t-xl border-t-2 border-white/40 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-white shadow-[0_0_10px_rgba(255,255,255,1)]" />
             </div>
           </div>
 

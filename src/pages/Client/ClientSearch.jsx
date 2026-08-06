@@ -79,7 +79,7 @@ export default function ClientSearch() {
                   onClick={() => setCategory(c)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all text-left ${
                     category === c 
-                      ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(212,175,55,0.2)]' 
+                      ? 'bg-primary text-primary-foreground shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
                       : 'bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800'
                   }`}
                 >
@@ -162,7 +162,7 @@ export default function ClientSearch() {
                             {p.location}
                           </div>
                           <div className="w-1 h-1 rounded-full bg-zinc-700" />
-                          <div className="flex items-center gap-1 text-gold">
+                          <div className="flex items-center gap-1 text-white">
                             <Star className="w-4 h-4 fill-gold" />
                             <span className="font-medium">{p.avgRating}</span>
                             <span className="text-zinc-500 ml-1">({p.wins})</span>

@@ -44,7 +44,7 @@ export default function LandingPage() {
           <Button variant="ghost" className="hidden sm:inline-flex" onClick={() => navigate('/login')}>
             Sign In
           </Button>
-          <Button onClick={() => navigate('/signup')} className="rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+          <Button onClick={() => navigate('/signup')} className="rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-[0_0_15px_rgba(255,255,255,0.4)]">
             Get Started
           </Button>
         </div>
@@ -79,7 +79,7 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
-              <Button size="lg" className="rounded-full px-8 bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-base font-bold shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:-translate-y-0.5" onClick={() => navigate('/signup?role=photographer')}>
+              <Button size="lg" className="rounded-full px-8 bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-base font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:-translate-y-0.5" onClick={() => navigate('/signup?role=photographer')}>
                 Start Competing
               </Button>
               <Button size="lg" variant="outline" className="rounded-full px-8 h-14 border-border text-foreground hover:bg-secondary text-base font-medium" onClick={() => navigate('/signup?role=client')}>

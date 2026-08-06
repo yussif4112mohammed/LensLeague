@@ -110,7 +110,7 @@ export default function ChallengesPage() {
                   
                   <div className="relative p-6 md:p-10 flex flex-col justify-end min-h-[400px]">
                     <div className="mb-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gold/20 text-gold text-xs font-bold uppercase tracking-widest rounded-full border border-gold/30 backdrop-blur-md">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-full border border-white/30 backdrop-blur-md">
                         <Trophy className="w-3.5 h-3.5" />
                         Featured Challenge
                       </span>
@@ -124,7 +124,7 @@ export default function ChallengesPage() {
                       <div className="px-3 py-1.5 bg-zinc-900/60 backdrop-blur-md rounded-lg text-sm font-medium text-zinc-300 border border-zinc-800">
                         {featured.entries.toLocaleString()} entries
                       </div>
-                      <div className="px-3 py-1.5 bg-zinc-900/60 backdrop-blur-md rounded-lg text-sm font-bold text-gold border border-gold/20">
+                      <div className="px-3 py-1.5 bg-zinc-900/60 backdrop-blur-md rounded-lg text-sm font-bold text-white border border-white/20">
                         +{featured.prizePoints.toLocaleString()} pts
                       </div>
                     </div>
@@ -141,7 +141,7 @@ export default function ChallengesPage() {
                       <Button 
                         size="lg" 
                         onClick={() => handleOpenEntry(featured)} 
-                        className="w-full md:w-auto bg-primary text-primary-foreground font-black text-lg h-14 px-8 rounded-xl hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all"
+                        className="w-full md:w-auto bg-primary text-primary-foreground font-black text-lg h-14 px-8 rounded-xl hover:bg-primary/90 shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all"
                       >
                         Enter Challenge
                       </Button>
@@ -164,7 +164,7 @@ export default function ChallengesPage() {
                           <img src={ch.coverUrl} alt={ch.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                           <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
-                            <span className="text-gold font-bold text-sm drop-shadow-md">+{ch.prizePoints.toLocaleString()} pts</span>
+                            <span className="text-white font-bold text-sm drop-shadow-md">+{ch.prizePoints.toLocaleString()} pts</span>
                             <span className="text-xs font-medium text-white/90">{ch.entries} entries</span>
                           </div>
                         </div>
@@ -201,7 +201,7 @@ export default function ChallengesPage() {
                   {ch.winners.map(w => (
                     <div key={w.rank} className="relative group cursor-pointer" onClick={() => navigate(`/profile/${w.photographerId}`)}>
                       <div className="absolute -top-3 -left-3 z-10 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-black" style={{
-                        background: w.rank === 1 ? 'linear-gradient(135deg, #FFD700, #D4AF37)' : w.rank === 2 ? 'linear-gradient(135deg, #E0E0E0, #9E9E9E)' : 'linear-gradient(135deg, #CD7F32, #A0522D)'
+                        background: w.rank === 1 ? 'linear-gradient(135deg, #FFFFFF, #FFFFFF)' : w.rank === 2 ? 'linear-gradient(135deg, #E0E0E0, #9E9E9E)' : 'linear-gradient(135deg, #FFFFFF, #A0522D)'
                       }}>
                         {w.rank === 1 ? '🥇' : w.rank === 2 ? '🥈' : '🥉'}
                       </div>
@@ -251,7 +251,7 @@ export default function ChallengesPage() {
                     key={i} 
                     onClick={() => setSelectedPhoto(url)}
                     className={`relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
-                      selectedPhoto === url ? 'border-primary shadow-[0_0_15px_rgba(212,175,55,0.3)]' : 'border-transparent hover:border-zinc-700'
+                      selectedPhoto === url ? 'border-primary shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-transparent hover:border-zinc-700'
                     }`}
                   >
                     <img src={url} alt={`Option ${i}`} className="w-full h-full object-cover" />

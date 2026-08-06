@@ -9,7 +9,7 @@ export default function Logo({ className = "w-8 h-8", withText = false }) {
         <defs>
           <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#FFF1B8" />
-            <stop offset="50%" stopColor="#D4AF37" />
+            <stop offset="50%" stopColor="#FFFFFF" />
             <stop offset="100%" stopColor="#997A15" />
           </linearGradient>
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -33,7 +33,7 @@ export default function Logo({ className = "w-8 h-8", withText = false }) {
       </svg>
       {withText && (
         <span className="font-bold text-xl tracking-tight text-white">
-          Lens<span className="text-[#D4AF37]">League</span>
+          Lens<span className="text-[#FFFFFF]">League</span>
         </span>
       )}
     </div>

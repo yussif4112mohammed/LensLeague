@@ -468,7 +468,7 @@ export function SignUpPage() {
                         className={cn(
                           "px-4 py-2 rounded-full text-sm font-semibold transition-all border",
                           categories.includes(c) 
-                            ? "bg-primary text-primary-foreground border-primary shadow-[0_0_10px_rgba(212,175,55,0.4)]" 
+                            ? "bg-primary text-primary-foreground border-primary shadow-[0_0_10px_rgba(255,255,255,0.4)]" 
                             : "bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-zinc-200"
                         )}
                       >

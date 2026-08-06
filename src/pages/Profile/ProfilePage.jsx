@@ -208,9 +208,9 @@ export default function ProfilePage() {
     if (avatarFile) {
       const fileExt = avatarFile.name.split('.').pop();
       const fileName = `avatars/${currentUser.id}_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('photos').upload(fileName, avatarFile);
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, avatarFile);
       if (!uploadError) {
-        const { data } = supabase.storage.from('photos').getPublicUrl(fileName);
+        const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
         newAvatarUrl = data.publicUrl;
       }
     }

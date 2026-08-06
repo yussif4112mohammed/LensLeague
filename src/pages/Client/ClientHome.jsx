@@ -1,79 +1,130 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import RankBadge from '../../components/RankBadge/RankBadge';
-import './ClientHome.css';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Search, Bell, Calendar, Heart, ChevronRight, Star, MapPin } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function ClientHome() {
   const navigate = useNavigate();
-  const { photos, users } = useApp();
-  const featured = users.slice(0, 4).map(u => ({ ...u, globalRank: u.global_rank || 1, categories: ['Portrait'], startingPrice: '$500', avgRating: '5.0', cover: u.avatar }));
+  const { currentUser, photos, users } = useApp();
+  
+  const featured = users.slice(0, 4).map(u => ({ 
+    ...u, 
+    globalRank: u.global_rank || 1, 
+    categories: ['Portrait'], 
+    startingPrice: '$500', 
+    avgRating: '5.0', 
+    cover: u.avatar 
+  }));
 
   return (
-    <div className="client-home">
-      <div className="client-home__header">
-        <div>
-          <h1 className="display-lg">Find Your Photographer</h1>
-          <p className="body-md text-secondary">Discover top-ranked talent for your next project.</p>
+    <div className="min-h-screen bg-background text-zinc-400 p-4 pb-24 animate-in fade-in duration-500">
+      {/* Header */}
+      <header className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12 border-2 border-zinc-800">
+            <AvatarImage src={currentUser?.avatar} alt={currentUser?.name} />
+            <AvatarFallback>{currentUser?.name?.charAt(0) || 'C'}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-white font-bold text-lg">Welcome back, {currentUser?.name?.split(' ')[0] || 'Client'}</h1>
+            <p className="text-zinc-500 text-sm">Let's find your perfect shot</p>
+          </div>
         </div>
-        <div className="client-home__actions" style={{ display: 'flex', gap: '8px' }}>
-          <button className="client-home__notif" onClick={() => navigate('/client/inbox')} id="client-inbox-btn" style={{ position: 'relative' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-            </svg>
-            <span className="feed-header__badge" style={{ position: 'absolute', top: '1px', right: '1px', width: '14px', height: '14px', background: 'var(--accent-primary)', borderRadius: '100px', fontSize: '9px', fontWeight: '800', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid var(--bg-base)' }}>2</span>
-          </button>
-          <button className="client-home__notif" id="client-notif-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 rounded-xl relative" onClick={() => navigate('/client/inbox')}>
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent-primary"></span>
+          </Button>
         </div>
-      </div>
+      </header>
 
-      {/* Search shortcut */}
-      <button className="client-home__search-cta" onClick={() => navigate('/client/search')} id="client-search-cta">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <span className="text-secondary body-md">Search by style, location, or name...</span>
-      </button>
-
-      {/* Featured photographers */}
-      <section className="client-home__section">
-        <div className="client-home__section-header">
-          <h2 className="heading-1">Top Ranked</h2>
-          <button className="client-home__see-all" onClick={() => navigate('/client/search')} id="see-all-btn">See all →</button>
-        </div>
-        <div className="featured-photographers">
-          {featured.map(p => (
-            <div key={p.id} className="featured-card" onClick={() => navigate(`/profile/${p.id}`)} id={`featured-${p.id}`}>
-              <div className="featured-card__cover" style={{ backgroundImage: `url(${p.cover})` }}>
-                <RankBadge rank={p.globalRank} size="sm" />
-              </div>
-              <div className="featured-card__info">
-                <img src={p.avatar} alt={p.name} className="featured-card__avatar" />
-                <div className="featured-card__text">
-                  <div className="body-md" style={{ fontWeight: 600 }}>{p.name}</div>
-                  <div className="body-sm text-secondary">{p.categories[0]} · {p.location}</div>
-                  <div className="body-sm text-gold">★ {p.avgRating} · from {p.startingPrice}</div>
-                </div>
-              </div>
+      {/* Quick Actions */}
+      <section className="grid grid-cols-3 gap-3 mb-8">
+        <Card className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl cursor-pointer hover:bg-zinc-800/50 transition-colors" onClick={() => navigate('/client/search')}>
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
+            <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-white mb-1">
+              <Search className="h-5 w-5" />
             </div>
+            <span className="text-white text-xs font-semibold">Find<br/>Pros</span>
+          </CardContent>
+        </Card>
+        <Card className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl cursor-pointer hover:bg-zinc-800/50 transition-colors" onClick={() => navigate('/client/bookings')}>
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
+            <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-white mb-1">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <span className="text-white text-xs font-semibold">My<br/>Bookings</span>
+          </CardContent>
+        </Card>
+        <Card className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl cursor-pointer hover:bg-zinc-800/50 transition-colors" onClick={() => navigate('/client/saved')}>
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center gap-2">
+            <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center text-white mb-1">
+              <Heart className="h-5 w-5" />
+            </div>
+            <span className="text-white text-xs font-semibold">Saved<br/>Items</span>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Featured Carousel */}
+      <section className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-white font-bold text-lg">Featured Photographers</h2>
+          <Button variant="ghost" className="text-zinc-400 hover:text-white" onClick={() => navigate('/client/search')}>
+            See all <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex overflow-x-auto gap-4 pb-4 snap-x no-scrollbar">
+          {featured.map(p => (
+            <Card key={p.id} className="min-w-[240px] bg-zinc-900/50 border-zinc-800/50 rounded-2xl overflow-hidden cursor-pointer snap-start" onClick={() => navigate(`/profile/${p.id}`)}>
+              <div className="h-32 bg-zinc-800 relative bg-cover bg-center" style={{ backgroundImage: `url(${p.cover})` }}>
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/90 to-transparent"></div>
+                <Badge className="absolute top-2 left-2 bg-black/50 text-white backdrop-blur-md border-zinc-700">
+                  Rank #{p.globalRank}
+                </Badge>
+              </div>
+              <CardContent className="p-4 relative">
+                <Avatar className="h-16 w-16 border-4 border-zinc-900 absolute -top-10 right-4">
+                  <AvatarImage src={p.avatar} alt={p.name} />
+                  <AvatarFallback>{p.name[0]}</AvatarFallback>
+                </Avatar>
+                <h3 className="text-white font-bold truncate pr-16">{p.name}</h3>
+                <div className="flex items-center text-zinc-500 text-xs mt-1 mb-3">
+                  <MapPin className="h-3 w-3 mr-1" /> {p.location}
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-zinc-300 bg-zinc-800 py-1 px-2 rounded-md">{p.categories[0]}</span>
+                  <div className="flex items-center text-yellow-500 font-medium">
+                    <Star className="h-3 w-3 mr-1 fill-current" /> {p.avgRating}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>
 
-      {/* Recent photos (discovery feed for clients) */}
-      <section className="client-home__section">
-        <h2 className="heading-1">Browse Work</h2>
-        <div className="client-photo-grid">
+      {/* Browse Work */}
+      <section>
+        <h2 className="text-white font-bold text-lg mb-4">Recent Inspiration</h2>
+        <div className="grid grid-cols-2 gap-3">
           {photos.slice(0, 6).map(photo => (
-            <div key={photo.id} className="client-photo-item" onClick={() => navigate(`/profile/${photo.ownerId}`)} id={`client-photo-${photo.id}`}>
-              <img src={photo.url} alt={photo.caption} className="client-photo-img" style={{ aspectRatio: photo.aspectRatio || '3/4' }} />
-              <div className="client-photo-overlay">
-                <img src={photo.ownerAvatar} alt={photo.ownerName} className="client-photo-avatar" />
-                <span className="body-sm">{photo.ownerName}</span>
+            <div key={photo.id} className="relative rounded-2xl overflow-hidden cursor-pointer group" onClick={() => navigate(`/profile/${photo.ownerId}`)}>
+              <img src={photo.url} alt={photo.caption} className="w-full object-cover transition-transform duration-500 group-hover:scale-105" style={{ aspectRatio: photo.aspectRatio || '3/4' }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100 flex flex-col justify-end p-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6 border border-zinc-700">
+                    <AvatarImage src={photo.ownerAvatar} />
+                    <AvatarFallback>{photo.ownerName[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-white text-xs font-medium truncate">{photo.ownerName}</span>
+                </div>
               </div>
             </div>
           ))}

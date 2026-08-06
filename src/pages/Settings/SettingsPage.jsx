@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -90,8 +89,7 @@ function SettingsSection({ title, children }) {
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { logout, profile } = useAuth();
-  const { currentRole } = useApp();
+  const { logoutUser, currentUser: profile, currentRole } = useApp();
 
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -99,7 +97,7 @@ export default function SettingsPage() {
   const [availableForBookings, setAvailableForBookings] = useState(true);
 
   const handleLogout = async () => {
-    await logout();
+    await logoutUser();
     navigate('/');
   };
 

@@ -8,6 +8,7 @@ import ClientShell from './layouts/ClientShell/ClientShell';
 // Pages — Photographer
 import LandingPage from './pages/Landing/LandingPage';
 import { LoginPage, SignUpPage } from './pages/Auth/AuthPages';
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import FeedPage from './pages/Feed/FeedPage';
 import DiscoverPage from './pages/Discover/DiscoverPage';
 import VotePage from './pages/Vote/VotePage';
@@ -35,6 +36,7 @@ const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignUpPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/admin', element: <AdminPage /> },
 
   // ────── Photographer SPA ──────

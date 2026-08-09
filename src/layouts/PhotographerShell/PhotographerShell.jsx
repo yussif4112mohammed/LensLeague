@@ -88,7 +88,7 @@ export default function PhotographerShell() {
         </nav>
 
         <Button 
-          className="w-full justify-start gap-3 mt-6 bg-white text-black hover:bg-gray-200"
+          className="w-full justify-start gap-3 mt-6 bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={() => navigate('/upload')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -150,7 +150,7 @@ export default function PhotographerShell() {
       {/* Mobile FAB for upload */}
       <Button 
         size="icon"
-        className="md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-white text-black hover:bg-gray-200 shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50"
+        className="md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50"
         onClick={() => navigate('/upload')}
         aria-label="Upload photo"
       >

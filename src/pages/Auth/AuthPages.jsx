@@ -127,7 +127,7 @@ export function LoginPage() {
               <p className="text-zinc-400 text-sm leading-relaxed mb-8">
                 Please verify your email address to log in. Click the link we sent to your inbox.
               </p>
-              <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold">
+              <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold">
                 Open Email App
               </Button>
             </div>
@@ -185,7 +185,7 @@ export function LoginPage() {
                   />
                 </div>
                 
-                <Button type="submit" className="w-full h-12 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl mt-2 shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
+                <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-2 shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-black" />}
                   {loading ? 'Logging in...' : 'Log In'}
                 </Button>
@@ -349,7 +349,7 @@ export function SignUpPage() {
                 We've sent a verification link to <strong className="text-white">{form.email}</strong>.<br />
                 Please click the link to activate your account.
               </p>
-              <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all">
+              <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all">
                 Open Email App
               </Button>
             </div>
@@ -445,7 +445,7 @@ export function SignUpPage() {
                         className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-white text-white placeholder:text-zinc-600 rounded-xl"
                       />
                     </div>
-                    <Button type="submit" className="w-full h-12 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl mt-4 shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
+                    <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-4 shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-black" />}
                       {role === 'photographer' ? 'Continue' : 'Create Account'}
                     </Button>
@@ -486,7 +486,7 @@ export function SignUpPage() {
                     />
                   </div>
 
-                  <Button onClick={handleFinish} className="w-full h-12 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
+                  <Button onClick={handleFinish} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-black" />}
                     Start Competing
                   </Button>

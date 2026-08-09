@@ -136,7 +136,7 @@ export default function UploadPage() {
                 key={s} 
                 className={cn(
                   "relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300",
-                  step >= s ? "bg-white text-black" : "bg-zinc-900 text-zinc-500 border-2 border-zinc-800"
+                  step >= s ? "bg-primary text-primary-foreground" : "bg-zinc-900 text-zinc-500 border-2 border-zinc-800"
                 )}
               >
                 {step > s ? <Check className="w-5 h-5" /> : s}
@@ -232,7 +232,7 @@ export default function UploadPage() {
               </Button>
               <Button 
                 onClick={() => setStep(3)} 
-                className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl px-8"
               >
                 Next <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -317,7 +317,7 @@ export default function UploadPage() {
                       className={cn(
                         "px-4 py-2 rounded-xl text-sm font-medium transition-colors border",
                         category === c 
-                          ? "bg-white text-black border-white" 
+                          ? "bg-primary text-primary-foreground border-white" 
                           : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200"
                       )}
                     >
@@ -356,7 +356,7 @@ export default function UploadPage() {
               </Button>
               <Button 
                 onClick={() => setStep(4)} 
-                className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl px-8"
               >
                 Review <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -435,7 +435,7 @@ export default function UploadPage() {
               <Button 
                 onClick={handlePublish} 
                 disabled={!!modStatus}
-                className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl px-8 min-w-[140px]"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl px-8 min-w-[140px]"
               >
                 {modStatus ? (
                   <>

@@ -208,7 +208,7 @@ export default function LandingPage() {
               <p className="text-zinc-400 text-lg mb-8 max-w-md">
                 Battle head-to-head in photography challenges, climb the global rankings, and get discovered by elite clients.
               </p>
-              <Button onClick={() => navigate('/signup')} className="rounded-full bg-white text-black hover:bg-zinc-200 px-8 py-6 text-base font-bold group">
+              <Button onClick={() => navigate('/signup')} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-base font-bold group">
                 Get Started 
                 <ArrowUpRight className="w-5 h-5 ml-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </Button>

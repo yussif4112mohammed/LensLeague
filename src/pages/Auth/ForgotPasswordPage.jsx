@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
                 We've sent a password reset link to <strong className="text-white">{email}</strong>.<br />
                 Click the link in the email to reset your password.
               </p>
-              <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold">
+              <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold">
                 Open Email App
               </Button>
             </div>
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
                 
-                <Button type="submit" className="w-full h-12 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
+                <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-black" />}
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </Button>

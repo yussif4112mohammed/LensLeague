@@ -104,7 +104,7 @@ export default function ClientSearch() {
                   onClick={() => setMinRating(r)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
                     minRating === r 
-                      ? 'bg-white text-black hover:scale-[1.02]' 
+                      ? 'bg-primary text-primary-foreground hover:scale-[1.02]' 
                       : 'bg-zinc-900/50 text-zinc-400 hover:text-white hover:bg-zinc-800 hover:-translate-y-0.5'
                   }`}
                 >

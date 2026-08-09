@@ -27,7 +27,7 @@ export default function ClientSaved() {
           </div>
           <h2 className="text-white text-lg font-bold mb-2">No saved items yet</h2>
           <p className="text-zinc-500 mb-6 max-w-[250px]">Heart your favorite photos and photographers to save them here for later.</p>
-          <Button className="bg-white text-black hover:bg-zinc-200 font-bold rounded-xl" onClick={() => navigate('/client/search')}>
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl" onClick={() => navigate('/client/search')}>
             <Search className="h-4 w-4 mr-2" /> Browse Inspiration
           </Button>
         </div>

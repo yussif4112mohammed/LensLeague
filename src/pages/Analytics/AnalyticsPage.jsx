@@ -404,7 +404,7 @@ export default function AnalyticsPage() {
                       "w-full h-14 rounded-xl font-bold text-base transition-all duration-300",
                       scorecardShared 
                         ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                        : "bg-white text-black hover:bg-zinc-200"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
                     )}
                   >
                     {scorecardShared ? (

@@ -216,7 +216,7 @@ export default function InboxPage() {
                                 Decline
                               </Button>
                               <Button 
-                                className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl"
+                                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl"
                                 onClick={() => acceptBooking(b.id)}
                               >
                                 Accept
@@ -341,7 +341,7 @@ export default function InboxPage() {
                         <div className={cn(
                           "px-4 py-2.5 rounded-2xl text-[15px] leading-relaxed shadow-sm",
                           isMe 
-                            ? "bg-white text-black rounded-br-sm" 
+                            ? "bg-primary text-primary-foreground rounded-br-sm" 
                             : "bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-bl-sm"
                         )}>
                           {msg.body}
@@ -375,7 +375,7 @@ export default function InboxPage() {
                     type="submit" 
                     size="icon"
                     disabled={!messageText.trim()}
-                    className="h-11 w-11 rounded-xl bg-white text-black hover:bg-zinc-200 shrink-0 disabled:opacity-50 disabled:hover:bg-white transition-all"
+                    className="h-11 w-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 disabled:opacity-50 disabled:hover:bg-white transition-all"
                   >
                     <Send className="h-5 w-5" />
                   </Button>

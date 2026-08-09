@@ -39,7 +39,7 @@ export default function ClientBookings() {
           </div>
           <p className="text-zinc-400 font-medium">No {status !== 'all' ? status : ''} bookings found</p>
           <p className="text-sm mt-1">Ready for your next photoshoot?</p>
-          <Button className="mt-6 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl" onClick={() => navigate('/client/search')}>
+          <Button className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl" onClick={() => navigate('/client/search')}>
             Find Photographers
           </Button>
         </div>
@@ -91,12 +91,12 @@ export default function ClientBookings() {
                 
                 <div className="p-4 pt-0 flex gap-2">
                   {b.status === 'accepted' && (
-                    <Button className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl" onClick={() => navigate('/client/inbox')}>
+                    <Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl" onClick={() => navigate('/client/inbox')}>
                       <MessageCircle className="h-4 w-4 mr-2" /> Message
                     </Button>
                   )}
                   {b.status === 'completed' && (
-                    <Button className="flex-1 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl">
+                    <Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl">
                       <Star className="h-4 w-4 mr-2" /> Leave Review
                     </Button>
                   )}
@@ -116,7 +116,7 @@ export default function ClientBookings() {
     <div className="min-h-screen bg-background text-zinc-400 p-4 pb-24 animate-in fade-in duration-500">
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-white font-bold text-2xl">My Bookings</h1>
-        <Button size="icon" className="bg-white text-black hover:bg-zinc-200 rounded-xl" onClick={() => navigate('/client/search')}>
+        <Button size="icon" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl" onClick={() => navigate('/client/search')}>
           <Plus className="h-5 w-5" />
         </Button>
       </header>

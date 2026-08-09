@@ -36,7 +36,7 @@ export default function AdminPage() {
         <Button 
           onClick={() => navigate('/login')} 
           size="lg"
-          className="mt-4 font-bold rounded-xl bg-white text-black hover:bg-zinc-200"
+          className="mt-4 font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
           id="go-to-login-btn"
         >
           Go to Log In

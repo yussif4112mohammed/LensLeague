@@ -136,22 +136,22 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
   return (
     <>
-      <article className="max-w-2xl mx-auto w-full mb-12 sm:border sm:border-zinc-800/50 sm:rounded-3xl overflow-hidden bg-black text-zinc-50" id={`post-${photo.id}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 px-4 sm:px-6">
+      <article className="max-w-3xl mx-auto w-full mb-16 sm:mb-24 relative" id={`post-${photo.id}`}>
+        {/* Header (Floating above the image or seamlessly integrated) */}
+        <div className="flex items-center justify-between p-4 sm:px-2 mb-2">
           <button
-            className="flex items-center gap-3 text-left group"
+            className="flex items-center gap-4 text-left group"
             onClick={() => navigate(`/profile/${photo.ownerId || '1'}`)}
             id={`post-author-${photo.id}`}
           >
-            <Avatar className="w-10 h-10 ring-2 ring-zinc-800 group-hover:ring-zinc-600 transition-all">
+            <Avatar className="w-12 h-12 ring-2 ring-transparent group-hover:ring-primary/50 transition-all duration-300 shadow-lg">
               <AvatarImage src={photo.ownerAvatar} alt={photo.ownerName} className="object-cover" />
               <AvatarFallback className="bg-zinc-800 text-xs">{photo.ownerName?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-semibold text-sm tracking-tight hover:underline">{photo.ownerName}</div>
+              <div className="font-extrabold text-base tracking-tight group-hover:text-white transition-colors">{photo.ownerName}</div>
               {photo.location && (
-                <div className="text-xs text-zinc-400 font-medium tracking-wide">{photo.location}</div>
+                <div className="text-xs text-zinc-500 font-medium tracking-wide mt-0.5">{photo.location}</div>
               )}
             </div>
           </button>
@@ -161,22 +161,22 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
               <Button
                 variant={isFollowing ? "secondary" : "default"}
                 size="sm"
-                className={cn("h-8 px-4 rounded-full text-xs font-semibold tracking-wide transition-all", isFollowing ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-300" : "bg-zinc-100 text-black hover:bg-white")}
+                className={cn("h-9 px-5 rounded-full text-xs font-bold tracking-wide transition-all shadow-lg", isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95")}
                 onClick={handleFollowClick}
                 id={`follow-${photo.id}`}
               >
                 {isFollowing ? 'Following' : 'Follow'}
               </Button>
             )}
-            <button className="text-zinc-500 hover:text-zinc-300 transition-colors">
+            <button className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Media Frame (Passepartout Inspired) */}
+        {/* Media Frame */}
         <div 
-          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950 flex items-center justify-center cursor-pointer group"
+          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950/50 flex items-center justify-center cursor-pointer group rounded-none sm:rounded-[2rem] overflow-hidden border-y sm:border border-white/5 shadow-2xl"
           onClick={handleTap}
         >
           {photo.isVideo ? (
@@ -237,33 +237,33 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
         </div>
 
         {/* Actions & Info */}
-        <div className="p-4 px-4 sm:px-6 space-y-3">
+        <div className="p-4 sm:px-2 pt-6 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <button 
                 onClick={handleLike} 
-                className={cn("transition-transform active:scale-90", liked ? "text-red-500" : "text-zinc-100 hover:text-zinc-300")}
+                className={cn("transition-all duration-300 hover:scale-110 active:scale-90", liked ? "text-primary" : "text-zinc-400 hover:text-white")}
               >
-                <Heart className={cn("w-6 h-6", liked ? "fill-current" : "")} strokeWidth={2} />
+                <Heart className={cn("w-7 h-7", liked ? "fill-current" : "")} strokeWidth={2.5} />
               </button>
               <button 
                 onClick={handleComment} 
-                className="text-zinc-100 hover:text-zinc-400 transition-transform active:scale-90"
+                className="text-zinc-400 hover:text-white hover:scale-110 active:scale-90 transition-all duration-300"
               >
-                <MessageCircle className="w-6 h-6" strokeWidth={2} />
+                <MessageCircle className="w-7 h-7" strokeWidth={2.5} />
               </button>
               <button 
                 onClick={handleShare} 
-                className="text-zinc-100 hover:text-zinc-400 transition-transform active:scale-90"
+                className="text-zinc-400 hover:text-white hover:scale-110 active:scale-90 transition-all duration-300"
               >
-                <Share className="w-6 h-6" strokeWidth={2} />
+                <Share className="w-7 h-7" strokeWidth={2.5} />
               </button>
             </div>
             <button 
               onClick={handleSave} 
-              className={cn("transition-transform active:scale-90", saved ? "text-zinc-100" : "text-zinc-100 hover:text-zinc-400")}
+              className={cn("transition-all duration-300 hover:scale-110 active:scale-90", saved ? "text-white" : "text-zinc-400 hover:text-white")}
             >
-              <Bookmark className={cn("w-6 h-6", saved ? "fill-current" : "")} strokeWidth={2} />
+              <Bookmark className={cn("w-7 h-7", saved ? "fill-current text-white" : "")} strokeWidth={2.5} />
             </button>
           </div>
 

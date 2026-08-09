@@ -161,42 +161,42 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-black text-zinc-50 pb-20 md:pb-0 font-sans selection:bg-zinc-800">
       
-      <header className="sticky top-0 z-40 md:hidden flex items-center justify-between p-4 bg-black/80 backdrop-blur-xl border-b border-zinc-900">
+      <header className="sticky top-0 z-40 md:hidden flex items-center justify-between p-4 bg-black/80 backdrop-blur-3xl border-b border-white/5">
         <div className="flex items-center gap-2">
           <Logo withText={true} className="w-6 h-6" />
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/upload')} className="text-zinc-100 hover:text-white hover:scale-110 active:scale-95 transition-all">
+          <button onClick={() => navigate('/upload')} className="text-zinc-400 hover:text-white hover:scale-110 active:scale-95 transition-all">
             <PlusSquare className="w-6 h-6" />
           </button>
-          <button onClick={() => navigate('/inbox')} className="text-zinc-100 hover:text-white hover:scale-110 active:scale-95 transition-all relative">
+          <button onClick={() => navigate('/inbox')} className="text-zinc-400 hover:text-white hover:scale-110 active:scale-95 transition-all relative">
             <Inbox className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full border-2 border-black" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-black" />
           </button>
-          <button onClick={() => setNotifOpen(true)} className="text-zinc-100 hover:text-white hover:scale-110 active:scale-95 transition-all relative">
+          <button onClick={() => setNotifOpen(true)} className="text-zinc-400 hover:text-white hover:scale-110 active:scale-95 transition-all relative">
             <Bell className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full border-2 border-black" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-black" />
           </button>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto md:px-6 lg:px-8 md:py-8 lg:grid lg:grid-cols-[1fr_340px] lg:gap-12">
+      <div className="max-w-[1400px] mx-auto md:px-6 lg:px-12 md:py-8 lg:grid lg:grid-cols-[1fr_360px] lg:gap-16">
         
-        <main className="w-full max-w-2xl mx-auto lg:mx-0">
+        <main className="w-full max-w-3xl mx-auto lg:mx-0 lg:ml-auto">
           
-          <div className="hidden md:flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Feed</h1>
+          <div className="flex items-center justify-between mb-8 px-4 md:px-0">
+            <h1 className="text-3xl font-extrabold tracking-tight hidden md:block">Feed</h1>
             
-            <div className="flex items-center p-1 bg-zinc-900/50 rounded-full border border-zinc-800">
+            <div className="flex items-center p-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10 mx-auto md:mx-0">
               {FEED_TABS.map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
                   className={cn(
-                    "px-6 py-2 rounded-full text-sm font-semibold tracking-wide transition-all duration-300",
+                    "px-8 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300",
                     tab === t 
-                      ? "bg-zinc-100 text-black shadow-sm scale-105" 
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 active:scale-95"
+                      ? "bg-white text-black shadow-lg shadow-white/20 scale-105" 
+                      : "text-zinc-400 hover:text-white hover:bg-white/5 active:scale-95"
                   )}
                 >
                   {t}
@@ -205,24 +205,7 @@ export default function FeedPage() {
             </div>
           </div>
 
-          <div className="md:hidden flex items-center justify-center gap-2 p-4 mb-2">
-            {FEED_TABS.map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  "px-6 py-2 rounded-full text-sm font-semibold tracking-wide transition-all duration-300",
-                  tab === t 
-                    ? "bg-zinc-100 text-black shadow-sm scale-105" 
-                    : "text-zinc-500 hover:text-zinc-300 active:scale-95"
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-4 md:space-y-8">
+          <div className="space-y-6 md:space-y-12">
             {loading && feedPhotos.length === 0 ? (
               <>
                 <SkeletonPhotoCard />
@@ -230,11 +213,11 @@ export default function FeedPage() {
                 <SkeletonPhotoCard />
               </>
             ) : feedPhotos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 text-center border border-zinc-800/50 rounded-3xl bg-zinc-950/30 transition-all hover:bg-zinc-900/50">
-                <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6 shadow-inner border border-zinc-800">
-                  <ImageOff className="w-10 h-10 text-zinc-500" />
+              <div className="flex flex-col items-center justify-center p-12 text-center border border-white/5 rounded-[2rem] bg-zinc-950/50 backdrop-blur-sm transition-all">
+                <div className="w-24 h-24 bg-gradient-to-tr from-zinc-900 to-zinc-800 rounded-full flex items-center justify-center mb-8 shadow-2xl border border-white/5">
+                  <ImageOff className="w-10 h-10 text-zinc-400" />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight mb-3">
+                <h2 className="text-3xl font-extrabold tracking-tight mb-4 text-white">
                   {tab === 'Following' ? 'Your Timeline is Quiet' : 'Welcome to the Feed'}
                 </h2>
                 <p className="text-zinc-400 text-sm max-w-sm mb-8 leading-relaxed">
@@ -291,24 +274,24 @@ export default function FeedPage() {
           </div>
         </main>
 
-        <aside className="hidden lg:block space-y-8 sticky top-8 h-fit">
+        <aside className="hidden lg:block space-y-12 sticky top-12 h-fit pr-4">
           
           {currentUser && (
-            <div className="flex items-center justify-between bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800/50 transition-colors hover:border-zinc-700/50">
+            <div className="flex items-center justify-between bg-zinc-950/30 p-5 rounded-[2rem] border border-white/5 transition-all hover:border-white/10 hover:bg-zinc-950/50">
               <button 
                 onClick={() => navigate(`/profile/${currentUser.id}`)}
                 className="flex items-center gap-4 group text-left"
               >
-                <Avatar className="w-12 h-12 ring-2 ring-transparent group-hover:ring-zinc-700 transition-all duration-300">
+                <Avatar className="w-14 h-14 ring-2 ring-transparent group-hover:ring-primary/50 transition-all duration-300">
                   <AvatarImage src={currentUser.avatar} alt={currentUser.name} className="object-cover" />
                   <AvatarFallback className="bg-zinc-800">{currentUser?.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-bold text-sm group-hover:text-zinc-300 transition-colors">{currentUser?.name || 'User'}</div>
-                  <div className="text-zinc-500 text-xs mt-0.5">@{currentUser?.handle || currentUser?.name?.toLowerCase().replace(' ', '') || 'user'}</div>
+                  <div className="font-extrabold text-base group-hover:text-white transition-colors">{currentUser?.name || 'User'}</div>
+                  <div className="text-zinc-500 text-sm mt-0.5 font-medium">@{currentUser?.handle || currentUser?.name?.toLowerCase().replace(' ', '') || 'user'}</div>
                 </div>
               </button>
-              <button className="text-xs font-bold text-zinc-400 hover:text-white transition-colors px-3 py-1.5 rounded-full hover:bg-zinc-900 active:scale-95">Switch</button>
+              <button className="text-xs font-bold text-primary hover:text-white transition-colors px-4 py-2 rounded-full hover:bg-primary/20 active:scale-95">Switch</button>
             </div>
           )}
 
@@ -326,27 +309,27 @@ export default function FeedPage() {
               </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               {activeChallenges.length > 0 ? (
                 activeChallenges.map(c => (
                   <button 
                     key={c.id}
                     onClick={() => navigate('/compete/challenges')}
-                    className="w-full flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:border-zinc-800/50 hover:bg-zinc-900/50 transition-all duration-300 group text-left"
+                    className="w-full flex items-center gap-4 p-3 rounded-2xl border border-transparent hover:bg-white/5 transition-all duration-300 group text-left"
                   >
-                    <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-zinc-800">
+                    <div className="w-16 h-16 rounded-[1rem] overflow-hidden shrink-0 shadow-lg">
                       <img src={c.coverUrl} alt={c.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <div className="font-semibold text-sm truncate text-zinc-200 group-hover:text-white transition-colors">{c.title}</div>
+                      <div className="font-extrabold text-sm truncate text-zinc-200 group-hover:text-white transition-colors">{c.title}</div>
                       <div className="text-xs text-zinc-500 mt-1 truncate font-medium">
-                        <span className="text-zinc-300">💎 {c.prizePoints} pts</span> · {c.entries} entries
+                        <span className="text-primary">💎 {c.prizePoints} pts</span> · {c.entries} entries
                       </div>
                     </div>
                   </button>
                 ))
               ) : (
-                <div className="text-sm text-zinc-500 p-6 text-center border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-950/30">
+                <div className="text-sm font-medium text-zinc-600 p-4 text-left">
                   No active challenges right now.
                 </div>
               )}
@@ -372,23 +355,23 @@ export default function FeedPage() {
                   <button 
                     key={p.id}
                     onClick={() => navigate(`/profile/${p.id}`)}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl border border-transparent hover:border-zinc-800/50 hover:bg-zinc-900/50 transition-all duration-300 group text-left"
+                    className="w-full flex items-center justify-between p-3 rounded-2xl border border-transparent hover:bg-white/5 transition-all duration-300 group text-left"
                   >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10 border border-zinc-800 group-hover:border-zinc-700 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="w-12 h-12 ring-2 ring-transparent group-hover:ring-white/20 transition-all">
                         <AvatarImage src={p.avatar} alt={p.name} className="object-cover" />
                         <AvatarFallback className="bg-zinc-800 text-xs">{p?.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-semibold text-sm text-zinc-200 group-hover:text-white transition-colors">{p.name}</div>
+                        <div className="font-extrabold text-sm text-zinc-200 group-hover:text-white transition-colors">{p.name}</div>
                         <div className="text-xs text-zinc-500 mt-0.5 font-medium">Rank #{p.globalRank || 1} · {(p.points || 0).toLocaleString()} pts</div>
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-zinc-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
                   </button>
                 ))
               ) : (
-                <div className="text-sm text-zinc-500 p-6 text-center border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-950/30">
+                <div className="text-sm font-medium text-zinc-600 p-4 text-left">
                   Join & post to rank!
                 </div>
               )}

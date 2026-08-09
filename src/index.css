@@ -19,8 +19,8 @@
     --popover: 240 5.9% 10%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 0 0% 100%;             /* Pure White #FFFFFF */
-    --primary-foreground: 0 0% 0%;   /* #000000 */
+    --primary: 217 91% 60%;           /* Electric Blue #3B82F6 */
+    --primary-foreground: 0 0% 100%;  /* White text on primary button */
     
     --secondary: 240 3.7% 15.9%;     /* #27272A */
     --secondary-foreground: 0 0% 98%;

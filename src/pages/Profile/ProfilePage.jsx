@@ -12,22 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import CommentSheet from '../../components/CommentSheet/CommentSheet';
 import { supabase } from '../../lib/supabaseClient';
+import { Camera, SearchX, LogIn, ImageOff, MessageSquare, Plus, Edit2, History } from 'lucide-react';
 import './ProfilePage.css';
-
-const ACHIEVEMENTS = [
-  { id: 'a1', icon: '🏆', name: 'First Win', desc: 'Won your first battle', unlocked: true },
-  { id: 'a2', icon: '🔥', name: '10-Day Streak', desc: 'Uploaded 10 days in a row', unlocked: true },
-  { id: 'a3', icon: '⭐', name: 'Top 10 Global', desc: 'Reached top 10 on the global leaderboard', unlocked: true },
-  { id: 'a4', icon: '💎', name: 'Diamond Rank', desc: 'Reach 40,000 points', unlocked: true },
-  { id: 'a5', icon: '📸', name: '100 Uploads', desc: 'Upload 100 photos', unlocked: false },
-  { id: 'a6', icon: '👑', name: 'Challenge Champion', desc: 'Win 5 challenges', unlocked: false },
-];
-
-const REVIEWS = [
-  { id: 'r1', reviewer: 'Jordan Blake', reviewerAvatar: 'https://ui-avatars.com/api/?name=Jordan+Blake', rating: 5, body: 'Absolutely stunning work. Captured our brand campaign with a level of artistry I hadn\'t seen before. Will book again.', type: 'Commercial Campaign', date: '2 weeks ago', verified: true },
-  { id: 'r2', reviewer: 'Maria Santos', reviewerAvatar: 'https://ui-avatars.com/api/?name=Maria+Santos', rating: 5, body: 'Our family portraits turned out beyond expectations. Professional, warm, and incredibly talented.', type: 'Portrait Session', date: '1 month ago', verified: true },
-  { id: 'r3', reviewer: 'Tech Ventures Ltd.', reviewerAvatar: 'https://ui-avatars.com/api/?name=Tech+Ventures', rating: 4, body: 'Great product photography for our launch. Fast turnaround, excellent communication.', type: 'Product Photography', date: '2 months ago', verified: true },
-];
 
 function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
   const [liked, setLiked] = useState(false);
@@ -50,17 +36,17 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
           
           <div className="w-full md:w-[380px] flex flex-col bg-card border-l border-border/40">
             <div className="p-4 border-b border-border/40 flex items-center justify-between">
-              <div className="flex items-center gap-3 cursor-pointer" onClick={() => { onClose(); onNavigateProfile?.(); }}>
-                <Avatar className="h-10 w-10 border border-border">
+              <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { onClose(); onNavigateProfile?.(); }}>
+                <Avatar className="h-10 w-10 border border-border group-hover:border-zinc-500 transition-colors">
                   <AvatarImage src={photo.ownerAvatar} />
                   <AvatarFallback>{photo.ownerName[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-bold text-sm leading-tight hover:underline">{photo.ownerName}</div>
+                  <div className="font-bold text-sm leading-tight group-hover:text-primary transition-colors">{photo.ownerName}</div>
                   {photo.location && <div className="text-xs text-muted-foreground">{photo.location}</div>}
                 </div>
               </div>
-              <button className="hidden md:block p-2 text-muted-foreground hover:text-foreground transition-colors" onClick={onClose}>✕</button>
+              <button className="hidden md:block p-2 text-muted-foreground hover:text-foreground hover:scale-110 transition-all" onClick={onClose}>✕</button>
             </div>
 
             <div className="p-4 flex-1 overflow-y-auto">
@@ -77,19 +63,19 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
             <div className="p-4 border-t border-border/40">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-4">
-                  <button className={`hover:scale-110 transition-transform ${liked ? 'text-red-500' : 'text-foreground'}`} onClick={() => { setLiked(!liked); setLikeCount(c => liked ? c - 1 : c + 1); }}>
+                  <button className={`hover:scale-110 active:scale-95 transition-transform ${liked ? 'text-red-500' : 'text-foreground'}`} onClick={() => { setLiked(!liked); setLikeCount(c => liked ? c - 1 : c + 1); }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   </button>
-                  <button className="hover:scale-110 transition-transform" onClick={() => setShowComments(true)}>
+                  <button className="hover:scale-110 active:scale-95 transition-transform" onClick={() => setShowComments(true)}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                   </button>
                 </div>
-                <button className={`hover:scale-110 transition-transform ${saved ? 'text-primary' : 'text-foreground'}`} onClick={() => setSaved(!saved)}>
+                <button className={`hover:scale-110 active:scale-95 transition-transform ${saved ? 'text-primary' : 'text-foreground'}`} onClick={() => setSaved(!saved)}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                 </button>
               </div>
               {likeCount > 0 && <div className="text-sm font-bold mb-1">{fmt(likeCount)} likes</div>}
-              <button className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setShowComments(true)}>
+              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors" onClick={() => setShowComments(true)}>
                 View all {fmt(photo.comments || 24)} comments
               </button>
             </div>
@@ -98,6 +84,53 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
       </div>
       {showComments && <CommentSheet photo={photo} onClose={() => setShowComments(false)} />}
     </>
+  );
+}
+
+function SkeletonProfile() {
+  return (
+    <div className="w-full min-h-screen bg-background animate-pulse pb-20">
+      <div className="relative h-64 md:h-80 w-full bg-zinc-900 border-b border-border/50" />
+      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10">
+        <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8">
+          <div className="flex items-end gap-6">
+            <div className="h-32 w-32 rounded-full bg-zinc-800 border-4 border-background shadow-xl" />
+            <div className="pb-2 space-y-3">
+              <div className="h-8 w-48 bg-zinc-800 rounded-md" />
+              <div className="h-4 w-32 bg-zinc-800 rounded-md" />
+            </div>
+          </div>
+          <div className="pb-2">
+            <div className="h-10 w-32 bg-zinc-800 rounded-full" />
+          </div>
+        </div>
+        <div className="space-y-3 mb-8 max-w-3xl">
+          <div className="h-4 w-full bg-zinc-800 rounded-md" />
+          <div className="h-4 w-5/6 bg-zinc-800 rounded-md" />
+          <div className="h-4 w-4/6 bg-zinc-800 rounded-md" />
+        </div>
+        <div className="flex gap-4 mb-12">
+          <div className="h-8 w-24 bg-zinc-800 rounded-xl" />
+          <div className="h-8 w-24 bg-zinc-800 rounded-xl" />
+          <div className="h-8 w-24 bg-zinc-800 rounded-xl" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, desc, action }) {
+  return (
+    <div className="flex flex-col items-center justify-center p-12 text-center border border-border/50 rounded-3xl bg-card/30 transition-all hover:bg-card/50 my-8">
+      <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6 shadow-inner border border-border/50">
+        <Icon className="w-10 h-10 text-muted-foreground" />
+      </div>
+      <h2 className="text-2xl font-bold tracking-tight mb-3">{title}</h2>
+      <p className="text-muted-foreground text-sm max-w-sm mb-8 leading-relaxed">
+        {desc}
+      </p>
+      {action && action}
+    </div>
   );
 }
 
@@ -160,7 +193,7 @@ export default function ProfilePage() {
     if (id === 'me') {
       if (currentUser) setIsMeLoading(false);
       else {
-        const timer = setTimeout(() => setIsMeLoading(false), 4000);
+        const timer = setTimeout(() => setIsMeLoading(false), 2000);
         return () => clearTimeout(timer);
       }
     } else {
@@ -169,26 +202,35 @@ export default function ProfilePage() {
   }, [id, currentUser]);
 
   if (!photographer) {
-    if (loadingProfile || isMeLoading) return <div className="flex items-center justify-center min-h-screen text-muted-foreground">Loading profile...</div>;
+    if (loadingProfile || isMeLoading) return <SkeletonProfile />;
     if (!currentUser && id === 'me') return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] p-4 text-center">
-        <Card className="p-8 max-w-sm w-full bg-card/60 backdrop-blur-xl border-border/50">
-          <h2 className="text-2xl font-bold mb-2">Log In Required</h2>
-          <p className="text-muted-foreground mb-6">You need to be logged in to view your profile.</p>
-          <Button className="w-full rounded-full" onClick={() => navigate('/login')}>Sign In</Button>
-        </Card>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
+        <EmptyState 
+          icon={LogIn} 
+          title="Log In Required" 
+          desc="You need to be logged in to view and edit your profile."
+          action={
+            <Button className="rounded-full px-8 hover:scale-105 active:scale-95 transition-all" onClick={() => navigate('/login')}>Sign In</Button>
+          }
+        />
       </div>
     );
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] p-4 text-center">
-        <h2 className="text-2xl font-bold mb-2">Profile Not Found</h2>
-        <p className="text-muted-foreground mb-6">This creator doesn't exist or hasn't setup their profile.</p>
-        <Button variant="outline" className="rounded-full" onClick={() => navigate('/feed')}>Return to Feed</Button>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
+        <EmptyState 
+          icon={SearchX} 
+          title="Profile Not Found" 
+          desc="This creator doesn't exist or hasn't set up their profile yet."
+          action={
+            <Button variant="outline" className="rounded-full px-8 hover:scale-105 active:scale-95 transition-all" onClick={() => navigate('/feed')}>Return to Feed</Button>
+          }
+        />
       </div>
     );
   }
 
   const userPhotos = photos.filter(p => p.ownerId === photographer.id);
+  const userReviews = photographer.reviews || [];
 
   const handleBookingSubmit = (e) => {
     e.preventDefault();
@@ -224,24 +266,24 @@ export default function ProfilePage() {
   const isFollowing = currentUser && follows.some(f => f.follower_id === currentUser.id && f.following_id === photographer.id);
 
   return (
-    <div className="w-full min-h-screen bg-background text-foreground animate-in fade-in pb-20">
+    <div className="w-full min-h-screen bg-background text-foreground animate-in fade-in pb-20 selection:bg-zinc-800">
       
       {/* Cover */}
-      <div className="relative h-64 md:h-80 w-full overflow-hidden">
+      <div className="relative h-64 md:h-80 w-full overflow-hidden group">
         {photographer.cover ? (
-          <img src={photographer.cover} className="w-full h-full object-cover" alt="Cover" />
+          <img src={photographer.cover} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-tr from-secondary/40 to-background" />
+          <div className="w-full h-full bg-zinc-900 border-b border-border/50" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent pointer-events-none" />
         
         <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-10">
-          <Button variant="secondary" size="icon" className="rounded-full bg-background/50 hover:bg-background/80 backdrop-blur-md" onClick={() => navigate(-1)}>
+          <Button variant="secondary" size="icon" className="rounded-full bg-background/50 hover:bg-background/80 backdrop-blur-md hover:scale-110 active:scale-95 transition-all" onClick={() => navigate(-1)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
           </Button>
           {isOwnProfile && (
-            <Button variant="secondary" size="icon" className="rounded-full bg-background/50 hover:bg-background/80 backdrop-blur-md">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <Button variant="secondary" size="icon" className="rounded-full bg-background/50 hover:bg-background/80 backdrop-blur-md hover:scale-110 active:scale-95 transition-all">
+              <Camera className="w-4 h-4" />
             </Button>
           )}
         </div>
@@ -250,9 +292,9 @@ export default function ProfilePage() {
       <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10">
         <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8">
           <div className="flex items-end gap-6">
-            <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
+            <Avatar className="h-32 w-32 border-4 border-background shadow-xl hover:scale-[1.02] transition-transform">
               <AvatarImage src={photographer.avatar} className="object-cover" />
-              <AvatarFallback className="text-3xl">{photographer.name[0]}</AvatarFallback>
+              <AvatarFallback className="text-3xl bg-zinc-900">{photographer.name[0]}</AvatarFallback>
             </Avatar>
             <div className="pb-2">
               <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-2">
@@ -267,7 +309,9 @@ export default function ProfilePage() {
             {isOwnProfile ? (
               <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="rounded-full font-bold">Edit Profile</Button>
+                  <Button variant="outline" className="rounded-full font-bold hover:scale-105 active:scale-95 transition-all">
+                    <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
+                  </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px] bg-card border-border/50 backdrop-blur-xl">
                   <DialogHeader>
@@ -288,11 +332,11 @@ export default function ProfilePage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Name</label>
-                      <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} />
+                      <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} className="bg-background" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Bio</label>
-                      <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none" />
+                      <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none bg-background" />
                     </div>
                     <Button type="submit" className="w-full rounded-full" disabled={isSavingEdit}>{isSavingEdit ? 'Saving...' : 'Save Changes'}</Button>
                   </form>
@@ -300,13 +344,15 @@ export default function ProfilePage() {
               </Dialog>
             ) : (
               <>
-                <Button variant="secondary" className="rounded-full font-bold" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>Message</Button>
-                <Button variant={isFollowing ? "outline" : "secondary"} className="rounded-full font-bold" onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
+                <Button variant="secondary" className="rounded-full font-bold hover:scale-105 active:scale-95 transition-all" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
+                  Message
+                </Button>
+                <Button variant={isFollowing ? "outline" : "secondary"} className="rounded-full font-bold hover:scale-105 active:scale-95 transition-all" onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
                   {isFollowing ? 'Following' : 'Follow'}
                 </Button>
                 <Dialog open={bookingModalOpen} onOpenChange={setBookingModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-full font-bold text-black bg-white hover:bg-gray-200 shadow-lg shadow-white/10">Request Booking</Button>
+                    <Button className="rounded-full font-bold text-black bg-white hover:bg-gray-200 shadow-lg shadow-white/10 hover:scale-105 active:scale-95 transition-all">Request Booking</Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px] bg-card border-border/50">
                     <DialogHeader>
@@ -315,17 +361,17 @@ export default function ProfilePage() {
                     </DialogHeader>
                     {bookingSuccess ? (
                       <div className="py-12 text-center flex flex-col items-center">
-                        <div className="text-5xl mb-4">🎉</div>
+                        <div className="text-5xl mb-4 animate-bounce">🎉</div>
                         <h3 className="text-xl font-bold mb-2">Request Sent</h3>
                         <p className="text-muted-foreground">Opening conversation thread...</p>
                       </div>
                     ) : (
                       <form onSubmit={handleBookingSubmit} className="space-y-4 pt-4">
-                        <Input type="date" required value={bookingForm.date} onChange={e=>setBookingForm({...bookingForm, date: e.target.value})} />
-                        <Input placeholder="Location" required value={bookingForm.location} onChange={e=>setBookingForm({...bookingForm, location: e.target.value})} />
-                        <Input placeholder="Budget (e.g. $1000)" required value={bookingForm.budget} onChange={e=>setBookingForm({...bookingForm, budget: e.target.value})} />
-                        <Textarea placeholder="Describe the shoot..." required value={bookingForm.message} onChange={e=>setBookingForm({...bookingForm, message: e.target.value})} />
-                        <Button type="submit" className="w-full rounded-full bg-primary text-primary-foreground">Send Request</Button>
+                        <Input type="date" required value={bookingForm.date} onChange={e=>setBookingForm({...bookingForm, date: e.target.value})} className="bg-background" />
+                        <Input placeholder="Location" required value={bookingForm.location} onChange={e=>setBookingForm({...bookingForm, location: e.target.value})} className="bg-background" />
+                        <Input placeholder="Budget (e.g. $1000)" required value={bookingForm.budget} onChange={e=>setBookingForm({...bookingForm, budget: e.target.value})} className="bg-background" />
+                        <Textarea placeholder="Describe the shoot..." required value={bookingForm.message} onChange={e=>setBookingForm({...bookingForm, message: e.target.value})} className="bg-background" />
+                        <Button type="submit" className="w-full rounded-full bg-zinc-100 text-black hover:bg-white transition-all hover:scale-[1.02] active:scale-95 font-bold">Send Request</Button>
                       </form>
                     )}
                   </DialogContent>
@@ -335,15 +381,17 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <p className="text-lg leading-relaxed max-w-3xl mb-8">{photographer.bio}</p>
+        {photographer.bio && (
+          <p className="text-lg leading-relaxed max-w-3xl mb-8 text-zinc-300">{photographer.bio}</p>
+        )}
 
         {/* Stats Flex */}
         <div className="flex flex-wrap items-center gap-4 mb-12">
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2">👥 <span className="font-bold">{follows.filter(f=>f.following_id===photographer.id).length}</span> followers</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2">🏆 <span className="font-bold">{photographer.wins||0}</span> wins</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2">⭐ <span className="font-bold">{photographer.avgRating||'5.0'}</span> rating</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 text-primary border border-primary/20 bg-primary/10">💎 <span className="font-bold">{photographer.points||0}</span> pts</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 bg-gradient-to-r from-muted to-muted">🌍 <span className="font-bold">#{photographer.global_rank || 99}</span> Global</Badge>
+          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 hover:scale-105 transition-transform cursor-default">👥 <span className="font-bold">{follows.filter(f=>f.following_id===photographer.id).length}</span> followers</Badge>
+          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 hover:scale-105 transition-transform cursor-default">🏆 <span className="font-bold">{photographer.wins||0}</span> wins</Badge>
+          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 hover:scale-105 transition-transform cursor-default">⭐ <span className="font-bold">{photographer.avgRating||'5.0'}</span> rating</Badge>
+          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 text-primary border border-primary/20 bg-primary/10 hover:scale-105 transition-transform cursor-default">💎 <span className="font-bold">{photographer.points||0}</span> pts</Badge>
+          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 bg-gradient-to-r from-muted to-muted hover:scale-105 transition-transform cursor-default">🌍 <span className="font-bold">#{photographer.global_rank || 99}</span> Global</Badge>
         </div>
 
         <Tabs defaultValue="portfolio" className="w-full">
@@ -352,7 +400,7 @@ export default function ProfilePage() {
               <TabsTrigger 
                 key={tab} 
                 value={tab.toLowerCase()}
-                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground rounded-none border-b-2 border-transparent px-0 py-3 font-semibold text-muted-foreground hover:text-foreground"
+                className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-foreground rounded-none border-b-2 border-transparent px-0 py-3 font-semibold text-muted-foreground hover:text-foreground transition-all"
               >
                 {tab}
               </TabsTrigger>
@@ -369,9 +417,16 @@ export default function ProfilePage() {
                 ))}
               </div>
             ) : (
-              <div className="py-24 text-center text-muted-foreground border border-dashed border-border/50 rounded-2xl">
-                No visual work uploaded yet.
-              </div>
+              <EmptyState 
+                icon={ImageOff} 
+                title="No Portfolio Yet" 
+                desc={isOwnProfile ? "Upload your first high-res shoot or video to start building your portfolio." : "This creator hasn't uploaded any visual work yet."}
+                action={isOwnProfile && (
+                  <Button onClick={() => navigate('/upload')} className="rounded-full bg-zinc-100 text-black font-bold hover:bg-white hover:scale-105 active:scale-95 transition-all">
+                    Upload Shoot
+                  </Button>
+                )}
+              />
             )}
           </TabsContent>
 
@@ -381,7 +436,9 @@ export default function ProfilePage() {
                 <div className="mb-8 flex justify-end">
                   <Dialog open={milestoneModalOpen} onOpenChange={setMilestoneModalOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="secondary" className="rounded-full">+ Add Milestone</Button>
+                      <Button variant="secondary" className="rounded-full hover:scale-105 active:scale-95 transition-all">
+                        <Plus className="w-4 h-4 mr-2" /> Add Milestone
+                      </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px] bg-card border-border/50">
                       <DialogHeader>
@@ -394,10 +451,10 @@ export default function ProfilePage() {
                         setMilestoneModalOpen(false);
                         setMilestoneForm({title:'',desc:'',date:'',icon:'🏆'});
                       }} className="space-y-4">
-                        <Input placeholder="Title" required value={milestoneForm.title} onChange={e=>setMilestoneForm({...milestoneForm, title: e.target.value})} />
-                        <Input placeholder="Date (e.g. Sep 2026)" value={milestoneForm.date} onChange={e=>setMilestoneForm({...milestoneForm, date: e.target.value})} />
-                        <Textarea placeholder="Description" value={milestoneForm.desc} onChange={e=>setMilestoneForm({...milestoneForm, desc: e.target.value})} />
-                        <Button type="submit" className="w-full rounded-full">Add to Timeline</Button>
+                        <Input placeholder="Title" required value={milestoneForm.title} onChange={e=>setMilestoneForm({...milestoneForm, title: e.target.value})} className="bg-background" />
+                        <Input placeholder="Date (e.g. Sep 2026)" value={milestoneForm.date} onChange={e=>setMilestoneForm({...milestoneForm, date: e.target.value})} className="bg-background" />
+                        <Textarea placeholder="Description" value={milestoneForm.desc} onChange={e=>setMilestoneForm({...milestoneForm, desc: e.target.value})} className="bg-background" />
+                        <Button type="submit" className="w-full rounded-full hover:scale-[1.02] active:scale-95 transition-all">Add to Timeline</Button>
                       </form>
                     </DialogContent>
                   </Dialog>
@@ -415,18 +472,18 @@ export default function ProfilePage() {
                     gear: p.gear
                   })), {id:'joined',date:'Member',icon:'✨',title:'Joined LensLeague',desc:'Created official creator profile.'}]
                 .map((item, idx) => (
-                  <div key={item.id||idx} className="relative">
-                    <div className="absolute -left-[45px] top-0 w-8 h-8 rounded-full bg-card border-2 border-primary flex items-center justify-center text-sm shadow-xl">
+                  <div key={item.id||idx} className="relative group">
+                    <div className="absolute -left-[45px] top-0 w-8 h-8 rounded-full bg-card border-2 border-primary flex items-center justify-center text-sm shadow-xl transition-transform group-hover:scale-110">
                       {item.icon}
                     </div>
-                    <Card className="bg-card/40 hover:bg-card border-border/40 transition-colors">
+                    <Card className="bg-card/40 hover:bg-card border-border/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                       <CardContent className="p-5">
                         <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-bold text-lg">{item.title}</h3>
+                          <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{item.title}</h3>
                           <span className="text-xs font-mono text-muted-foreground">{item.date}</span>
                         </div>
                         <p className="text-muted-foreground text-sm">{item.desc}</p>
-                        {item.photoUrl && <img src={item.photoUrl} className="mt-4 rounded-xl w-full h-48 object-cover border border-border/30" alt="" />}
+                        {item.photoUrl && <img src={item.photoUrl} className="mt-4 rounded-xl w-full h-48 object-cover border border-border/30 transition-transform duration-500 hover:scale-[1.02]" alt="" />}
                         {item.gear && <div className="mt-3 text-xs text-muted-foreground font-mono">📷 {item.gear}</div>}
                       </CardContent>
                     </Card>
@@ -446,9 +503,9 @@ export default function ProfilePage() {
                 { id: 'a5', icon: '🔥', name: 'Prolific Creator', desc: 'Uploaded 5+ photos', unlocked: userPhotos.length >= 5 },
                 { id: 'a6', icon: '👑', name: 'League Leader', desc: 'Reached top 5 global rank', unlocked: (photographer.global_rank || 99) <= 5 }
               ].map(ach => (
-                <Card key={ach.id} className={`bg-card/40 border-border/40 transition-opacity ${ach.unlocked ? 'opacity-100 border-primary/30' : 'opacity-40 grayscale'}`}>
+                <Card key={ach.id} className={`bg-card/40 border-border/40 transition-all duration-300 hover:-translate-y-1 hover:bg-card ${ach.unlocked ? 'opacity-100 border-primary/30' : 'opacity-40 grayscale'}`}>
                   <CardContent className="p-5 flex items-center gap-4">
-                    <div className="text-4xl drop-shadow-md">{ach.icon}</div>
+                    <div className="text-4xl drop-shadow-md group-hover:scale-110 transition-transform">{ach.icon}</div>
                     <div>
                       <div className="font-bold text-sm flex items-center gap-2">{ach.name} {ach.unlocked && <span className="text-primary text-xs">✓</span>}</div>
                       <div className="text-xs text-muted-foreground">{ach.desc}</div>
@@ -460,27 +517,35 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="reviews" className="animate-in fade-in duration-300">
-            <div className="space-y-4 max-w-3xl">
-              {REVIEWS.map(rev => (
-                <Card key={rev.id} className="bg-card/40 border-border/40">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 border border-border">
-                          <AvatarImage src={rev.reviewerAvatar} />
-                        </Avatar>
-                        <div>
-                          <div className="font-bold text-sm">{rev.reviewer}</div>
-                          <div className="text-xs text-muted-foreground">{rev.type} · {rev.date}</div>
+            {userReviews.length > 0 ? (
+              <div className="space-y-4 max-w-3xl">
+                {userReviews.map(rev => (
+                  <Card key={rev.id} className="bg-card/40 border-border/40 transition-all duration-300 hover:-translate-y-1 hover:bg-card">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 border border-border">
+                            <AvatarImage src={rev.reviewerAvatar || `https://ui-avatars.com/api/?name=${rev.reviewer}`} />
+                          </Avatar>
+                          <div>
+                            <div className="font-bold text-sm">{rev.reviewer}</div>
+                            <div className="text-xs text-muted-foreground">{rev.type || 'Booking'} · {rev.date || 'Recently'}</div>
+                          </div>
                         </div>
+                        <div className="text-primary text-sm font-black tracking-widest">{'★'.repeat(rev.rating || 5)}</div>
                       </div>
-                      <div className="text-primary text-sm font-black tracking-widest">{'★'.repeat(rev.rating)}</div>
-                    </div>
-                    <p className="text-sm leading-relaxed text-muted-foreground">"{rev.body}"</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <p className="text-sm leading-relaxed text-muted-foreground">"{rev.body}"</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <EmptyState 
+                icon={MessageSquare}
+                title="No Reviews Yet"
+                desc={isOwnProfile ? "Complete bookings through LensLeague to start earning verified client reviews." : "This creator hasn't received any verified reviews yet."}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>

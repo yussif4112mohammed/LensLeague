@@ -4,74 +4,37 @@ import { supabase } from '../lib/supabaseClient';
 
 const AppContext = createContext(null);
 
-const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-
-const DEFAULT_BOOKINGS = [];
-const DEFAULT_THREADS = [];
-
 export function AppProvider({ children }) {
-  const [userEmail, setUserEmail] = useState(() => localStorage.getItem('ll-user-email') || '');
-  const [currentRole, setCurrentRole] = useState(() => localStorage.getItem('ll-current-role') || 'photographer');
+  const [userEmail, setUserEmail] = useState('');
+  const [currentRole, setCurrentRole] = useState('photographer');
   const [currentUser, setCurrentUser] = useState(null);
 
   // Photos list state
-  const [photos, setPhotos] = useState(() => {
-    const saved = localStorage.getItem('ll-photos');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const [photos, setPhotos] = useState([]);
 
   // Bookings list state
-  const [bookings, setBookings] = useState(() => {
-    const saved = localStorage.getItem('ll-bookings');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const [bookings, setBookings] = useState([]);
 
   // Chat threads list state
-  const [threads, setThreads] = useState(() => {
-    const saved = localStorage.getItem('ll-threads');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const [threads, setThreads] = useState([]);
 
   // Challenges active list state
-  const [challenges, setChallenges] = useState(() => {
-    const saved = localStorage.getItem('ll-challenges');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const [challenges, setChallenges] = useState([]);
 
   // User submissions to challenges
-  const [submissions, setSubmissions] = useState(() => {
-    const saved = localStorage.getItem('ll-submissions');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [submissions, setSubmissions] = useState([]);
 
   // User list state (supporting bans and verification updates)
-  const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem('ll-users');
-    if (saved) return JSON.parse(saved);
-    return [];
-  });
+  const [users, setUsers] = useState([]);
 
   // Flagged reported photos list
-  const [reports, setReports] = useState(() => {
-    const saved = localStorage.getItem('ll-reports');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [reports, setReports] = useState([]);
 
   // Battle dispute cases
-  const [disputes, setDisputes] = useState(() => {
-    const saved = localStorage.getItem('ll-disputes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [disputes, setDisputes] = useState([]);
 
   // Active battles list state (supporting dynamic Elo updates)
-  const [battles, setBattles] = useState(() => {
-    const saved = localStorage.getItem('ll-battles');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [battles, setBattles] = useState([]);
 
   // Follows and comments states
   const [follows, setFollows] = useState([]);
@@ -80,7 +43,6 @@ export function AppProvider({ children }) {
   // ── Username Availability Check (calls DB RPC) ──
   const checkUsernameAvailable = async (username) => {
     if (!username || username.length < 3) return false;
-    if (!isSupabaseConfigured) return true; // allow anything in mock mode
     try {
       const { data, error } = await supabase.rpc('is_username_available', {
         check_username: username.toLowerCase().trim()
@@ -113,43 +75,39 @@ export function AppProvider({ children }) {
         onboarding_completed: false
       };
 
-      if (isSupabaseConfigured) {
-        // The handle_new_user trigger auto-creates the profile row
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { username: finalUsername, display_name: name, name, role, location },
-            emailRedirectTo: window.location.origin
-          }
-        });
-
-        if (error) {
-          console.error('Supabase Auth Error:', error.message, error.status, error);
-          throw error;
+      // The handle_new_user trigger auto-creates the profile row
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username: finalUsername, display_name: name, name, role, location },
+          emailRedirectTo: window.location.origin
         }
+      });
 
-        // If email confirmation is enabled in Supabase, data.session will be null
-        if (!data.session && data.user) {
-          return { success: true, requireVerification: true };
-        }
+      if (error) {
+        console.error('Supabase Auth Error:', error.message, error.status, error);
+        throw error;
+      }
 
-        if (data.user) {
-          createdProfile.id = data.user.id;
-          // Fetch the trigger-created profile to get the canonical data
-          const { data: profile } = await supabase
-            .from('profiles').select('*').eq('id', data.user.id).maybeSingle();
-          if (profile) {
-            createdProfile = { ...createdProfile, ...profile };
-          }
+      // If email confirmation is enabled in Supabase, data.session will be null
+      if (!data.session && data.user) {
+        return { success: true, requireVerification: true };
+      }
+
+      if (data.user) {
+        createdProfile.id = data.user.id;
+        // Fetch the trigger-created profile to get the canonical data
+        const { data: profile } = await supabase
+          .from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+        if (profile) {
+          createdProfile = { ...createdProfile, ...profile };
         }
       }
 
       setUserEmail(email);
       setCurrentUser(createdProfile);
       setCurrentRole(role);
-      localStorage.setItem('ll-user-email', email);
-      localStorage.setItem('ll-current-role', role);
 
       await recordAuditLog('USER_SIGNUP', createdProfile.id, { role, email });
       return { success: true, user: createdProfile };
@@ -163,75 +121,52 @@ export function AppProvider({ children }) {
 
   const loginUser = async ({ email, password }) => {
     try {
-      if (isSupabaseConfigured) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-        if (error) {
-          if (error.message.toLowerCase().includes('email not confirmed')) {
-            return { success: false, requireVerification: true };
-          }
-          return { success: false, error: 'Invalid email or password.' };
+      if (error) {
+        if (error.message.toLowerCase().includes('email not confirmed')) {
+          return { success: false, requireVerification: true };
         }
-
-        if (data.user) {
-          let { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
-          if (!profile) {
-            const meta = data.user.user_metadata || {};
-            const userRole = meta.role || 'photographer';
-            const newProfileData = {
-              id: data.user.id,
-              name: meta.name || meta.full_name || email.split('@')[0] || 'LensLeague User',
-              username: meta.username || `user_${Date.now().toString(36)}`,
-              avatar: null,
-              bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
-              location: meta.location || 'Accra, Ghana',
-              role: userRole,
-              points: 0,
-              wins: 0,
-              rating: 5.0,
-              followers: 0,
-              cover: null,
-              verified: false,
-              banned: false,
-              global_rank: 99
-            };
-            await supabase.from('profiles').insert(newProfileData);
-            profile = newProfileData;
-          }
-          if (profile) {
-            setUserEmail(email);
-            setCurrentUser(profile);
-            setCurrentRole(profile.role || 'photographer');
-            localStorage.setItem('ll-user-email', email);
-            localStorage.setItem('ll-current-role', profile.role || 'photographer');
-            await recordAuditLog('USER_LOGIN', profile.id, { email });
-            return { success: true, user: profile };
-          }
-        }
+        return { success: false, error: 'Invalid email or password.' };
       }
 
-      // Local fallback mock login if Supabase not connected or test mode
-      const mockProfile = {
-        id: `usr_${Date.now()}`,
-        name: email.split('@')[0],
-        username: email.split('@')[0].toLowerCase(),
-        display_name: email.split('@')[0],
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`,
-        bio: 'LensLeague Member',
-        location: 'Global',
-        role: 'photographer',
-        points: 250,
-        global_rank: 14,
-        onboarding_completed: true  // Mock users skip onboarding
-      };
-
-      setUserEmail(email);
-      setCurrentUser(mockProfile);
-      localStorage.setItem('ll-user-email', email);
-      return { success: true, user: mockProfile };
+      if (data.user) {
+        let { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+        if (!profile) {
+          const meta = data.user.user_metadata || {};
+          const userRole = meta.role || 'photographer';
+          const newProfileData = {
+            id: data.user.id,
+            name: meta.name || meta.full_name || email.split('@')[0] || 'LensLeague User',
+            username: meta.username || `user_${Date.now().toString(36)}`,
+            avatar: null,
+            bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
+            location: meta.location || 'Accra, Ghana',
+            role: userRole,
+            points: 0,
+            wins: 0,
+            rating: 5.0,
+            followers: 0,
+            cover: null,
+            verified: false,
+            banned: false,
+            global_rank: 99
+          };
+          await supabase.from('profiles').insert(newProfileData);
+          profile = newProfileData;
+        }
+        if (profile) {
+          setUserEmail(email);
+          setCurrentUser(profile);
+          setCurrentRole(profile.role || 'photographer');
+          await recordAuditLog('USER_LOGIN', profile.id, { email });
+          return { success: true, user: profile };
+        }
+      }
+      return { success: false, error: 'User data not found.' };
     } catch (err) {
       return { success: false, error: 'Invalid email or password.' };
     }
@@ -241,13 +176,6 @@ export function AppProvider({ children }) {
   const uploadAvatar = async (file) => {
     const userId = currentUser?.id;
     if (!userId || !file) return null;
-
-    if (!isSupabaseConfigured) {
-      // Mock: create local URL
-      const localUrl = URL.createObjectURL(file);
-      setCurrentUser(prev => ({ ...prev, avatar_url: localUrl, avatar: localUrl }));
-      return localUrl;
-    }
 
     try {
       const ext = file.name.split('.').pop();
@@ -282,15 +210,13 @@ export function AppProvider({ children }) {
     const userId = currentUser?.id;
     if (!userId || !categoryIds?.length) return;
 
-    if (isSupabaseConfigured) {
-      try {
-        // Clear existing selections and insert new ones
-        await supabase.from('profile_categories').delete().eq('profile_id', userId);
-        const rows = categoryIds.map(cid => ({ profile_id: userId, category_id: cid }));
-        await supabase.from('profile_categories').insert(rows);
-      } catch (err) {
-        console.warn('Profile categories error:', err.message);
-      }
+    try {
+      // Clear existing selections and insert new ones
+      await supabase.from('profile_categories').delete().eq('profile_id', userId);
+      const rows = categoryIds.map(cid => ({ profile_id: userId, category_id: cid }));
+      await supabase.from('profile_categories').insert(rows);
+    } catch (err) {
+      console.warn('Profile categories error:', err.message);
     }
   };
 
@@ -298,15 +224,13 @@ export function AppProvider({ children }) {
     const userId = currentUser?.id;
     if (!userId) return;
 
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('profiles').update({
-          onboarding_completed: true,
-          updated_at: new Date().toISOString()
-        }).eq('id', userId);
-      } catch (err) {
-        console.warn('Onboarding completion error:', err.message);
-      }
+    try {
+      await supabase.from('profiles').update({
+        onboarding_completed: true,
+        updated_at: new Date().toISOString()
+      }).eq('id', userId);
+    } catch (err) {
+      console.warn('Onboarding completion error:', err.message);
     }
 
     setCurrentUser(prev => ({ ...prev, onboarding_completed: true }));
@@ -315,7 +239,6 @@ export function AppProvider({ children }) {
   // Fetch a user profile based on ID
   const fetchUserProfile = async (uid) => {
     try {
-      if (!isSupabaseConfigured) return;
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
@@ -325,7 +248,6 @@ export function AppProvider({ children }) {
       if (existingProfile) {
         setCurrentUser(existingProfile);
         setCurrentRole(existingProfile.role);
-        localStorage.setItem('ll-current-role', existingProfile.role);
       }
     } catch (err) {
       console.warn('Error fetching user profile:', err);
@@ -334,8 +256,6 @@ export function AppProvider({ children }) {
 
   // Listen to Authentication State Changes
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUserEmail(session.user.email);
@@ -360,8 +280,6 @@ export function AppProvider({ children }) {
 
   // ── SUPABASE SYNC ON MOUNT ──
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
     const syncFromSupabase = async () => {
       // 1. Fetch profiles (users list) - Limit to 100 for now to prevent memory bloat
       const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
@@ -535,7 +453,7 @@ export function AppProvider({ children }) {
         .limit(500);
       if (commentsData) {
         const mappedComments = commentsData.map(c => {
-          const user = c.profiles || { name: 'Aria Nakamura', avatar: photographers[0].avatar };
+          const user = c.profiles || { name: 'Unknown', avatar: '' };
           return {
             id: c.id,
             photo_id: c.item_id,
@@ -543,7 +461,7 @@ export function AppProvider({ children }) {
             body: c.body,
             created_at: c.created_at,
             userName: user.name,
-            userAvatar: user.avatar
+            userAvatar: user.avatar_url || user.avatar
           };
         });
         setComments(mappedComments);
@@ -634,55 +552,6 @@ export function AppProvider({ children }) {
     });
   };
 
-  // ── LOCAL STORAGE FALLBACK SYNCS ──
-  useEffect(() => {
-    localStorage.setItem('ll-current-role', currentRole);
-  }, [currentRole]);
-
-  useEffect(() => {
-    localStorage.setItem('ll-user-email', userEmail);
-  }, [userEmail]);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      localStorage.setItem('ll-bookings', JSON.stringify(bookings));
-    }
-  }, [bookings]);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      localStorage.setItem('ll-threads', JSON.stringify(threads));
-    }
-  }, [threads]);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      localStorage.setItem('ll-challenges', JSON.stringify(challenges));
-    }
-  }, [challenges]);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) {
-      localStorage.setItem('ll-submissions', JSON.stringify(submissions));
-    }
-  }, [submissions]);
-
-  useEffect(() => {
-    localStorage.setItem('ll-users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('ll-reports', JSON.stringify(reports));
-  }, [reports]);
-
-  useEffect(() => {
-    localStorage.setItem('ll-disputes', JSON.stringify(disputes));
-  }, [disputes]);
-
-  useEffect(() => {
-    localStorage.setItem('ll-battles', JSON.stringify(battles));
-  }, [battles]);
-
   const switchRole = (role) => {
     setCurrentRole(role);
   };
@@ -691,7 +560,7 @@ export function AppProvider({ children }) {
 
   // Booking requests
   const addBookingRequest = async (photographerId, details) => {
-    const photographer = users.find(p => p.id === photographerId) || photographers[0];
+    const photographer = users.find(p => p.id === photographerId) || { name: 'Unknown', avatar: '' };
     const clientUid = currentUser?.id || 'client_1';
     const clientName = currentUser?.name || 'Sarah Jenkins';
 
@@ -712,18 +581,16 @@ export function AppProvider({ children }) {
 
     setBookings(prev => [newBooking, ...prev]);
 
-    if (isSupabaseConfigured && String(photographerId).includes('-')) {
-      const priceVal = details.budget ? parseFloat(details.budget.replace(/[^0-9.]/g, '')) || 0 : 0;
-      await supabase.from('bookings').insert({
-        client_id: clientUid,
-        photographer_id: photographerId,
-        event_date: details.date,
-        total_price: priceVal,
-        location: details.location,
-        notes: details.message,
-        status: 'requested'
-      });
-    }
+    const priceVal = details.budget ? parseFloat(details.budget.replace(/[^0-9.]/g, '')) || 0 : 0;
+    await supabase.from('bookings').insert({
+      client_id: clientUid,
+      photographer_id: photographerId,
+      event_date: details.date,
+      total_price: priceVal,
+      location: details.location,
+      notes: details.message,
+      status: 'requested'
+    });
 
     // Auto seed default message thread
     const newThread = {
@@ -757,32 +624,28 @@ export function AppProvider({ children }) {
       return [newThread, ...prev];
     });
 
-    if (isSupabaseConfigured && String(photographerId).includes('-') && String(clientUid).includes('-')) {
-      try {
-        // Use the get_or_create_thread RPC to find or create a thread
-        const { data: threadId } = await supabase.rpc('get_or_create_thread', {
-          user_a: clientUid,
-          user_b: photographerId
+    try {
+      // Use the get_or_create_thread RPC to find or create a thread
+      const { data: threadId } = await supabase.rpc('get_or_create_thread', {
+        user_a: clientUid,
+        user_b: photographerId
+      });
+      if (threadId) {
+        await supabase.from('messages').insert({
+          thread_id: threadId,
+          sender_id: clientUid,
+          body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`
         });
-        if (threadId) {
-          await supabase.from('messages').insert({
-            thread_id: threadId,
-            sender_id: clientUid,
-            body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`
-          });
-        }
-      } catch (err) {
-        console.warn('Thread/message creation error:', err.message);
       }
+    } catch (err) {
+      console.warn('Thread/message creation error:', err.message);
     }
   };
 
   const acceptBooking = async (bookingId) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'accepted' } : b));
     
-    if (isSupabaseConfigured) {
-      await supabase.from('bookings').update({ status: 'accepted' }).eq('id', bookingId);
-    }
+    await supabase.from('bookings').update({ status: 'accepted' }).eq('id', bookingId);
 
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
@@ -793,9 +656,7 @@ export function AppProvider({ children }) {
   const declineBooking = async (bookingId) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'declined' } : b));
     
-    if (isSupabaseConfigured) {
-      await supabase.from('bookings').update({ status: 'declined' }).eq('id', bookingId);
-    }
+    await supabase.from('bookings').update({ status: 'declined' }).eq('id', bookingId);
 
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
@@ -806,9 +667,7 @@ export function AppProvider({ children }) {
   const completeBooking = async (bookingId) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'completed' } : b));
     
-    if (isSupabaseConfigured) {
-      await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId);
-    }
+    await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId);
   };
 
   const addSystemMessage = async (photographerId, clientId, body) => {
@@ -826,14 +685,12 @@ export function AppProvider({ children }) {
       return t;
     }));
 
-    if (isSupabaseConfigured) {
-      await supabase.from('messages').insert({
-        sender_id: 'system',
-        recipient_id: clientId,
-        body,
-        timestamp
-      });
-    }
+    await supabase.from('messages').insert({
+      sender_id: 'system',
+      recipient_id: clientId,
+      body,
+      timestamp
+    });
   };
 
   // Chats
@@ -855,17 +712,15 @@ export function AppProvider({ children }) {
       return t;
     }));
 
-    if (isSupabaseConfigured && String(senderId).includes('-')) {
-      try {
-        // threadId is now a real UUID from message_threads
-        await supabase.from('messages').insert({
-          thread_id: threadId,
-          sender_id: senderId,
-          body
-        });
-      } catch (err) {
-        console.warn('sendMessage error:', err.message);
-      }
+    try {
+      // threadId is now a real UUID from message_threads
+      await supabase.from('messages').insert({
+        thread_id: threadId,
+        sender_id: senderId,
+        body
+      });
+    } catch (err) {
+      console.warn('sendMessage error:', err.message);
     }
   };
 
@@ -885,29 +740,23 @@ export function AppProvider({ children }) {
       return ch;
     }));
 
-    if (isSupabaseConfigured) {
-      await supabase.from('challenge_entries').insert({
-        challenge_id: challengeId,
-        photo_url: photoUrl,
-        photographer_id: currentUser?.id || '1'
-      });
-    }
+    await supabase.from('challenge_entries').insert({
+      challenge_id: challengeId,
+      photo_url: photoUrl,
+      photographer_id: currentUser?.id || '1'
+    });
   };
 
   // Admin actions
   const approvePhotoReport = async (reportId) => {
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'dismissed' } : rep));
-    if (isSupabaseConfigured) {
-      await supabase.from('reports').update({ status: 'dismissed', resolution_notes: 'Dismissed by moderator' }).eq('id', reportId);
-    }
+    await supabase.from('reports').update({ status: 'dismissed', resolution_notes: 'Dismissed by moderator' }).eq('id', reportId);
     await recordAuditLog('REPORT_DISMISSED', reportId, { action: 'dismiss' });
   };
 
   const removeReportedPhoto = async (reportId) => {
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'resolved' } : rep));
-    if (isSupabaseConfigured) {
-      await supabase.from('reports').update({ status: 'resolved', resolution_notes: 'Content removed by moderator' }).eq('id', reportId);
-    }
+    await supabase.from('reports').update({ status: 'resolved', resolution_notes: 'Content removed by moderator' }).eq('id', reportId);
     await recordAuditLog('REPORT_RESOLVED', reportId, { action: 'remove_content' });
   };
 
@@ -925,26 +774,22 @@ export function AppProvider({ children }) {
       created_at: new Date().toISOString()
     };
     setReports(prev => [newReport, ...prev]);
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('reports').insert({
-          reporter_id: userId,
-          target_type: targetType,
-          target_id: targetId,
-          reason
-        });
-      } catch (err) {
-        console.warn('submitReport error:', err.message);
-      }
+    try {
+      await supabase.from('reports').insert({
+        reporter_id: userId,
+        target_type: targetType,
+        target_id: targetId,
+        reason
+      });
+    } catch (err) {
+      console.warn('submitReport error:', err.message);
     }
     await recordAuditLog('REPORT_SUBMITTED', targetId, { target_type: targetType, reason });
   };
 
   const verifyPhotographer = async (userId) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: true } : u));
-    if (isSupabaseConfigured) {
-      await supabase.from('profiles').update({ verified: true }).eq('id', userId);
-    }
+    await supabase.from('profiles').update({ verified: true }).eq('id', userId);
     await recordAuditLog('USER_VERIFIED', userId, { action: 'verify' });
   };
 
@@ -953,9 +798,7 @@ export function AppProvider({ children }) {
     if (!userObj) return;
     const nextBanned = !userObj.banned;
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, banned: nextBanned } : u));
-    if (isSupabaseConfigured) {
-      await supabase.from('profiles').update({ banned: nextBanned }).eq('id', userId);
-    }
+    await supabase.from('profiles').update({ banned: nextBanned }).eq('id', userId);
     await recordAuditLog(nextBanned ? 'USER_BANNED' : 'USER_UNBANNED', userId, { action: nextBanned ? 'ban' : 'unban' });
   };
 
@@ -1007,24 +850,22 @@ export function AppProvider({ children }) {
       return u;
     }));
 
-    // 6. Supabase DB Updates (if configured)
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('photos').update({ votes: eloResults.newRatingA }).eq('id', battle.photoA.id);
-        await supabase.from('photos').update({ votes: eloResults.newRatingB }).eq('id', battle.photoB.id);
+    // 6. Supabase DB Updates
+    try {
+      await supabase.from('photos').update({ votes: eloResults.newRatingA }).eq('id', battle.photoA.id);
+      await supabase.from('photos').update({ votes: eloResults.newRatingB }).eq('id', battle.photoB.id);
 
-        const { data: pA } = await supabase.from('profiles').select('points').eq('id', battle.photoA.photographerId).single();
-        const { data: pB } = await supabase.from('profiles').select('points').eq('id', battle.photoB.photographerId).single();
+      const { data: pA } = await supabase.from('profiles').select('points').eq('id', battle.photoA.photographerId).single();
+      const { data: pB } = await supabase.from('profiles').select('points').eq('id', battle.photoB.photographerId).single();
 
-        if (pA) {
-          await supabase.from('profiles').update({ points: Math.max(0, (pA.points || 0) + changeA) }).eq('id', battle.photoA.photographerId);
-        }
-        if (pB) {
-          await supabase.from('profiles').update({ points: Math.max(0, (pB.points || 0) + changeB) }).eq('id', battle.photoB.photographerId);
-        }
-      } catch (err) {
-        console.warn('Supabase DB Elo update error:', err.message);
+      if (pA) {
+        await supabase.from('profiles').update({ points: Math.max(0, (pA.points || 0) + changeA) }).eq('id', battle.photoA.photographerId);
       }
+      if (pB) {
+        await supabase.from('profiles').update({ points: Math.max(0, (pB.points || 0) + changeB) }).eq('id', battle.photoB.photographerId);
+      }
+    } catch (err) {
+      console.warn('Supabase DB Elo update error:', err.message);
     }
 
     return {
@@ -1037,9 +878,7 @@ export function AppProvider({ children }) {
 
   const resolveDispute = async (disputeId, resolution) => {
     setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
-    if (isSupabaseConfigured) {
-      await supabase.from('disputes').update({ status: 'resolved', resolution }).eq('id', disputeId);
-    }
+    await supabase.from('disputes').update({ status: 'resolved', resolution }).eq('id', disputeId);
   };
 
   const updateProfile = async (userId, data) => {
@@ -1047,19 +886,11 @@ export function AppProvider({ children }) {
     if (currentUser && currentUser.id === userId) {
       setCurrentUser(prev => ({ ...prev, ...data }));
     }
-    if (isSupabaseConfigured) {
-      await supabase.from('profiles').update(data).eq('id', userId);
-    }
+    await supabase.from('profiles').update(data).eq('id', userId);
   };
 
   const searchUsers = async (query) => {
     if (!query || query.trim().length === 0) return [];
-    if (!isSupabaseConfigured) {
-      return users.filter(u =>
-        u.name?.toLowerCase().includes(query.toLowerCase()) ||
-        u.username?.toLowerCase().includes(query.toLowerCase())
-      );
-    }
     try {
       const { data, error } = await supabase.rpc('search_users', {
         query: query.trim(),
@@ -1075,12 +906,6 @@ export function AppProvider({ children }) {
 
   const searchPosts = async (query) => {
     if (!query || query.trim().length === 0) return [];
-    if (!isSupabaseConfigured) {
-      return photos.filter(p =>
-        p.caption?.toLowerCase().includes(query.toLowerCase()) ||
-        p.category?.toLowerCase().includes(query.toLowerCase())
-      );
-    }
     try {
       const { data, error } = await supabase.rpc('search_posts', {
         query: query.trim(),
@@ -1098,23 +923,21 @@ export function AppProvider({ children }) {
     const userId = currentUser?.id;
     if (!userId) return;
 
-    if (isSupabaseConfigured && !userId.startsWith('usr_')) {
-      try {
-        const { data: existing } = await supabase
-          .from('likes')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('item_id', postId)
-          .maybeSingle();
+    try {
+      const { data: existing } = await supabase
+        .from('likes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('item_id', postId)
+        .maybeSingle();
 
-        if (existing) {
-          await supabase.from('likes').delete().eq('user_id', userId).eq('item_id', postId);
-        } else {
-          await supabase.from('likes').insert({ user_id: userId, item_id: postId });
-        }
-      } catch (err) {
-        console.warn('toggleLikePost error:', err.message);
+      if (existing) {
+        await supabase.from('likes').delete().eq('user_id', userId).eq('item_id', postId);
+      } else {
+        await supabase.from('likes').insert({ user_id: userId, item_id: postId });
       }
+    } catch (err) {
+      console.warn('toggleLikePost error:', err.message);
     }
   };
 
@@ -1125,10 +948,6 @@ export function AppProvider({ children }) {
       basePhotos = (photos || []).filter(p => followedIds.includes(p.ownerId));
     }
 
-    if (!isSupabaseConfigured) {
-      // Mock local storage fallback range slicing
-      return basePhotos.slice(start, end + 1);
-    }
     try {
       // Try get_feed RPC first for algorithmically ranked timeline
       if (filterType === 'for-you' && currentUser?.id && !currentUser.id.startsWith('usr_')) {
@@ -1206,7 +1025,7 @@ export function AppProvider({ children }) {
     let finalUrl = url;
 
     // Handle Storage File upload if a File object is provided
-    if (file && isSupabaseConfigured) {
+    if (file) {
       try {
         const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
         const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
@@ -1248,31 +1067,29 @@ export function AppProvider({ children }) {
 
     setPhotos(prev => [newPhoto, ...prev]);
 
-    if (isSupabaseConfigured) {
-      try {
-        // Insert into legacy photos table for backward compatibility
-        await supabase.from('photos').insert({
-          url: finalUrl,
-          owner_id: userId,
-          caption,
-          category,
-          destination,
-          alt_text
-        });
+    try {
+      // Insert into legacy photos table for backward compatibility
+      await supabase.from('photos').insert({
+        url: finalUrl,
+        owner_id: userId,
+        caption,
+        category,
+        destination,
+        alt_text
+      });
 
-        // Also insert into new production `posts` table if authenticated
-        if (userId && !userId.startsWith('usr_') && !userId.startsWith('anon_')) {
-          await supabase.from('posts').insert({
-            author_id: userId,
-            image_url: finalUrl,
-            caption: caption || '',
-            location: currentUser?.location || '',
-            visibility: 'public'
-          });
-        }
-      } catch (err) {
-        console.warn('Supabase photo upload note:', err.message);
+      // Also insert into new production `posts` table if authenticated
+      if (userId && !userId.startsWith('usr_') && !userId.startsWith('anon_')) {
+        await supabase.from('posts').insert({
+          author_id: userId,
+          image_url: finalUrl,
+          caption: caption || '',
+          location: currentUser?.location || '',
+          visibility: 'public'
+        });
       }
+    } catch (err) {
+      console.warn('Supabase photo upload note:', err.message);
     }
 
     await recordAuditLog('PHOTO_UPLOAD', newPhoto.id, { category, destination });
@@ -1286,12 +1103,10 @@ export function AppProvider({ children }) {
     const newFollow = { follower_id: followerId, following_id: followingId };
     setFollows(prev => [...prev, newFollow]);
 
-    if (isSupabaseConfigured && String(followingId).includes('-')) {
-      try {
-        await supabase.from('follows').insert(newFollow);
-      } catch (err) {
-        console.warn('Supabase follow error:', err.message);
-      }
+    try {
+      await supabase.from('follows').insert(newFollow);
+    } catch (err) {
+      console.warn('Supabase follow error:', err.message);
     }
   };
 
@@ -1301,12 +1116,10 @@ export function AppProvider({ children }) {
 
     setFollows(prev => prev.filter(f => !(f.follower_id === followerId && f.following_id === followingId)));
 
-    if (isSupabaseConfigured && String(followingId).includes('-')) {
-      try {
-        await supabase.from('follows').delete().eq('follower_id', followerId).eq('following_id', followingId);
-      } catch (err) {
-        console.warn('Supabase unfollow error:', err.message);
-      }
+    try {
+      await supabase.from('follows').delete().eq('follower_id', followerId).eq('following_id', followingId);
+    } catch (err) {
+      console.warn('Supabase unfollow error:', err.message);
     }
   };
 
@@ -1321,32 +1134,26 @@ export function AppProvider({ children }) {
       body: body,
       created_at: new Date().toISOString(),
       userName: currentUser.name || 'Anonymous',
-      userAvatar: currentUser.avatar || photographers[0].avatar
+      userAvatar: currentUser.avatar || ''
     };
 
     setComments(prev => [...prev, newComment]);
 
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('comments').insert({
-          item_id: photoId,
-          user_id: userId,
-          body: body
-        });
-      } catch (err) {
-        console.warn('Supabase comment insert error:', err.message);
-      }
+    try {
+      await supabase.from('comments').insert({
+        item_id: photoId,
+        user_id: userId,
+        body: body
+      });
+    } catch (err) {
+      console.warn('Supabase comment insert error:', err.message);
     }
   };
 
   const logoutUser = async () => {
     setUserEmail('');
     setCurrentUser(null);
-    localStorage.removeItem('ll-user-email');
-    localStorage.removeItem('ll-current-role');
-    if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
-    }
+    await supabase.auth.signOut();
   };
 
   // Audit Logging (OWASP Top 10 Transparency)
@@ -1354,17 +1161,15 @@ export function AppProvider({ children }) {
     const actorId = currentUser?.id;
     if (!actorId) return;
 
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('audit_logs').insert({
-          actor_id: actorId,
-          action,
-          target,
-          metadata
-        });
-      } catch (err) {
-        console.warn('Audit log insert warning:', err.message);
-      }
+    try {
+      await supabase.from('audit_logs').insert({
+        actor_id: actorId,
+        action,
+        target,
+        metadata
+      });
+    } catch (err) {
+      console.warn('Audit log insert warning:', err.message);
     }
   };
 
@@ -1387,17 +1192,15 @@ export function AppProvider({ children }) {
     setConnections(prev => [...prev, newConn]);
     await recordAuditLog('CONNECTION_REQUEST', targetUserId, { status: 'pending' });
 
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('connections').insert({
-          user_a_id: userId,
-          user_b_id: targetUserId,
-          status: 'pending',
-          requested_by: userId
-        });
-      } catch (err) {
-        console.warn('Supabase connection request error:', err.message);
-      }
+    try {
+      await supabase.from('connections').insert({
+        user_a_id: userId,
+        user_b_id: targetUserId,
+        status: 'pending',
+        requested_by: userId
+      });
+    } catch (err) {
+      console.warn('Supabase connection request error:', err.message);
     }
   };
 
@@ -1405,12 +1208,10 @@ export function AppProvider({ children }) {
     setConnections(prev => prev.map(c => c.id === connectionId ? { ...c, status: 'accepted' } : c));
     await recordAuditLog('CONNECTION_ACCEPT', connectionId, { status: 'accepted' });
 
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.from('connections').update({ status: 'accepted' }).eq('id', connectionId);
-      } catch (err) {
-        console.warn('Supabase connection accept error:', err.message);
-      }
+    try {
+      await supabase.from('connections').update({ status: 'accepted' }).eq('id', connectionId);
+    } catch (err) {
+      console.warn('Supabase connection accept error:', err.message);
     }
   };
 

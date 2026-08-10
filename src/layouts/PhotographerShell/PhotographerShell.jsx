@@ -29,15 +29,12 @@ function NavIcon({ item, isActive }) {
   const Icon = item.icon;
   return (
     <div className={cn(
-      "relative flex items-center justify-center w-12 h-12 rounded-2xl transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-[0.96]",
-      isActive ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"
+      "relative flex items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 ease-out",
+      isActive ? "bg-zinc-900 text-white border border-white/10" : "text-zinc-500 hover:text-white hover:bg-zinc-900/50"
     )}>
-      {isActive && (
-        <div className="absolute inset-0 bg-primary/20 blur-md rounded-full" />
-      )}
       <Icon 
-        strokeWidth={isActive ? 2.5 : 2} 
-        className={cn("w-6 h-6 relative z-10 transition-colors", isActive && item.featured ? "text-primary" : "")} 
+        strokeWidth={isActive ? 2 : 1.5} 
+        className="w-5 h-5 relative z-10" 
       />
     </div>
   );
@@ -52,9 +49,9 @@ export default function PhotographerShell() {
       <div className="flex h-screen w-full bg-black overflow-hidden text-zinc-50 selection:bg-primary/30">
         
         {/* Desktop Slim Sidebar */}
-        <aside className="hidden md:flex flex-col items-center w-[88px] border-r border-white/5 bg-black/50 backdrop-blur-2xl h-full py-8 z-50">
+        <aside className="hidden md:flex flex-col items-center w-[88px] border-r border-white/10 bg-black h-full py-8 z-50">
           <div 
-            className="flex items-center justify-center w-12 h-12 mb-10 cursor-pointer hover:scale-110 active:scale-[0.96] transition-transform duration-200 ease-out"
+            className="flex items-center justify-center w-12 h-12 mb-10 cursor-pointer transition-transform duration-200 ease-out"
             onClick={() => navigate('/feed')}
           >
             <Logo withText={false} className="w-8 h-8" />
@@ -79,21 +76,7 @@ export default function PhotographerShell() {
             ))}
           </nav>
 
-          <Tooltip placement="right">
-            <TooltipTrigger asChild>
-              <button 
-                className="w-12 h-12 mt-6 rounded-full bg-gradient-to-tr from-primary to-blue-400 text-white flex items-center justify-center hover:scale-110 active:scale-[0.96] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-[transform,shadow] duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
-                onClick={() => navigate('/upload')}
-              >
-                <Plus className="w-6 h-6" strokeWidth={3} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={16} className="bg-primary border-none text-white font-bold">
-              Upload
-            </TooltipContent>
-          </Tooltip>
-
-          <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-6">
+          <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-6">
 
             {currentUser ? (
               <Tooltip placement="right">
@@ -129,7 +112,7 @@ export default function PhotographerShell() {
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-3xl border-t border-white/5 pb-safe supports-[padding-bottom:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-white/10 pb-safe supports-[padding-bottom:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]">
           <div className="flex justify-around items-center h-16 px-2">
             {NAV_ITEMS.map(item => (
               <NavLink
@@ -145,8 +128,7 @@ export default function PhotographerShell() {
                   const Icon = item.icon;
                   return (
                     <div className="relative flex flex-col items-center gap-1">
-                      {isActive && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-primary/20 blur-md rounded-full" />}
-                      <Icon strokeWidth={isActive ? 2.5 : 2} className={cn("w-5 h-5 relative z-10", isActive && item.featured ? "text-primary" : "")} />
+                      <Icon strokeWidth={isActive ? 2 : 1.5} className="w-5 h-5 relative z-10" />
                       <span className="text-[9px] font-bold tracking-wider">{item.label}</span>
                     </div>
                   );

@@ -183,14 +183,14 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             <div>
               <div className="font-extrabold text-base tracking-tight text-zinc-100 group-hover:text-white transition-colors flex items-center gap-2">
                 {photo.ownerName}
-                {ownerProfile.verified && <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/20 text-primary uppercase">PRO</Badge>}
+                {ownerProfile.verified && <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-foreground text-background uppercase">PRO</Badge>}
               </div>
               <div className="text-xs text-zinc-400 font-medium tracking-wide mt-0.5 flex items-center gap-2">
                 {photo.location && <span>{photo.location}</span>}
                 {ownerProfile.role === 'photographer' && ownerProfile.starting_rate > 0 && (
                   <>
                     <span className="text-zinc-600">•</span>
-                    <span className="text-emerald-400/90 font-bold tracking-wider">STARTS AT ${ownerProfile.starting_rate}</span>
+                    <span className="text-zinc-100 font-bold tracking-wider">STARTS AT ${ownerProfile.starting_rate}</span>
                   </>
                 )}
               </div>
@@ -204,7 +204,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
                   <Button
                     variant="default"
                     size="sm"
-                    className="h-9 px-5 rounded-full text-xs font-bold tracking-widest transition-all duration-300 ease-out shadow-[0_0_15px_rgba(16,185,129,0.3)] border border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-black hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:scale-[1.02] active:scale-[0.96]"
+                    className="h-9 px-5 rounded-md text-xs font-bold tracking-widest transition-all duration-300 ease-out border border-white/10 bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-[0.96]"
                     onClick={(e) => { e.stopPropagation(); navigate(`/profile/${photo.ownerId}`); }}
                   >
                     HIRE
@@ -214,7 +214,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
                   variant={isFollowing ? "secondary" : "default"}
                   size="sm"
                   className={cn(
-                    "h-9 px-5 rounded-full text-xs font-bold tracking-wide transition-all duration-300 ease-out shadow-lg",
+                    "h-9 px-5 rounded-md text-xs font-bold tracking-wide transition-all duration-300 ease-out",
                     isFollowing 
                       ? "bg-white/10 hover:bg-white/20 text-white" 
                       : "bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-[0.96]"
@@ -237,7 +237,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
         {/* Media Frame */}
         <div 
-          className="relative w-screen -ml-4 sm:ml-0 sm:w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950/80 flex items-center justify-center cursor-pointer group rounded-none sm:rounded-[2rem] overflow-hidden shadow-2xl sm:ring-1 sm:ring-white/10 ring-inset transition-transform duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+          className="relative w-screen -ml-4 sm:ml-0 sm:w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950 flex items-center justify-center cursor-pointer group rounded-none sm:rounded-md overflow-hidden border-y sm:border border-white/10 transition-transform duration-500"
           onClick={handleTap}
         >
           {photo.isVideo ? (
@@ -260,9 +260,9 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
           <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none flex flex-col justify-end">
             <div className="flex items-end justify-between">
               <div>
-                <h4 className="text-xl font-bold tracking-tight text-white mb-1 text-glow">“{photoTitle}”</h4>
+                <h4 className="text-xl font-bold tracking-tight text-white mb-1">“{photoTitle}”</h4>
                 <div className="flex items-center gap-2 text-xs text-zinc-300 font-medium tracking-wide">
-                  <Camera className="w-3 h-3 text-emerald-400" />
+                  <Camera className="w-3 h-3 text-zinc-400" />
                   <span>{exif.camera}</span>
                   <span className="opacity-50">•</span>
                   <span>{exif.lens}</span>
@@ -303,9 +303,9 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             <div className="flex items-center gap-6">
               <button 
                 onClick={handleLike} 
-                className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] flex items-center gap-2 group", liked ? "text-emerald-500" : "text-zinc-400 hover:text-white")}
+                className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] flex items-center gap-2 group", liked ? "text-white" : "text-zinc-400 hover:text-white")}
               >
-                <Heart className={cn("w-7 h-7 transition-colors", liked ? "fill-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] rounded-full" : "")} strokeWidth={2} />
+                <Heart className={cn("w-7 h-7 transition-colors", liked ? "fill-white" : "")} strokeWidth={2} />
                 <span className="text-sm font-bold tracking-wide">{formatCount(likeCount)}</span>
               </button>
 

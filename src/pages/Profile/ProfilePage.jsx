@@ -323,16 +323,16 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 -mt-24 relative z-10">
-        <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8 p-6 sm:p-8 glass-card rounded-[2rem] border-white/10">
+        <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8 p-6 sm:p-8 rounded-md border border-white/10 bg-zinc-950">
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
-            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-black shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] transition-transform">
+            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-black hover:scale-[1.02] transition-transform">
               <AvatarImage src={photographer.avatar} className="object-cover" />
               <AvatarFallback className="text-4xl bg-zinc-900">{photographer.name[0]}</AvatarFallback>
             </Avatar>
             <div className="pb-2 flex flex-col items-center sm:items-start">
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight flex items-center gap-3 text-glow text-white mb-2">
+              <h1 className="text-3xl sm:text-5xl font-black tracking-tight flex items-center gap-3 text-white mb-2">
                 {photographer.name}
-                {photographer.verified && <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)] px-2 py-0.5 text-xs">PRO</Badge>}
+                {photographer.verified && <Badge variant="secondary" className="bg-foreground text-background px-2 py-0.5 text-xs">PRO</Badge>}
               </h1>
               <div className="text-zinc-400 font-medium mt-1 flex items-center gap-3 flex-wrap justify-center sm:justify-start">
                 <span className="text-zinc-300">@{photographer.username}</span>
@@ -346,14 +346,14 @@ export default function ProfilePage() {
                       {photographer.points || 1200} ELO
                     </span>
                     <span className="text-zinc-600">•</span>
-                    <span className="text-emerald-400 font-bold tracking-wide">{photographer.starting_rate ? `STARTING AT $${photographer.starting_rate}` : 'RATES ON REQUEST'}</span>
+                    <span className="text-zinc-100 font-bold tracking-wide">{photographer.starting_rate ? `STARTING AT $${photographer.starting_rate}` : 'RATES ON REQUEST'}</span>
                   </>
                 )}
               </div>
               {photographer.role === 'photographer' && (
                 <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
-                  <Badge variant="outline" className={cn("px-3 py-1 text-xs tracking-wide shadow-lg", photographer.availability_status === 'Unavailable' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]')}>
-                    <div className={cn("w-2 h-2 rounded-full mr-2", photographer.availability_status === 'Unavailable' ? "bg-red-500" : "bg-emerald-500 animate-pulse")} />
+                  <Badge variant="outline" className={cn("px-3 py-1 text-xs tracking-wide", photographer.availability_status === 'Unavailable' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-white/5 border-white/10 text-white')}>
+                    <div className={cn("w-2 h-2 rounded-full mr-2", photographer.availability_status === 'Unavailable' ? "bg-red-500" : "bg-white animate-pulse")} />
                     {photographer.availability_status || 'AVAILABLE FOR BOOKING'}
                   </Badge>
                   {photographer.service_categories?.map(cat => (
@@ -371,13 +371,13 @@ export default function ProfilePage() {
               <>
                 <Button 
                   onClick={() => navigate('/upload')}
-                  className="rounded-full px-6 h-10 font-bold text-white bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                  className="rounded-md px-6 h-10 font-bold text-black bg-white hover:bg-zinc-200 transition-colors"
                 >
                   <Plus className="w-5 h-5 mr-2" strokeWidth={2.5} /> Upload Shoot
                 </Button>
                 <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="rounded-full px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg">
+                    <Button variant="outline" className="rounded-md px-6 h-10 font-bold bg-transparent border-white/10 hover:bg-white/10 text-white transition-colors">
                       <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
                     </Button>
                   </DialogTrigger>
@@ -428,15 +428,15 @@ export default function ProfilePage() {
               </Dialog>
             ) : (
               <>
-                <Button variant="secondary" className="rounded-full px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 text-white backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
+                <Button variant="secondary" className="rounded-md px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 text-white transition-colors" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
                   Message
                 </Button>
-                <Button variant={isFollowing ? "outline" : "secondary"} className={cn("rounded-full px-6 h-10 font-bold backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg", isFollowing ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : "bg-white text-black hover:bg-zinc-200")} onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
+                <Button variant={isFollowing ? "outline" : "secondary"} className={cn("rounded-md px-6 h-10 font-bold transition-colors", isFollowing ? "bg-transparent border-white/10 hover:bg-white/10 text-white" : "bg-white text-black hover:bg-zinc-200")} onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
                   {isFollowing ? 'Following' : 'Follow'}
                 </Button>
                 <Dialog open={bookingModalOpen} onOpenChange={setBookingModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-full px-6 h-10 font-black tracking-widest bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-400/50 hover:scale-[1.02] active:scale-[0.96] transition-all">
+                    <Button className="rounded-md px-6 h-10 font-bold tracking-widest bg-white hover:bg-zinc-200 text-black border border-transparent transition-colors">
                       REQUEST BOOKING
                     </Button>
                   </DialogTrigger>

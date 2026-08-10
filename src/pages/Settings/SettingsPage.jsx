@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { 
   ArrowLeft, Mail, User, Star, Globe, Calendar, Bell, 
-  HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight, Camera
+  HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight, Camera,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '../../lib/supabaseClient';
 
-// Tailwind CSS Switch Component Mock (in case shadcn Switch isn't installed)
+// Tailwind CSS Switch Component Mock
 function CustomSwitch({ checked, onCheckedChange }) {
   return (
     <button
@@ -89,16 +93,86 @@ function SettingsSection({ title, children }) {
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { logoutUser, currentUser: profile, currentRole } = useApp();
+  const { logoutUser, currentUser: profile, currentRole, updateProfileSettings } = useApp();
 
-  const [pushNotifs, setPushNotifs] = useState(true);
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [publicProfile, setPublicProfile] = useState(true);
-  const [availableForBookings, setAvailableForBookings] = useState(true);
+  const [pushNotifs, setPushNotifs] = useState(profile?.push_notifs ?? true);
+  const [emailNotifs, setEmailNotifs] = useState(profile?.email_notifs ?? true);
+  const [publicProfile, setPublicProfile] = useState(profile?.is_public ?? true);
+  const [availableForBookings, setAvailableForBookings] = useState(profile?.availability_status === 'Available');
+
+  const [activeModal, setActiveModal] = useState(null); // 'email' | 'username' | 'plan' | 'deactivate'
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Sync state if profile loads slightly after mount
+  useEffect(() => {
+    if (profile) {
+      setPushNotifs(profile.push_notifs ?? true);
+      setEmailNotifs(profile.email_notifs ?? true);
+      setPublicProfile(profile.is_public ?? true);
+      setAvailableForBookings(profile.availability_status === 'Available');
+    }
+  }, [profile]);
 
   const handleLogout = async () => {
     await logoutUser();
     navigate('/');
+  };
+
+  const handleToggle = async (key, currentValue, setter) => {
+    const newValue = !currentValue;
+    setter(newValue); // Optimistic UI update
+    
+    let updateObj = {};
+    if (key === 'availability') {
+      updateObj = { availability_status: newValue ? 'Available' : 'Unavailable' };
+    } else {
+      updateObj = { [key]: newValue };
+    }
+    
+    const success = await updateProfileSettings(updateObj);
+    if (!success) {
+      // Revert on failure
+      setter(currentValue);
+    }
+  };
+
+  const openModal = (type) => {
+    setActiveModal(type);
+    setErrorMsg('');
+    if (type === 'username') setInputValue(profile?.username || '');
+    if (type === 'email') setInputValue(profile?.email || ''); // Often Supabase doesn't put email in profile directly, might be in auth
+  };
+
+  const handleSaveModal = async () => {
+    if (!inputValue.trim() && activeModal !== 'deactivate' && activeModal !== 'plan') return;
+    setIsLoading(true);
+    setErrorMsg('');
+
+    try {
+      if (activeModal === 'username') {
+        const success = await updateProfileSettings({ username: inputValue.trim() });
+        if (!success) throw new Error('Username may be taken or invalid.');
+      } else if (activeModal === 'email') {
+        // Update auth email via Supabase
+        const { error } = await supabase.auth.updateUser({ email: inputValue.trim() });
+        if (error) throw error;
+        // Optionally update a mirrored email field in profiles if you have one
+      } else if (activeModal === 'deactivate') {
+        const success = await updateProfileSettings({ is_deactivated: true });
+        if (!success) throw new Error('Failed to deactivate account.');
+        await logoutUser();
+        navigate('/');
+        return; // exit early
+      }
+
+      setActiveModal(null);
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -125,7 +199,7 @@ export default function SettingsPage() {
         <div className="p-6 bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-3xl mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex items-center gap-5">
             <Avatar className="w-20 h-20 ring-4 ring-black shadow-xl">
-              <AvatarImage src={profile?.avatar_url} alt={profile?.name || 'avatar'} className="object-cover" />
+              <AvatarImage src={profile?.avatar_url || profile?.avatar} alt={profile?.name || 'avatar'} className="object-cover" />
               <AvatarFallback className="bg-zinc-800 text-2xl font-bold">{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
@@ -152,9 +226,9 @@ export default function SettingsPage() {
           
           {/* Account */}
           <SettingsSection title="Account">
-            <SettingsRow id="settings-email" icon={Mail} label="Email" value={profile?.email || 'Not set'} onClick={() => {}} />
-            <SettingsRow id="settings-username" icon={User} label="Username" value={`@${profile?.username || 'not set'}`} onClick={() => {}} />
-            <SettingsRow id="settings-plan" icon={Star} label="Plan" value="Pro" onClick={() => {}} />
+            <SettingsRow id="settings-email" icon={Mail} label="Email" value={profile?.email || 'Update'} onClick={() => openModal('email')} />
+            <SettingsRow id="settings-username" icon={User} label="Username" value={`@${profile?.username || 'not set'}`} onClick={() => openModal('username')} />
+            <SettingsRow id="settings-plan" icon={Star} label="Plan" value="Free" onClick={() => openModal('plan')} />
           </SettingsSection>
 
           {/* Privacy */}
@@ -163,14 +237,14 @@ export default function SettingsPage() {
               id="settings-public-profile"
               icon={Globe}
               label="Public Profile"
-              toggle={{ value: publicProfile, onToggle: () => setPublicProfile(v => !v) }}
+              toggle={{ value: publicProfile, onToggle: () => handleToggle('is_public', publicProfile, setPublicProfile) }}
             />
             {currentRole === 'photographer' && (
               <SettingsRow
                 id="settings-available-bookings"
                 icon={Calendar}
                 label="Available for Bookings"
-                toggle={{ value: availableForBookings, onToggle: () => setAvailableForBookings(v => !v) }}
+                toggle={{ value: availableForBookings, onToggle: () => handleToggle('availability', availableForBookings, setAvailableForBookings) }}
               />
             )}
           </SettingsSection>
@@ -181,21 +255,21 @@ export default function SettingsPage() {
               id="settings-push-notifs"
               icon={Bell}
               label="Push Notifications"
-              toggle={{ value: pushNotifs, onToggle: () => setPushNotifs(v => !v) }}
+              toggle={{ value: pushNotifs, onToggle: () => handleToggle('push_notifs', pushNotifs, setPushNotifs) }}
             />
             <SettingsRow
               id="settings-email-notifs"
               icon={Mail}
               label="Email Notifications"
-              toggle={{ value: emailNotifs, onToggle: () => setEmailNotifs(v => !v) }}
+              toggle={{ value: emailNotifs, onToggle: () => handleToggle('email_notifs', emailNotifs, setEmailNotifs) }}
             />
           </SettingsSection>
 
           {/* Support */}
           <SettingsSection title="Support">
-            <SettingsRow id="settings-help" icon={HelpCircle} label="Help Center" onClick={() => {}} />
-            <SettingsRow id="settings-privacy-policy" icon={Shield} label="Privacy Policy" onClick={() => {}} />
-            <SettingsRow id="settings-terms" icon={FileText} label="Terms of Service" onClick={() => {}} />
+            <SettingsRow id="settings-help" icon={HelpCircle} label="Help Center" onClick={() => alert('Help Center coming soon!')} />
+            <SettingsRow id="settings-privacy-policy" icon={Shield} label="Privacy Policy" onClick={() => alert('Privacy Policy coming soon!')} />
+            <SettingsRow id="settings-terms" icon={FileText} label="Terms of Service" onClick={() => alert('Terms of Service coming soon!')} />
           </SettingsSection>
 
           {/* Danger zone */}
@@ -208,11 +282,11 @@ export default function SettingsPage() {
               onClick={handleLogout}
             />
             <SettingsRow
-              id="settings-delete-account"
+              id="settings-deactivate-account"
               icon={Trash2}
-              label="Delete Account"
+              label="Deactivate Account"
               destructive
-              onClick={() => {}}
+              onClick={() => openModal('deactivate')}
             />
           </SettingsSection>
 
@@ -226,6 +300,59 @@ export default function SettingsPage() {
           </div>
         </div>
       </main>
+
+      {/* Dynamic Modal */}
+      <Dialog open={!!activeModal} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="bg-zinc-950 border border-zinc-800 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {activeModal === 'email' && 'Update Email'}
+              {activeModal === 'username' && 'Change Username'}
+              {activeModal === 'plan' && 'Upgrade Plan'}
+              {activeModal === 'deactivate' && 'Deactivate Account'}
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {activeModal === 'email' && 'Enter your new email address below. You may need to verify it.'}
+              {activeModal === 'username' && 'Choose a unique username for your profile.'}
+              {activeModal === 'plan' && 'Pro subscriptions are coming soon! Stay tuned.'}
+              {activeModal === 'deactivate' && 'Are you sure you want to deactivate your account? Your profile will be hidden from the platform until you log back in.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {errorMsg && (
+            <div className="text-sm font-medium text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+              {errorMsg}
+            </div>
+          )}
+
+          {(activeModal === 'email' || activeModal === 'username') && (
+            <div className="py-4">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={activeModal === 'email' ? 'new@email.com' : 'new_username'}
+                className="bg-zinc-900 border-zinc-800 text-white"
+              />
+            </div>
+          )}
+
+          <DialogFooter className="mt-4">
+            <Button variant="outline" className="border-zinc-800 hover:bg-zinc-900 hover:text-white" onClick={() => setActiveModal(null)}>
+              Cancel
+            </Button>
+            {activeModal !== 'plan' && (
+              <Button 
+                variant={activeModal === 'deactivate' ? 'destructive' : 'default'}
+                onClick={handleSaveModal} 
+                disabled={isLoading}
+                className={activeModal === 'deactivate' ? 'bg-red-600 hover:bg-red-700' : 'bg-white text-black hover:bg-zinc-200'}
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (activeModal === 'deactivate' ? 'Deactivate' : 'Save')}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

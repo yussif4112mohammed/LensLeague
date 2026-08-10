@@ -237,6 +237,26 @@ export function AppProvider({ children }) {
     setCurrentUser(prev => ({ ...prev, onboarding_completed: true }));
   };
 
+  const updateProfileSettings = async (updates) => {
+    const userId = currentUser?.id;
+    if (!userId) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      setCurrentUser(prev => ({ ...prev, ...updates }));
+      return true;
+    } catch (err) {
+      console.error('Update profile settings error:', err.message);
+      return false;
+    }
+  };
+
   // Fetch a user profile based on ID
   const fetchUserProfile = async (uid) => {
     try {
@@ -1135,7 +1155,7 @@ export function AppProvider({ children }) {
 
     const newComment = {
       id: `c_${Date.now()}`,
-      item_id: photoId,
+      photo_id: photoId,
       user_id: userId,
       body: body,
       created_at: new Date().toISOString(),
@@ -1275,7 +1295,9 @@ export function AppProvider({ children }) {
       completeOnboarding,
       searchUsers,
       searchPosts,
-      toggleLikePost
+      toggleLikePost,
+      syncFollowsAndLikes,
+      updateProfileSettings
     }}>
       {children}
     </AppContext.Provider>

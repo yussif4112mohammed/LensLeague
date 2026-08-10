@@ -6,9 +6,10 @@ export default function Logo({ className = "w-8 h-8", withText = false }) {
       <div className="relative flex items-center justify-center">
         {/* Subtle glow effect behind the logo */}
         <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-        <Aperture 
-          className={`text-primary relative z-10 ${className}`} 
-          strokeWidth={2.5} 
+        <img 
+          src="/neon_lens.jpg" 
+          alt="LensLeague Logo" 
+          className={`relative z-10 rounded-full object-cover ${className}`} 
         />
       </div>
       {withText && (

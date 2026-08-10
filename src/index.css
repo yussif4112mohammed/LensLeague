@@ -9,36 +9,36 @@
   :root {
     --font-sans: 'Inter Variable', sans-serif;
     
-    /* Cinematic Premium Dark Theme Tokens */
-    --background: 222 47% 7%;              /* Rich Dark Slate */
-    --foreground: 210 40% 98%;             /* Off-White */
+    /* Ultra-Premium Charcoal & Neon Amber Theme */
+    --background: 0 0% 7%;                 /* Deep matte charcoal (no blue) */
+    --foreground: 0 0% 90%;                /* Soft light grey (not pure white) */
     
-    --card: 222 47% 10%;                   /* Slightly lighter slate for cards */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 10%;                      /* Slightly lighter charcoal */
+    --card-foreground: 0 0% 90%;
     
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 90%;
     
-    --primary: 217 91% 60%;                /* Electric Blue primary action */
-    --primary-foreground: 210 40% 98%;
+    --primary: 32 95% 55%;                 /* Neon Amber/Orange for primary actions */
+    --primary-foreground: 0 0% 7%;         /* Dark text on primary */
     
-    --secondary: 217 32% 15%;              /* Dark grey blue */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 14%;                 /* Mid-grey */
+    --secondary-foreground: 0 0% 90%;
     
-    --muted: 217 32% 17%;                  /* Muted slate */
-    --muted-foreground: 215 20.2% 65.1%;   /* Muted text */
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
     
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 90%;
     
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 40%;              /* Deep Red */
+    --destructive-foreground: 0 0% 90%;
     
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 224 71.4% 4.1%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 32 95% 55%;
     
-    --radius: 0.75rem;
+    --radius: 1rem;                        /* Rounder premium feel */
   }
 }
 

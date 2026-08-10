@@ -368,12 +368,19 @@ export default function ProfilePage() {
           
           <div className="flex flex-wrap gap-4 items-center justify-center sm:justify-end pb-2">
             {isOwnProfile ? (
-              <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="rounded-full px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg">
-                    <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
-                  </Button>
-                </DialogTrigger>
+              <>
+                <Button 
+                  onClick={() => navigate('/upload')}
+                  className="rounded-full px-6 h-10 font-bold text-white bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                >
+                  <Plus className="w-5 h-5 mr-2" strokeWidth={2.5} /> Upload Shoot
+                </Button>
+                <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="rounded-full px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg">
+                      <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 backdrop-blur-xl text-white">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Edit Profile</DialogTitle>

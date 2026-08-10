@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { to: '/discover', label: 'Discover', id: 'nav-discover', icon: Compass },
   { to: '/compete/vote', label: 'Compete', id: 'nav-compete', featured: true, icon: Swords },
   { to: '/leaderboard', label: 'Rankings', id: 'nav-leaderboard', icon: Trophy },
+  { to: '/settings', label: 'Settings', id: 'nav-settings', icon: Settings },
   { to: '/profile/me', label: 'Profile', id: 'nav-profile', icon: User },
 ];
 
@@ -93,16 +94,6 @@ export default function PhotographerShell() {
           </Tooltip>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-6">
-            <Tooltip placement="right">
-              <TooltipTrigger asChild>
-                <NavLink to="/settings" className="group">
-                  {({ isActive }) => <NavIcon item={{ icon: Settings }} isActive={isActive} />}
-                </NavLink>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={16} className="bg-zinc-900 border-white/10 text-white font-semibold">
-                Settings
-              </TooltipContent>
-            </Tooltip>
 
             {currentUser ? (
               <Tooltip placement="right">
@@ -165,14 +156,6 @@ export default function PhotographerShell() {
           </div>
         </nav>
 
-        {/* Mobile FAB for upload */}
-        <button 
-          className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-blue-400 text-white flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:scale-105 active:scale-[0.96] transition-transform duration-200 ease-out z-50 focus:outline-none"
-          onClick={() => navigate('/upload')}
-          aria-label="Upload photo"
-        >
-          <Plus className="w-6 h-6" strokeWidth={3} />
-        </button>
       </div>
     </TooltipProvider>
   );

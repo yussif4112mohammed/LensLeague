@@ -37,10 +37,11 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const isOwnPhoto = currentUser && photo.ownerId === currentUser.id;
   const commentCount = comments.filter(c => c.photo_id === photo.id || c.item_id === photo.id).length;
 
-  // Sync likeCount from context if it changes externally
+  // Keep likes synced with backend, but preserve local anon likes
   useEffect(() => {
-    setLikeCount(photo.likes);
-  }, [photo.likes]);
+    const isLocalLiked = localStorage.getItem(`liked_${photo.id}`) === 'true';
+    setLikeCount(photo.likes + (isLocalLiked && !photo.likes ? 1 : 0));
+  }, [photo.likes, photo.id]);
 
   // Check if current user has already liked this photo
   useEffect(() => {
@@ -226,7 +227,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
               </>
             )}
             <button 
-              onClick={(e) => { e.stopPropagation(); navigate('/settings'); }}
+              onClick={(e) => { e.stopPropagation(); alert('Post options (Share, Report, Copy Link) coming soon.'); }}
               className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
             >
               <MoreHorizontal className="w-5 h-5" />

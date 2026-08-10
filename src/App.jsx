@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Layouts
 import PhotographerShell from './layouts/PhotographerShell/PhotographerShell';
@@ -39,9 +40,9 @@ const router = createBrowserRouter([
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/admin', element: <AdminPage /> },
 
-  // ────── Photographer SPA ──────
+  // ────── Photographer SPA (Protected) ──────
   {
-    element: <PhotographerShell />,
+    element: <ProtectedRoute><PhotographerShell /></ProtectedRoute>,
     children: [
       { path: '/feed', element: <FeedPage /> },
       { path: '/discover', element: <DiscoverPage /> },
@@ -66,9 +67,9 @@ const router = createBrowserRouter([
     ]
   },
 
-  // ────── Client SPA ──────
+  // ────── Client SPA (Protected) ──────
   {
-    element: <ClientShell />,
+    element: <ProtectedRoute><ClientShell /></ProtectedRoute>,
     children: [
       { path: '/client/home', element: <ClientHome /> },
       { path: '/client/search', element: <ClientSearch /> },

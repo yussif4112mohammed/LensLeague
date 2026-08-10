@@ -10,33 +10,33 @@
     --font-sans: 'Inter Variable', sans-serif;
     
     /* Strict Dark Mode UI/UX Pro Max tokens */
-    --background: 0 0% 0%;           /* #000000 */
-    --foreground: 0 0% 98%;          /* #FAFAFA */
+    --background: 200 63.6% 6.5%;      /* #06141B */
+    --foreground: 165 4.1% 80.8%;      /* #CCD0CF */
     
-    --card: 240 5.9% 10%;            /* #18181B */
-    --card-foreground: 0 0% 98%;     /* #FAFAFA */
+    --card: 206 45.2% 12.2%;           /* #11212D */
+    --card-foreground: 165 4.1% 80.8%;
     
-    --popover: 240 5.9% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 206 45.2% 12.2%;
+    --popover-foreground: 165 4.1% 80.8%;
     
-    --primary: 217 91% 60%;           /* Electric Blue #3B82F6 */
-    --primary-foreground: 0 0% 100%;  /* White text on primary button */
+    --primary: 165 4.1% 80.8%;         /* #CCD0CF */
+    --primary-foreground: 200 63.6% 6.5%; /* #06141B */
     
-    --secondary: 240 3.7% 15.9%;     /* #27272A */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 206 30.2% 20.8%;      /* #253745 */
+    --secondary-foreground: 165 4.1% 80.8%;
     
-    --muted: 0 0% 9.4%;              /* #181818 */
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 206 45.2% 12.2%;          /* #11212D */
+    --muted-foreground: 191 8.7% 63.9%;/* #9BA8AB */
     
-    --accent: 210 40% 96.1%;         /* #F8FAFC */
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 206 30.2% 20.8%;         /* #253745 */
+    --accent-foreground: 165 4.1% 80.8%;
     
-    --destructive: 0 84.2% 60.2%;    /* #EF4444 */
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 165 4.1% 80.8%;
     
-    --border: 240 3.7% 26.5%;        /* #3F3F46 */
-    --input: 240 3.7% 15.9%;         /* #27272A */
-    --ring: 240 5.9% 10%;            /* #18181B */
+    --border: 206 30.2% 20.8%;         /* #253745 */
+    --input: 206 30.2% 20.8%;          /* #253745 */
+    --ring: 206 17.8% 35.3%;           /* #4A5C6A */
     
     --radius: 0.5rem;
   }

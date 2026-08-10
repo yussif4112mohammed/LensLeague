@@ -31,8 +31,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col pt-16 pb-24 sm:pt-24 sm:px-6 lg:px-8 relative overflow-y-auto">
-      <div className="absolute inset-0 bg-black z-0 fixed" />
+    <div className="min-h-screen bg-background flex flex-col pt-16 pb-24 sm:pt-24 sm:px-6 lg:px-8 relative overflow-y-auto">
+      <div className="absolute inset-0 bg-background z-0 fixed" />
       
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <Link to="/login" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium mb-8 ml-4 sm:ml-0">
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
           Back to Login
         </Link>
         
-        <div className="bg-black/60 backdrop-blur-xl border border-zinc-800/50 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10">
+        <div className="bg-card/80 backdrop-blur-xl border border-border/50 py-8 px-4 shadow-2xl sm:rounded-3xl sm:px-10">
           
           <Logo withText={true} className="w-10 h-10 mb-6" />
 
@@ -77,11 +77,11 @@ export default function ForgotPasswordPage() {
                     value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com" required autoComplete="email"
                     disabled={loading}
-                    className="h-12 bg-zinc-900/50 border-zinc-800 focus:border-zinc-500 focus:ring-zinc-500 text-white placeholder:text-zinc-600 rounded-xl"
+                    className="h-12 bg-secondary/50 border-border focus:border-muted-foreground focus:ring-ring text-foreground placeholder:text-muted-foreground/50 rounded-xl"
                   />
                 </div>
                 
-                <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all" disabled={loading}>
+                <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-[0_0_15px_rgba(204,208,207,0.15)] transition-transform duration-200 ease-out active:scale-[0.96]" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-black" />}
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </Button>

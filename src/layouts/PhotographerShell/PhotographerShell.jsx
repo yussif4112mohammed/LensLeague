@@ -28,7 +28,7 @@ function NavIcon({ item, isActive }) {
   const Icon = item.icon;
   return (
     <div className={cn(
-      "relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300 group-hover:scale-110",
+      "relative flex items-center justify-center w-12 h-12 rounded-2xl transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-[0.96]",
       isActive ? "text-white" : "text-zinc-500 group-hover:text-zinc-300"
     )}>
       {isActive && (
@@ -53,7 +53,7 @@ export default function PhotographerShell() {
         {/* Desktop Slim Sidebar */}
         <aside className="hidden md:flex flex-col items-center w-[88px] border-r border-white/5 bg-black/50 backdrop-blur-2xl h-full py-8 z-50">
           <div 
-            className="flex items-center justify-center w-12 h-12 mb-10 cursor-pointer hover:scale-110 transition-transform"
+            className="flex items-center justify-center w-12 h-12 mb-10 cursor-pointer hover:scale-110 active:scale-[0.96] transition-transform duration-200 ease-out"
             onClick={() => navigate('/feed')}
           >
             <Logo withText={false} className="w-8 h-8" />
@@ -81,7 +81,7 @@ export default function PhotographerShell() {
           <Tooltip placement="right">
             <TooltipTrigger asChild>
               <button 
-                className="w-12 h-12 mt-6 rounded-full bg-gradient-to-tr from-primary to-blue-400 text-white flex items-center justify-center hover:scale-110 hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
+                className="w-12 h-12 mt-6 rounded-full bg-gradient-to-tr from-primary to-blue-400 text-white flex items-center justify-center hover:scale-110 active:scale-[0.96] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-[transform,shadow] duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black"
                 onClick={() => navigate('/upload')}
               >
                 <Plus className="w-6 h-6" strokeWidth={3} />
@@ -156,7 +156,7 @@ export default function PhotographerShell() {
 
         {/* Mobile FAB for upload */}
         <button 
-          className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-blue-400 text-white flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:scale-105 active:scale-95 transition-all z-50 focus:outline-none"
+          className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-blue-400 text-white flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:scale-105 active:scale-[0.96] transition-transform duration-200 ease-out z-50 focus:outline-none"
           onClick={() => navigate('/upload')}
           aria-label="Upload photo"
         >

@@ -8,6 +8,7 @@ export function AppProvider({ children }) {
   const [userEmail, setUserEmail] = useState('');
   const [currentRole, setCurrentRole] = useState('photographer');
   const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Photos list state
   const [photos, setPhotos] = useState([]);
@@ -256,17 +257,20 @@ export function AppProvider({ children }) {
 
   // Listen to Authentication State Changes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         setUserEmail(session.user.email);
-        fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user.id);
       }
+      setAuthLoading(false);
+    }).catch(() => {
+      setAuthLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         setUserEmail(session.user.email);
-        fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user.id);
       } else {
         setUserEmail('');
         setCurrentUser(null);
@@ -1222,6 +1226,7 @@ export function AppProvider({ children }) {
       userEmail,
       setUserEmail,
       currentUser,
+      authLoading,
       photos,
       setPhotos,
       bookings,

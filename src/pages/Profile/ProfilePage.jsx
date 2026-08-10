@@ -16,10 +16,28 @@ import { Camera, SearchX, LogIn, ImageOff, MessageSquare, Plus, Edit2, History }
 import './ProfilePage.css';
 
 function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
+  const { currentUser, toggleLikePost } = useApp();
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(photo?.likes || 0);
   const [showComments, setShowComments] = useState(false);
+
+  // Check if current user has already liked this photo
+  useEffect(() => {
+    if (!currentUser || !photo) return;
+    const checkLiked = async () => {
+      try {
+        const { data } = await supabase
+          .from('likes')
+          .select('user_id')
+          .eq('user_id', currentUser.id)
+          .eq('item_id', photo.id)
+          .maybeSingle();
+        if (data) setLiked(true);
+      } catch (e) { /* ignore */ }
+    };
+    checkLiked();
+  }, [currentUser, photo]);
 
   if (!photo) return null;
 
@@ -63,7 +81,11 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
             <div className="p-4 border-t border-border/40">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-4">
-                  <button className={`hover:scale-110 active:scale-95 transition-transform ${liked ? 'text-red-500' : 'text-foreground'}`} onClick={() => { setLiked(!liked); setLikeCount(c => liked ? c - 1 : c + 1); }}>
+                  <button className={`hover:scale-110 active:scale-95 transition-transform ${liked ? 'text-red-500' : 'text-foreground'}`} onClick={() => { 
+                    setLiked(!liked); 
+                    setLikeCount(c => liked ? c - 1 : c + 1);
+                    toggleLikePost(photo.id);
+                  }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   </button>
                   <button className="hover:scale-110 active:scale-95 transition-transform" onClick={() => setShowComments(true)}>
@@ -169,7 +191,10 @@ export default function ProfilePage() {
   const isOwnProfile = currentUser && (id === currentUser.id || id === 'me');
 
   const [bookingForm, setBookingForm] = useState({ date: '', budget: '', location: '', message: '' });
-  const [editForm, setEditForm] = useState({ name: '', username: '', bio: '', location: '' });
+  const [editForm, setEditForm] = useState({ 
+    name: '', username: '', bio: '', location: '', 
+    starting_rate: '', availability_status: '', service_categories: '' 
+  });
   const [milestoneForm, setMilestoneForm] = useState({ title: '', desc: '', date: '', icon: '📷' });
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -181,7 +206,10 @@ export default function ProfilePage() {
         name: photographer.name || '',
         username: photographer.username || '',
         bio: photographer.bio || '',
-        location: photographer.location || ''
+        location: photographer.location || '',
+        starting_rate: photographer.starting_rate || '',
+        availability_status: photographer.availability_status || '',
+        service_categories: (photographer.service_categories || []).join(', ')
       });
       setAvatarPreview(photographer.avatar);
       setAvatarFile(null);
@@ -257,6 +285,10 @@ export default function ProfilePage() {
       }
     }
     const updateData = { ...editForm };
+    if (updateData.starting_rate) updateData.starting_rate = parseInt(updateData.starting_rate, 10);
+    if (updateData.service_categories) {
+      updateData.service_categories = updateData.service_categories.split(',').map(s => s.trim()).filter(Boolean);
+    }
     if (newAvatarUrl) updateData.avatar = newAvatarUrl;
     updateProfile(photographer.id, updateData);
     setIsSavingEdit(false);
@@ -301,7 +333,33 @@ export default function ProfilePage() {
                 {photographer.name}
                 {photographer.verified && <Badge variant="secondary" className="bg-primary/20 text-primary">✓ Verified</Badge>}
               </h1>
-              <div className="text-muted-foreground font-medium mt-1">@{photographer.username} · {photographer.location}</div>
+              <div className="text-muted-foreground font-medium mt-1 flex items-center gap-2 flex-wrap">
+                <span>@{photographer.username}</span>
+                <span>·</span>
+                <span>{photographer.location}</span>
+                {photographer.role === 'photographer' && (
+                  <>
+                    <span>·</span>
+                    <span className="flex items-center gap-1 text-yellow-500">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      {photographer.points || 1200} Elo
+                    </span>
+                    <span>·</span>
+                    <span className="text-emerald-400 font-bold">{photographer.starting_rate ? `Starting at $${photographer.starting_rate}` : 'Rates on request'}</span>
+                  </>
+                )}
+              </div>
+              {photographer.role === 'photographer' && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge variant="outline" className={photographer.availability_status === 'Unavailable' ? 'border-red-500/50 text-red-500' : 'border-emerald-500/50 text-emerald-500'}>
+                    <div className={cn("w-2 h-2 rounded-full mr-2", photographer.availability_status === 'Unavailable' ? "bg-red-500" : "bg-emerald-500 animate-pulse")} />
+                    {photographer.availability_status || 'Available for booking'}
+                  </Badge>
+                  {photographer.service_categories?.map(cat => (
+                    <Badge key={cat} variant="secondary" className="bg-zinc-800">{cat}</Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           
@@ -338,6 +396,22 @@ export default function ProfilePage() {
                       <label className="text-sm font-medium">Bio</label>
                       <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none bg-background" />
                     </div>
+                    {photographer.role === 'photographer' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Starting Rate ($)</label>
+                          <Input type="number" value={editForm.starting_rate} onChange={e=>setEditForm({...editForm, starting_rate: e.target.value})} className="bg-background" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Availability Status</label>
+                          <Input placeholder="e.g. Available for booking" value={editForm.availability_status} onChange={e=>setEditForm({...editForm, availability_status: e.target.value})} className="bg-background" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Services (comma separated)</label>
+                          <Input placeholder="Wedding, Portrait, Event" value={editForm.service_categories} onChange={e=>setEditForm({...editForm, service_categories: e.target.value})} className="bg-background" />
+                        </div>
+                      </>
+                    )}
                     <Button type="submit" className="w-full rounded-full" disabled={isSavingEdit}>{isSavingEdit ? 'Saving...' : 'Save Changes'}</Button>
                   </form>
                 </DialogContent>

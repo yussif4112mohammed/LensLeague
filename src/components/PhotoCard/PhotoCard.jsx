@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommentSheet from '../CommentSheet/CommentSheet';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
@@ -22,7 +22,8 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
-  const { follows, followUser, unfollowUser, currentUser, comments } = useApp();
+  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, users } = useApp();
+  const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(photo.likes);
@@ -34,7 +35,25 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
   const isFollowing = currentUser && follows.some(f => f.follower_id === currentUser.id && f.following_id === photo.ownerId);
   const isOwnPhoto = currentUser && photo.ownerId === currentUser.id;
-  const commentCount = comments.filter(c => c.photo_id === photo.id).length;
+  const commentCount = comments.filter(c => c.photo_id === photo.id || c.item_id === photo.id).length;
+
+  // Check if current user has already liked this photo
+  useEffect(() => {
+    if (!currentUser) return;
+    const checkLiked = async () => {
+      try {
+        const { supabase } = await import('../../lib/supabaseClient');
+        const { data } = await supabase
+          .from('likes')
+          .select('user_id')
+          .eq('user_id', currentUser.id)
+          .eq('item_id', photo.id)
+          .maybeSingle();
+        if (data) setLiked(true);
+      } catch (e) { /* ignore */ }
+    };
+    checkLiked();
+  }, [currentUser, photo.id]);
 
   const handleFollowClick = (e) => {
     e.stopPropagation();
@@ -54,6 +73,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
       setLikeCount(c => c + 1);
       setHeartBurst(true);
       setShowHeart(true);
+      toggleLikePost(photo.id); // Persist to Supabase
       setTimeout(() => setHeartBurst(false), 700);
       setTimeout(() => setShowHeart(false), 900);
     }
@@ -64,6 +84,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
     if (liked) {
       setLiked(false);
       setLikeCount(c => c - 1);
+      toggleLikePost(photo.id); // Persist unlike to Supabase
     } else {
       triggerLike();
     }
@@ -149,25 +170,46 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
               <AvatarFallback className="bg-zinc-800 text-xs">{photo.ownerName?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-extrabold text-base tracking-tight group-hover:text-white transition-colors">{photo.ownerName}</div>
-              {photo.location && (
-                <div className="text-xs text-zinc-500 font-medium tracking-wide mt-0.5">{photo.location}</div>
-              )}
+              <div className="font-extrabold text-base tracking-tight group-hover:text-white transition-colors flex items-center gap-2">
+                {photo.ownerName}
+                {ownerProfile.verified && <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-primary/20 text-primary uppercase">Pro</Badge>}
+              </div>
+              <div className="text-xs text-zinc-500 font-medium tracking-wide mt-0.5 flex items-center gap-1">
+                {photo.location && <span>{photo.location}</span>}
+                {ownerProfile.role === 'photographer' && ownerProfile.starting_rate > 0 && (
+                  <>
+                    <span>·</span>
+                    <span className="text-emerald-400 font-bold">Starts at ${ownerProfile.starting_rate}</span>
+                  </>
+                )}
+              </div>
             </div>
           </button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {!isOwnPhoto && (
-              <Button
+              <>
+                {ownerProfile.role === 'photographer' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-4 rounded-full text-xs font-bold tracking-wide transition-transform duration-200 ease-out shadow-lg border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:scale-[1.02] active:scale-[0.96]"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/profile/${photo.ownerId}`); }}
+                  >
+                    Hire
+                  </Button>
+                )}
+                <Button
                 variant={isFollowing ? "secondary" : "default"}
                 size="sm"
-                className={cn("h-9 px-5 rounded-full text-xs font-bold tracking-wide transition-all shadow-lg", isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95")}
+                className={cn("h-9 px-5 rounded-full text-xs font-bold tracking-wide transition-transform duration-200 ease-out shadow-lg", isFollowing ? "bg-white/10 hover:bg-white/20 text-white" : "bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-[0.96]")}
                 onClick={handleFollowClick}
                 id={`follow-${photo.id}`}
               >
                 {isFollowing ? 'Following' : 'Follow'}
               </Button>
-            )}
+            </>
+          )}
             <button className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">
               <MoreHorizontal className="w-5 h-5" />
             </button>
@@ -176,7 +218,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
         {/* Media Frame */}
         <div 
-          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950/50 flex items-center justify-center cursor-pointer group rounded-none sm:rounded-[2rem] overflow-hidden border-y sm:border border-white/5 shadow-2xl"
+          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-950/50 flex items-center justify-center cursor-pointer group rounded-none sm:rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 ring-inset"
           onClick={handleTap}
         >
           {photo.isVideo ? (
@@ -242,28 +284,28 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             <div className="flex items-center gap-6">
               <button 
                 onClick={handleLike} 
-                className={cn("transition-all duration-300 hover:scale-110 active:scale-90", liked ? "text-primary" : "text-zinc-400 hover:text-white")}
+                className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96]", liked ? "text-primary" : "text-zinc-400 hover:text-white")}
               >
-                <Heart className={cn("w-7 h-7", liked ? "fill-current" : "")} strokeWidth={2.5} />
+                <Heart className={cn("w-7 h-7", liked ? "fill-current" : "")} strokeWidth={2} />
               </button>
               <button 
                 onClick={handleComment} 
-                className="text-zinc-400 hover:text-white hover:scale-110 active:scale-90 transition-all duration-300"
+                className="text-zinc-400 hover:text-white hover:scale-110 active:scale-[0.96] transition-transform duration-200 ease-out"
               >
-                <MessageCircle className="w-7 h-7" strokeWidth={2.5} />
+                <MessageCircle className="w-7 h-7" strokeWidth={2} />
               </button>
               <button 
                 onClick={handleShare} 
-                className="text-zinc-400 hover:text-white hover:scale-110 active:scale-90 transition-all duration-300"
+                className="text-zinc-400 hover:text-white hover:scale-110 active:scale-[0.96] transition-transform duration-200 ease-out"
               >
-                <Share className="w-7 h-7" strokeWidth={2.5} />
+                <Share className="w-7 h-7" strokeWidth={2} />
               </button>
             </div>
             <button 
               onClick={handleSave} 
-              className={cn("transition-all duration-300 hover:scale-110 active:scale-90", saved ? "text-white" : "text-zinc-400 hover:text-white")}
+              className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96]", saved ? "text-white" : "text-zinc-400 hover:text-white")}
             >
-              <Bookmark className={cn("w-7 h-7", saved ? "fill-current text-white" : "")} strokeWidth={2.5} />
+              <Bookmark className={cn("w-7 h-7", saved ? "fill-current text-white" : "")} strokeWidth={2} />
             </button>
           </div>
 

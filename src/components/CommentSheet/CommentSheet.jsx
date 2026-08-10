@@ -92,7 +92,7 @@ export default function CommentSheet({ photo, onClose }) {
 
         {/* Input row */}
         <form className="comment-sheet__input-row" onSubmit={handleSend}>
-          <img src={currentUser?.avatar || photographers[0].avatar} alt="You" className="comment-sheet__input-avatar" />
+          <img src={currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80'} alt="You" className="comment-sheet__input-avatar" />
           <input
             ref={inputRef}
             id="comment-input"

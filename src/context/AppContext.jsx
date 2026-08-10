@@ -937,8 +937,10 @@ export function AppProvider({ children }) {
 
       if (existing) {
         await supabase.from('likes').delete().eq('user_id', userId).eq('item_id', postId);
+        setPhotos(prev => prev.map(p => p.id === postId ? { ...p, likes: Math.max(0, p.likes - 1) } : p));
       } else {
         await supabase.from('likes').insert({ user_id: userId, item_id: postId });
+        setPhotos(prev => prev.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
       }
     } catch (err) {
       console.warn('toggleLikePost error:', err.message);

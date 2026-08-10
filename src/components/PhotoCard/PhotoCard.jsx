@@ -37,6 +37,11 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const isOwnPhoto = currentUser && photo.ownerId === currentUser.id;
   const commentCount = comments.filter(c => c.photo_id === photo.id || c.item_id === photo.id).length;
 
+  // Sync likeCount from context if it changes externally
+  useEffect(() => {
+    setLikeCount(photo.likes);
+  }, [photo.likes]);
+
   // Check if current user has already liked this photo
   useEffect(() => {
     if (!currentUser) return;

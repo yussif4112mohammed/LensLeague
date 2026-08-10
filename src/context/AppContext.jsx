@@ -944,8 +944,7 @@ export function AppProvider({ children }) {
   };
 
   const toggleLikePost = async (postId) => {
-    const userId = currentUser?.id;
-    if (!userId) return;
+    const userId = currentUser?.id || 'anon_user';
 
     try {
       const { data: existing } = await supabase
@@ -1150,8 +1149,7 @@ export function AppProvider({ children }) {
   };
 
   const addPhotoComment = async (photoId, body) => {
-    const userId = currentUser?.id;
-    if (!userId) return;
+    const userId = currentUser?.id || 'anon_user';
 
     const newComment = {
       id: `c_${Date.now()}`,

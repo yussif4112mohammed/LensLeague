@@ -24,9 +24,9 @@ function getPhotoTitle(caption) {
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, users } = useApp();
   const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(photo.likes);
+  const [liked, setLiked] = useState(() => localStorage.getItem(`liked_${photo.id}`) === 'true');
+  const [saved, setSaved] = useState(() => localStorage.getItem(`saved_${photo.id}`) === 'true');
+  const [likeCount, setLikeCount] = useState(photo.likes + (localStorage.getItem(`liked_${photo.id}`) === 'true' && !photo.likes ? 1 : 0));
   const [heartBurst, setHeartBurst] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -54,7 +54,10 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
           .eq('user_id', currentUser.id)
           .eq('item_id', photo.id)
           .maybeSingle();
-        if (data) setLiked(true);
+        if (data) {
+          setLiked(true);
+          localStorage.setItem(`liked_${photo.id}`, 'true');
+        }
       } catch (e) { /* ignore */ }
     };
     checkLiked();
@@ -75,6 +78,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const triggerLike = () => {
     if (!liked) {
       setLiked(true);
+      localStorage.setItem(`liked_${photo.id}`, 'true');
       setLikeCount(c => c + 1);
       setHeartBurst(true);
       setShowHeart(true);
@@ -88,6 +92,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
     e.stopPropagation();
     if (liked) {
       setLiked(false);
+      localStorage.removeItem(`liked_${photo.id}`);
       setLikeCount(c => c - 1);
       toggleLikePost(photo.id); // Persist unlike to Supabase
     } else {
@@ -220,7 +225,10 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
                 </Button>
               </>
             )}
-            <button className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">
+            <button 
+              onClick={(e) => { e.stopPropagation(); navigate('/settings'); }}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+            >
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>

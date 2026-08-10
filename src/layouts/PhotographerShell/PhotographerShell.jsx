@@ -93,15 +93,26 @@ export default function PhotographerShell() {
           </Tooltip>
 
           <div className="mt-8 pt-8 border-t border-white/5 flex flex-col gap-6">
+            <Tooltip placement="right">
+              <TooltipTrigger asChild>
+                <NavLink to="/settings" className="group">
+                  {({ isActive }) => <NavIcon item={{ icon: Settings }} isActive={isActive} />}
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={16} className="bg-zinc-900 border-white/10 text-white font-semibold">
+                Settings
+              </TooltipContent>
+            </Tooltip>
+
             {currentUser ? (
               <Tooltip placement="right">
                 <TooltipTrigger asChild>
-                  <NavLink to="/settings" className="group">
-                    {({ isActive }) => <NavIcon item={{ icon: Settings }} isActive={isActive} />}
-                  </NavLink>
+                  <button onClick={() => navigate('/')} className="group outline-none">
+                    <NavIcon item={{ icon: LogOut }} isActive={false} />
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={16} className="bg-zinc-900 border-white/10 text-white font-semibold">
-                  Settings
+                  Log Out
                 </TooltipContent>
               </Tooltip>
             ) : (

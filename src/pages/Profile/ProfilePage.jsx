@@ -322,66 +322,68 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10">
-        <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8">
-          <div className="flex items-end gap-6">
-            <Avatar className="h-32 w-32 border-4 border-background shadow-xl hover:scale-[1.02] transition-transform">
+      <div className="max-w-5xl mx-auto px-6 -mt-24 relative z-10">
+        <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8 p-6 sm:p-8 glass-card rounded-[2rem] border-white/10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
+            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-black shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] transition-transform">
               <AvatarImage src={photographer.avatar} className="object-cover" />
-              <AvatarFallback className="text-3xl bg-zinc-900">{photographer.name[0]}</AvatarFallback>
+              <AvatarFallback className="text-4xl bg-zinc-900">{photographer.name[0]}</AvatarFallback>
             </Avatar>
-            <div className="pb-2">
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-2">
+            <div className="pb-2 flex flex-col items-center sm:items-start">
+              <h1 className="text-3xl sm:text-5xl font-black tracking-tight flex items-center gap-3 text-glow text-white mb-2">
                 {photographer.name}
-                {photographer.verified && <Badge variant="secondary" className="bg-primary/20 text-primary">✓ Verified</Badge>}
+                {photographer.verified && <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)] px-2 py-0.5 text-xs">PRO</Badge>}
               </h1>
-              <div className="text-muted-foreground font-medium mt-1 flex items-center gap-2 flex-wrap">
-                <span>@{photographer.username}</span>
-                <span>·</span>
+              <div className="text-zinc-400 font-medium mt-1 flex items-center gap-3 flex-wrap justify-center sm:justify-start">
+                <span className="text-zinc-300">@{photographer.username}</span>
+                <span className="text-zinc-600">•</span>
                 <span>{photographer.location}</span>
                 {photographer.role === 'photographer' && (
                   <>
-                    <span>·</span>
-                    <span className="flex items-center gap-1 text-yellow-500">
+                    <span className="text-zinc-600">•</span>
+                    <span className="flex items-center gap-1.5 text-yellow-500 font-bold tracking-wide bg-yellow-500/10 px-2 py-0.5 rounded-md border border-yellow-500/20">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                      {photographer.points || 1200} Elo
+                      {photographer.points || 1200} ELO
                     </span>
-                    <span>·</span>
-                    <span className="text-emerald-400 font-bold">{photographer.starting_rate ? `Starting at $${photographer.starting_rate}` : 'Rates on request'}</span>
+                    <span className="text-zinc-600">•</span>
+                    <span className="text-emerald-400 font-bold tracking-wide">{photographer.starting_rate ? `STARTING AT $${photographer.starting_rate}` : 'RATES ON REQUEST'}</span>
                   </>
                 )}
               </div>
               {photographer.role === 'photographer' && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant="outline" className={photographer.availability_status === 'Unavailable' ? 'border-red-500/50 text-red-500' : 'border-emerald-500/50 text-emerald-500'}>
+                <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
+                  <Badge variant="outline" className={cn("px-3 py-1 text-xs tracking-wide shadow-lg", photographer.availability_status === 'Unavailable' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]')}>
                     <div className={cn("w-2 h-2 rounded-full mr-2", photographer.availability_status === 'Unavailable' ? "bg-red-500" : "bg-emerald-500 animate-pulse")} />
-                    {photographer.availability_status || 'Available for booking'}
+                    {photographer.availability_status || 'AVAILABLE FOR BOOKING'}
                   </Badge>
                   {photographer.service_categories?.map(cat => (
-                    <Badge key={cat} variant="secondary" className="bg-zinc-800">{cat}</Badge>
+                    <Badge key={cat} variant="secondary" className="bg-zinc-800/50 border border-white/5 backdrop-blur-md px-3 py-1 text-xs font-medium tracking-wide text-zinc-300 hover:bg-zinc-700/50 transition-colors">
+                      {cat}
+                    </Badge>
                   ))}
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-3 pb-2">
+          <div className="flex flex-wrap gap-4 items-center justify-center sm:justify-end pb-2">
             {isOwnProfile ? (
               <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="rounded-full font-bold hover:scale-105 active:scale-95 transition-all">
+                  <Button variant="outline" className="rounded-full px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg">
                     <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] bg-card border-border/50 backdrop-blur-xl">
+                <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 backdrop-blur-xl text-white">
                   <DialogHeader>
-                    <DialogTitle>Edit Profile</DialogTitle>
+                    <DialogTitle className="text-xl font-bold">Edit Profile</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleEditSubmit} className="space-y-4 py-4">
                     <div className="flex flex-col items-center gap-4">
-                      <Avatar className="h-20 w-20 border border-border">
+                      <Avatar className="h-24 w-24 border border-zinc-800 shadow-xl">
                         <AvatarImage src={avatarPreview} />
                       </Avatar>
-                      <Button variant="secondary" size="sm" type="button" className="relative cursor-pointer overflow-hidden rounded-full">
+                      <Button variant="secondary" size="sm" type="button" className="relative cursor-pointer overflow-hidden rounded-full bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700">
                         Change Avatar
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={(e) => {
                           const file = e.target.files[0];
@@ -390,44 +392,46 @@ export default function ProfilePage() {
                       </Button>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Name</label>
-                      <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} className="bg-background" />
+                      <label className="text-sm font-medium text-zinc-400">Name</label>
+                      <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} className="bg-zinc-900 border-zinc-800" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Bio</label>
-                      <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none bg-background" />
+                      <label className="text-sm font-medium text-zinc-400">Bio</label>
+                      <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none bg-zinc-900 border-zinc-800" />
                     </div>
                     {photographer.role === 'photographer' && (
                       <>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Starting Rate ($)</label>
-                          <Input type="number" value={editForm.starting_rate} onChange={e=>setEditForm({...editForm, starting_rate: e.target.value})} className="bg-background" />
+                          <label className="text-sm font-medium text-zinc-400">Starting Rate ($)</label>
+                          <Input type="number" value={editForm.starting_rate} onChange={e=>setEditForm({...editForm, starting_rate: e.target.value})} className="bg-zinc-900 border-zinc-800" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Availability Status</label>
-                          <Input placeholder="e.g. Available for booking" value={editForm.availability_status} onChange={e=>setEditForm({...editForm, availability_status: e.target.value})} className="bg-background" />
+                          <label className="text-sm font-medium text-zinc-400">Availability Status</label>
+                          <Input placeholder="e.g. Available for booking" value={editForm.availability_status} onChange={e=>setEditForm({...editForm, availability_status: e.target.value})} className="bg-zinc-900 border-zinc-800" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">Services (comma separated)</label>
-                          <Input placeholder="Wedding, Portrait, Event" value={editForm.service_categories} onChange={e=>setEditForm({...editForm, service_categories: e.target.value})} className="bg-background" />
+                          <label className="text-sm font-medium text-zinc-400">Services (comma separated)</label>
+                          <Input placeholder="Wedding, Portrait, Event" value={editForm.service_categories} onChange={e=>setEditForm({...editForm, service_categories: e.target.value})} className="bg-zinc-900 border-zinc-800" />
                         </div>
                       </>
                     )}
-                    <Button type="submit" className="w-full rounded-full" disabled={isSavingEdit}>{isSavingEdit ? 'Saving...' : 'Save Changes'}</Button>
+                    <Button type="submit" className="w-full rounded-full bg-white text-black hover:bg-zinc-200 font-bold h-11" disabled={isSavingEdit}>{isSavingEdit ? 'Saving...' : 'Save Changes'}</Button>
                   </form>
                 </DialogContent>
               </Dialog>
             ) : (
               <>
-                <Button variant="secondary" className="rounded-full font-bold hover:scale-105 active:scale-95 transition-all" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
+                <Button variant="secondary" className="rounded-full px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 text-white backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
                   Message
                 </Button>
-                <Button variant={isFollowing ? "outline" : "secondary"} className="rounded-full font-bold hover:scale-105 active:scale-95 transition-all" onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
+                <Button variant={isFollowing ? "outline" : "secondary"} className={cn("rounded-full px-6 h-10 font-bold backdrop-blur-md hover:scale-105 active:scale-95 transition-all shadow-lg", isFollowing ? "bg-white/5 border-white/10 hover:bg-white/10 text-white" : "bg-white text-black hover:bg-zinc-200")} onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
                   {isFollowing ? 'Following' : 'Follow'}
                 </Button>
                 <Dialog open={bookingModalOpen} onOpenChange={setBookingModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-full font-bold text-black bg-white hover:bg-gray-200 shadow-lg shadow-white/10 hover:scale-105 active:scale-95 transition-all">Request Booking</Button>
+                    <Button className="rounded-full px-6 h-10 font-black tracking-widest bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] border border-emerald-400/50 hover:scale-[1.02] active:scale-[0.96] transition-all">
+                      REQUEST BOOKING
+                    </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px] bg-card border-border/50">
                     <DialogHeader>

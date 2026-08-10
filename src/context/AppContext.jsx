@@ -1296,7 +1296,6 @@ export function AppProvider({ children }) {
       searchUsers,
       searchPosts,
       toggleLikePost,
-      syncFollowsAndLikes,
       updateProfileSettings
     }}>
       {children}

@@ -9,36 +9,48 @@
   :root {
     --font-sans: 'Inter Variable', sans-serif;
     
-    /* Strict Dark Mode UI/UX Pro Max tokens */
-    --background: 200 63.6% 6.5%;      /* #06141B */
-    --foreground: 165 4.1% 80.8%;      /* #CCD0CF */
+    /* Cinematic Premium Dark Theme Tokens */
+    --background: 0 0% 0%;             /* Pure Black */
+    --foreground: 0 0% 98%;            /* Pure White */
     
-    --card: 206 45.2% 12.2%;           /* #11212D */
-    --card-foreground: 165 4.1% 80.8%;
+    --card: 240 5.9% 5%;               /* Very deep zinc */
+    --card-foreground: 0 0% 98%;
     
-    --popover: 206 45.2% 12.2%;
-    --popover-foreground: 165 4.1% 80.8%;
+    --popover: 240 5.9% 5%;
+    --popover-foreground: 0 0% 98%;
     
-    --primary: 165 4.1% 80.8%;         /* #CCD0CF */
-    --primary-foreground: 200 63.6% 6.5%; /* #06141B */
+    --primary: 0 0% 98%;               /* Stark white for primary actions */
+    --primary-foreground: 240 5.9% 10%; /* Dark for text on white buttons */
     
-    --secondary: 206 30.2% 20.8%;      /* #253745 */
-    --secondary-foreground: 165 4.1% 80.8%;
+    --secondary: 240 3.7% 15.9%;       /* Soft dark grey */
+    --secondary-foreground: 0 0% 98%;
     
-    --muted: 206 45.2% 12.2%;          /* #11212D */
-    --muted-foreground: 191 8.7% 63.9%;/* #9BA8AB */
+    --muted: 240 3.7% 12%;             /* Muted dark grey */
+    --muted-foreground: 240 5% 64.9%;  /* Muted text */
     
-    --accent: 206 30.2% 20.8%;         /* #253745 */
-    --accent-foreground: 165 4.1% 80.8%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 165 4.1% 80.8%;
+    --destructive: 0 62.8% 30.6%;      /* Darker red for premium feel */
+    --destructive-foreground: 0 0% 98%;
     
-    --border: 206 30.2% 20.8%;         /* #253745 */
-    --input: 206 30.2% 20.8%;          /* #253745 */
-    --ring: 206 17.8% 35.3%;           /* #4A5C6A */
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
     
-    --radius: 0.5rem;
+    --radius: 0.75rem;                 /* Slightly rounder for modern feel */
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  }
+  .glass-card {
+    @apply bg-zinc-900/40 backdrop-blur-2xl border border-zinc-800/50 shadow-2xl;
+  }
+  .text-glow {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
   }
 }
 

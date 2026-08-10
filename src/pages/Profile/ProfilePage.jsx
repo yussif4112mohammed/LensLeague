@@ -426,6 +426,7 @@ export default function ProfilePage() {
                   </form>
                 </DialogContent>
               </Dialog>
+              </>
             ) : (
               <>
                 <Button variant="secondary" className="rounded-md px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 text-white transition-colors" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>

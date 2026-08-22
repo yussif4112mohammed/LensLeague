@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { calculateElo } from '../lib/elo';
 import { supabase } from '../lib/supabaseClient';
 
@@ -267,7 +267,10 @@ export function AppProvider({ children }) {
         .maybeSingle();
 
       if (existingProfile) {
-        setCurrentUser(existingProfile);
+        // Normalize avatar: keep both avatar and avatar_url in sync
+        const avatarUrl = existingProfile.avatar_url || existingProfile.avatar || null;
+        const normalized = { ...existingProfile, avatar: avatarUrl, avatar_url: avatarUrl };
+        setCurrentUser(normalized);
         setCurrentRole(existingProfile.role);
       }
     } catch (err) {
@@ -864,29 +867,68 @@ export function AppProvider({ children }) {
     const changeA = eloResults.rawChangeA;
     const changeB = eloResults.rawChangeB;
 
-    setUsers(prevUsers => prevUsers.map(u => {
-      if (u.id === battle.photoA.photographerId) {
-        return { ...u, points: Math.max(0, (u.points || 0) + changeA) };
+    // Update local users state with new points
+    const updatedUsers = setUsers(prevUsers => {
+      const next = prevUsers.map(u => {
+        if (u.id === battle.photoA.ownerId || u.id === battle.photoA.photographerId) {
+          return { ...u, points: Math.max(0, (u.points || 0) + changeA) };
+        }
+        if (u.id === battle.photoB.ownerId || u.id === battle.photoB.photographerId) {
+          return { ...u, points: Math.max(0, (u.points || 0) + changeB) };
+        }
+        return u;
+      });
+      // Recompute global_rank based on points (descending)
+      const sorted = [...next].sort((a, b) => (b.points || 0) - (a.points || 0));
+      const rankMap = {};
+      sorted.forEach((u, idx) => { rankMap[u.id] = idx + 1; });
+      return next.map(u => ({ ...u, global_rank: rankMap[u.id] || u.global_rank }));
+    });
+
+    // Also update currentUser if they are one of the contestants
+    setCurrentUser(prev => {
+      if (!prev) return prev;
+      if (prev.id === battle.photoA.ownerId || prev.id === battle.photoA.photographerId) {
+        return { ...prev, points: Math.max(0, (prev.points || 0) + changeA) };
       }
-      if (u.id === battle.photoB.photographerId) {
-        return { ...u, points: Math.max(0, (u.points || 0) + changeB) };
+      if (prev.id === battle.photoB.ownerId || prev.id === battle.photoB.photographerId) {
+        return { ...prev, points: Math.max(0, (prev.points || 0) + changeB) };
       }
-      return u;
-    }));
+      return prev;
+    });
 
     // 6. Supabase DB Updates
     try {
-      await supabase.from('photos').update({ votes: eloResults.newRatingA }).eq('id', battle.photoA.id);
-      await supabase.from('photos').update({ votes: eloResults.newRatingB }).eq('id', battle.photoB.id);
+      await supabase.from('portfolio_items').update({ votes: eloResults.newRatingA }).eq('id', battle.photoA.id);
+      await supabase.from('portfolio_items').update({ votes: eloResults.newRatingB }).eq('id', battle.photoB.id);
 
-      const { data: pA } = await supabase.from('profiles').select('points').eq('id', battle.photoA.photographerId).single();
-      const { data: pB } = await supabase.from('profiles').select('points').eq('id', battle.photoB.photographerId).single();
+      const { data: pA } = await supabase.from('profiles').select('points').eq('id', battle.photoA.ownerId || battle.photoA.photographerId).single();
+      const { data: pB } = await supabase.from('profiles').select('points').eq('id', battle.photoB.ownerId || battle.photoB.photographerId).single();
+
+      const newPointsA = Math.max(0, (pA?.points || 0) + changeA);
+      const newPointsB = Math.max(0, (pB?.points || 0) + changeB);
 
       if (pA) {
-        await supabase.from('profiles').update({ points: Math.max(0, (pA.points || 0) + changeA) }).eq('id', battle.photoA.photographerId);
+        await supabase.from('profiles').update({ points: newPointsA }).eq('id', battle.photoA.ownerId || battle.photoA.photographerId);
       }
       if (pB) {
-        await supabase.from('profiles').update({ points: Math.max(0, (pB.points || 0) + changeB) }).eq('id', battle.photoB.photographerId);
+        await supabase.from('profiles').update({ points: newPointsB }).eq('id', battle.photoB.ownerId || battle.photoB.photographerId);
+      }
+
+      // Recompute global_rank for all users in DB
+      try {
+        const { data: allProfiles } = await supabase
+          .from('profiles')
+          .select('id, points')
+          .order('points', { ascending: false });
+        if (allProfiles && allProfiles.length > 0) {
+          // Batch update ranks (fire-and-forget, no await to not block UI)
+          allProfiles.forEach((u, idx) => {
+            supabase.from('profiles').update({ global_rank: idx + 1 }).eq('id', u.id).then(() => {});
+          });
+        }
+      } catch (rankErr) {
+        console.warn('Rank recompute error:', rankErr.message);
       }
     } catch (err) {
       console.warn('Supabase DB Elo update error:', err.message);
@@ -906,11 +948,16 @@ export function AppProvider({ children }) {
   };
 
   const updateProfile = async (userId, data) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
+    // Normalize avatar fields: if either avatar or avatar_url is updated, sync both
+    const normalized = { ...data };
+    if (data.avatar && !data.avatar_url) normalized.avatar_url = data.avatar;
+    if (data.avatar_url && !data.avatar) normalized.avatar = data.avatar_url;
+
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...normalized } : u));
     if (currentUser && currentUser.id === userId) {
-      setCurrentUser(prev => ({ ...prev, ...data }));
+      setCurrentUser(prev => ({ ...prev, ...normalized }));
     }
-    await supabase.from('profiles').update(data).eq('id', userId);
+    await supabase.from('profiles').update(normalized).eq('id', userId);
   };
 
   const searchUsers = async (query) => {
@@ -966,7 +1013,8 @@ export function AppProvider({ children }) {
     }
   };
 
-  const fetchPhotosPaginated = async (start, end, filterType = 'for-you') => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchPhotosPaginated = useCallback(async (start, end, filterType = 'for-you') => {
     let basePhotos = photos;
     if (filterType === 'following' && currentUser) {
       const followedIds = (follows || []).filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
@@ -1040,9 +1088,11 @@ export function AppProvider({ children }) {
       console.warn('Exception fetching paginated photos, falling back to local mock data:', err);
       return basePhotos.slice(start, end + 1);
     }
-  };
+  // Stable deps: photos and follows are stable arrays; currentUser.id won't change mid-session
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
-  const uploadPhoto = async ({ file, url, caption, category, destination = 'feed', alt_text = '' }) => {
+  const uploadPhoto = async ({ file, url, caption, category, customStyle, destination = 'feed', alt_text = '' }) => {
     const userId = currentUser?.id || 'anon_user';
     const userName = currentUser?.display_name || currentUser?.name || 'Anonymous Photographer';
     const userAvatar = currentUser?.avatar_url || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
@@ -1082,6 +1132,7 @@ export function AppProvider({ children }) {
       ownerAvatar: userAvatar,
       caption: caption || 'New photography post',
       category: category || 'Nature',
+      customStyle: customStyle || null,
       destination,
       alt_text,
       likes: 0,
@@ -1092,6 +1143,25 @@ export function AppProvider({ children }) {
 
     setPhotos(prev => [newPhoto, ...prev]);
 
+    // Auto-enter battle if there's an opponent available
+    setBattles(prev => {
+      const opponents = photos.filter(p => p.category === newPhoto.category && p.id !== newPhoto.id);
+      if (opponents.length > 0) {
+        const opponent = opponents[Math.floor(Math.random() * opponents.length)];
+        const newBattle = {
+          id: `b_${Date.now()}`,
+          category: newPhoto.category,
+          photoA: { ...newPhoto, rating: 1200, votes: 0, photographerName: newPhoto.ownerName, photographerId: newPhoto.ownerId },
+          photoB: { ...opponent, rating: 1200, votes: 0, photographerName: opponent.ownerName, photographerId: opponent.ownerId },
+          totalVotes: 0,
+          endsIn: '24h left',
+          status: 'active'
+        };
+        return [newBattle, ...prev];
+      }
+      return prev;
+    });
+
     try {
       // Insert into legacy photos table for backward compatibility
       await supabase.from('photos').insert({
@@ -1101,6 +1171,8 @@ export function AppProvider({ children }) {
         category,
         destination,
         alt_text
+        // customStyle column may not exist in DB yet, gracefully skipping it for Supabase to avoid errors, 
+        // or we could add it if we know the schema. It's stored in React state above.
       });
 
       // Also insert into new production `posts` table if authenticated

@@ -11,18 +11,18 @@ import { Upload, ArrowLeft, ArrowRight, Check, Loader2, Camera, MapPin, Image as
 const CATEGORIES = ['Portrait', 'Landscape', 'Wedding', 'Street', 'Product', 'Nature', 'Editorial', 'Architecture', 'Sports', 'Documentary'];
 const DESTINATIONS = [
   { value: 'feed', label: 'Add to Feed', desc: 'Share to your followers\' feed' },
-  { value: 'portfolio', label: 'Add to Portfolio', desc: 'Curate your professional showcase' },
-  { value: 'challenge', label: 'Enter a Challenge', desc: 'Submit for the active competition' },
+  { value: 'gallery', label: 'Add to Gallery', desc: 'Curate your professional showcase' },
 ];
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { currentUser, setPhotos } = useApp();
+  const { currentUser, setPhotos, photos, setBattles } = useApp();
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);
   const [isVideo, setIsVideo] = useState(false);
   const [destination, setDestination] = useState('feed');
   const [category, setCategory] = useState('');
+  const [customStyle, setCustomStyle] = useState('');
   const [caption, setCaption] = useState('');
   const [altText, setAltText] = useState('');
   const [gear, setGear] = useState('');
@@ -98,6 +98,8 @@ export default function UploadPage() {
         ownerAvatar: currentUser?.avatar || '',
         caption: caption,
         category: category,
+        customStyle: customStyle || null,
+        destination: destination,
         gear: gear || camera,
         lens: lens,
         aperture: aperture,
@@ -110,6 +112,25 @@ export default function UploadPage() {
       };
 
       setPhotos(prev => [newPhoto, ...prev]);
+
+      // Auto-enter battle if there's an opponent available
+      setBattles(prev => {
+        const opponents = photos.filter(p => p.category === newPhoto.category && p.id !== newPhoto.id);
+        if (opponents.length > 0) {
+          const opponent = opponents[Math.floor(Math.random() * opponents.length)];
+          const newBattle = {
+            id: `b_${Date.now()}`,
+            category: newPhoto.category,
+            photoA: { ...newPhoto, rating: 1200, votes: 0, photographerName: newPhoto.ownerName, photographerId: newPhoto.ownerId },
+            photoB: { ...opponent, rating: 1200, votes: 0, photographerName: opponent.ownerName, photographerId: opponent.ownerId },
+            totalVotes: 0,
+            endsIn: '24h left',
+            status: 'active'
+          };
+          return [newBattle, ...prev];
+        }
+        return prev;
+      });
 
       setModStatus('clear');
       setTimeout(() => navigate('/feed'), 1200);
@@ -325,6 +346,19 @@ export default function UploadPage() {
                     </button>
                   ))}
                 </div>
+                {category && (
+                  <div className="mt-4 animate-in slide-in-from-top-2 fade-in duration-300">
+                    <label className="text-sm font-semibold text-zinc-300" htmlFor="custom-style">What do you call your style of {category}?</label>
+                    <Input
+                      id="custom-style"
+                      type="text"
+                      className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12 mt-2"
+                      placeholder="e.g. Cinematic Portrait, Moody Street, Dreamy Landscape"
+                      value={customStyle}
+                      onChange={e => setCustomStyle(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">

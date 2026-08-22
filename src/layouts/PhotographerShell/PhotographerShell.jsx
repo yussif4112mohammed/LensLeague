@@ -30,7 +30,7 @@ function NavIcon({ item, isActive }) {
   return (
     <div className={cn(
       "relative flex items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 ease-out",
-      isActive ? "bg-zinc-900 text-white border border-white/10" : "text-zinc-500 hover:text-white hover:bg-zinc-900/50"
+      isActive ? "bg-zinc-100 text-zinc-950 border border-zinc-200" : "text-zinc-400 hover:text-zinc-950 hover:bg-zinc-50"
     )}>
       <Icon 
         strokeWidth={isActive ? 2 : 1.5} 
@@ -46,10 +46,10 @@ export default function PhotographerShell() {
 
   return (
     <TooltipProvider delayDuration={100}>
-      <div className="flex h-screen w-full bg-black overflow-hidden text-zinc-50 selection:bg-primary/30">
+      <div className="flex h-screen w-full bg-background overflow-hidden text-foreground selection:bg-zinc-200">
         
         {/* Desktop Slim Sidebar */}
-        <aside className="hidden md:flex flex-col items-center w-[88px] border-r border-white/10 bg-black h-full py-8 z-50">
+        <aside className="hidden md:flex flex-col items-center w-[88px] border-r border-border bg-white h-full py-8 z-50">
           <div 
             className="flex items-center justify-center w-12 h-12 mb-10 cursor-pointer transition-transform duration-200 ease-out"
             onClick={() => navigate('/feed')}
@@ -69,14 +69,14 @@ export default function PhotographerShell() {
                     {({ isActive }) => <NavIcon item={item} isActive={isActive} />}
                   </NavLink>
                 </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={16} className="bg-zinc-900 border-white/10 text-white font-semibold">
+                <TooltipContent side="right" sideOffset={16} className="bg-white border-zinc-200 text-zinc-950 font-semibold shadow-md">
                   {item.label}
                 </TooltipContent>
               </Tooltip>
             ))}
           </nav>
 
-          <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-6">
+          <div className="mt-8 pt-8 border-t border-border flex flex-col gap-6">
 
             {currentUser ? (
               <Tooltip placement="right">
@@ -85,7 +85,7 @@ export default function PhotographerShell() {
                     <NavIcon item={{ icon: LogOut }} isActive={false} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={16} className="bg-zinc-900 border-white/10 text-white font-semibold">
+                <TooltipContent side="right" sideOffset={16} className="bg-white border-zinc-200 text-zinc-950 font-semibold shadow-md">
                   Log Out
                 </TooltipContent>
               </Tooltip>
@@ -96,7 +96,7 @@ export default function PhotographerShell() {
                     {({ isActive }) => <NavIcon item={{ icon: LogIn }} isActive={isActive} />}
                   </NavLink>
                 </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={16} className="bg-zinc-900 border-white/10 text-white font-semibold">
+                <TooltipContent side="right" sideOffset={16} className="bg-white border-zinc-200 text-zinc-950 font-semibold shadow-md">
                   Log In
                 </TooltipContent>
               </Tooltip>
@@ -105,14 +105,14 @@ export default function PhotographerShell() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 flex flex-col min-h-0 relative z-0 bg-black">
+        <main className="flex-1 flex flex-col min-h-0 relative z-0 bg-transparent">
           <div className="flex-1 overflow-y-auto w-full pb-24 md:pb-0 scroll-smooth">
             <Outlet />
           </div>
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-white/10 pb-safe supports-[padding-bottom:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border pb-safe supports-[padding-bottom:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]">
           <div className="flex justify-around items-center h-16 px-2">
             {NAV_ITEMS.map(item => (
               <NavLink
@@ -121,7 +121,7 @@ export default function PhotographerShell() {
                 id={item.id}
                 className={({ isActive }) => cn(
                   "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-all duration-300",
-                  isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
+                  isActive ? 'text-zinc-950' : 'text-zinc-400 hover:text-zinc-800'
                 )}
               >
                 {({ isActive }) => {

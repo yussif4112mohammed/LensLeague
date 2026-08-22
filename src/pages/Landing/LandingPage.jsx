@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '../../lib/supabaseClient';
 import Logo from '@/components/Logo';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 
@@ -19,6 +21,34 @@ const TOP_PHOTOGRAPHERS = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [userCount, setUserCount] = useState(0);
+  const [email, setEmail] = useState('');
+  const [waitlistStatus, setWaitlistStatus] = useState('idle');
+
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        if (count !== null) setUserCount(count);
+      } catch (err) {
+        console.warn('Failed to fetch user count');
+      }
+    };
+    fetchUserCount();
+  }, []);
+
+  const handleWaitlistJoin = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) return;
+    setWaitlistStatus('submitting');
+    try {
+      await supabase.from('waitlist').insert({ email });
+      setWaitlistStatus('success');
+      setEmail('');
+    } catch (err) {
+      setWaitlistStatus('error');
+    }
+  };
 
   return (
     <div className="w-full min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground">
@@ -32,7 +62,7 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             <button onClick={() => navigate('/signup?role=photographer')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer flex items-center gap-1.5">
-              Photographers <span className="text-xs bg-secondary px-1.5 py-0.5 rounded-full text-foreground">1.4k</span>
+              Photographers <span className="text-xs bg-secondary px-1.5 py-0.5 rounded-full text-foreground" title="Registered users">{userCount > 0 ? userCount.toLocaleString() : '1.4k'}</span>
             </button>
             <button onClick={() => navigate('/signup?role=client')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer">
               Leaderboard
@@ -266,18 +296,34 @@ export default function LandingPage() {
                <p className="text-zinc-500 text-sm mb-4 leading-relaxed">
                  Receive product updates, exclusive photography tips, and early access to challenges.
                </p>
-               <div className="relative">
-                 <input type="email" placeholder="Enter your email..." className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3.5 pl-5 pr-14 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600" />
-                 <button className="absolute right-1.5 top-1.5 bottom-1.5 w-10 rounded-full bg-white flex items-center justify-center hover:bg-zinc-200 transition-colors">
-                   <ArrowRight className="w-4 h-4 text-black" />
+               <form onSubmit={handleWaitlistJoin} className="relative">
+                 <input 
+                   type="email" 
+                   placeholder="Enter your email..." 
+                   className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3.5 pl-5 pr-14 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 disabled:opacity-50" 
+                   value={email}
+                   onChange={(e) => setEmail(e.target.value)}
+                   disabled={waitlistStatus === 'submitting' || waitlistStatus === 'success'}
+                 />
+                 <button 
+                   type="submit" 
+                   disabled={waitlistStatus === 'submitting' || waitlistStatus === 'success'}
+                   className="absolute right-1.5 top-1.5 bottom-1.5 w-10 rounded-full bg-white flex items-center justify-center hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                 >
+                   {waitlistStatus === 'success' ? <span className="text-black text-xs font-bold">✓</span> : <ArrowRight className="w-4 h-4 text-black" />}
                  </button>
-               </div>
+               </form>
+               {waitlistStatus === 'success' && <p className="text-xs text-green-500 mt-2">You've been added to the waitlist!</p>}
+               {waitlistStatus === 'error' && <p className="text-xs text-red-500 mt-2">Something went wrong. Please try again.</p>}
             </div>
           </div>
 
           {/* Bottom Row */}
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-zinc-900/50 px-4 text-xs font-medium text-zinc-500 gap-4">
-             <div>© {new Date().getFullYear()} LensLeague. All rights reserved. Engineered for visual creators worldwide.</div>
+             <div className="flex flex-col gap-1">
+               <span>© {new Date().getFullYear()} LensLeague. All rights reserved. Engineered for visual creators worldwide.</span>
+               <span className="text-zinc-400 font-semibold tracking-wide">A Noble Stature Studios company</span>
+             </div>
              <div className="flex items-center gap-6">
                 <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> All systems operational</span>
              </div>

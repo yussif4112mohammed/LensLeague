@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import CommentSheet from '../../components/CommentSheet/CommentSheet';
 import { supabase } from '../../lib/supabaseClient';
-import { Camera, SearchX, LogIn, ImageOff, MessageSquare, Plus, Edit2, History } from 'lucide-react';
+import { Camera, SearchX, LogIn, ImageOff, MessageSquare, Plus, Edit2, History, MapPin, X } from 'lucide-react';
 import './ProfilePage.css';
 
 function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
@@ -196,7 +196,28 @@ export default function ProfilePage() {
     name: '', username: '', bio: '', location: '', 
     starting_rate: '', availability_status: '', service_categories: '' 
   });
-  const [milestoneForm, setMilestoneForm] = useState({ title: '', desc: '', date: '', icon: '📷' });
+  const [milestoneForm, setMilestoneForm] = useState({ title: '', desc: '', date: '', icon: '🏆' });
+
+  const [showLocationNudge, setShowLocationNudge] = useState(() => {
+    return !localStorage.getItem('lensleague_location_enabled');
+  });
+
+  const handleEnableLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          localStorage.setItem('lensleague_location_enabled', 'true');
+          setShowLocationNudge(false);
+        },
+        (error) => {
+          console.warn('Location access denied or failed', error);
+          localStorage.setItem('lensleague_location_enabled', 'denied');
+          setShowLocationNudge(false);
+        }
+      );
+    }
+  };
+
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -278,11 +299,17 @@ export default function ProfilePage() {
     let newAvatarUrl = null;
     if (avatarFile) {
       const fileExt = avatarFile.name.split('.').pop();
-      const fileName = `avatars/${currentUser.id}_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, avatarFile);
+      // Use a consistent path per user so upsert works correctly
+      const fileName = `avatars/${currentUser.id}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, avatarFile, { upsert: true, contentType: avatarFile.type });
       if (!uploadError) {
+        // Bust the cache by appending a timestamp query param
         const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-        newAvatarUrl = data.publicUrl;
+        newAvatarUrl = data.publicUrl + '?t=' + Date.now();
+      } else {
+        console.warn('Avatar upload error:', uploadError.message);
       }
     }
     const updateData = { ...editForm };
@@ -290,8 +317,12 @@ export default function ProfilePage() {
     if (updateData.service_categories) {
       updateData.service_categories = updateData.service_categories.split(',').map(s => s.trim()).filter(Boolean);
     }
-    if (newAvatarUrl) updateData.avatar = newAvatarUrl;
-    updateProfile(photographer.id, updateData);
+    // Sync BOTH avatar fields so shell nav and profile views always stay in sync
+    if (newAvatarUrl) {
+      updateData.avatar = newAvatarUrl;
+      updateData.avatar_url = newAvatarUrl;
+    }
+    await updateProfile(photographer.id, updateData);
     setIsSavingEdit(false);
     setEditModalOpen(false);
   };
@@ -306,7 +337,7 @@ export default function ProfilePage() {
         {photographer.cover ? (
           <img src={photographer.cover} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Cover" />
         ) : (
-          <div className="w-full h-full bg-zinc-900 border-b border-border/50" />
+          <div className="w-full h-full bg-zinc-100 border-b border-border" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent pointer-events-none" />
         
@@ -322,42 +353,68 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 -mt-24 relative z-10">
-        <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8 p-6 sm:p-8 rounded-md border border-white/10 bg-zinc-950">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
-            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-black hover:scale-[1.02] transition-transform">
-              <AvatarImage src={photographer.avatar} className="object-cover" />
-              <AvatarFallback className="text-4xl bg-zinc-900">{photographer.name[0]}</AvatarFallback>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-16 md:-mt-24 relative z-10">
+        {showLocationNudge && currentUser && isOwnProfile && (
+          <div className="mb-4 bg-zinc-900 text-white p-3 rounded-lg flex items-center justify-between shadow-lg animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                <MapPin className="w-4 h-4 text-zinc-300" />
+              </div>
+              <div className="text-sm">
+                <span className="font-bold">📍 Enable location</span> to help nearby clients find you.
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" className="bg-white text-black hover:bg-zinc-200 text-xs font-bold rounded-full h-8 px-4" onClick={handleEnableLocation}>Enable</Button>
+              <button className="p-1 hover:bg-white/10 rounded-full transition-colors" onClick={() => {
+                localStorage.setItem('lensleague_location_enabled', 'dismissed');
+                setShowLocationNudge(false);
+              }}>
+                <X className="w-4 h-4 text-zinc-400" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-6 mb-8 p-4 sm:p-6 rounded-xl border border-zinc-200 bg-white shadow-sm">
+          {/* Top row: avatar + name + meta */}
+          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-lg hover:scale-[1.02] transition-transform shrink-0">
+              <AvatarImage src={photographer.avatar_url || photographer.avatar} className="object-cover" />
+              <AvatarFallback className="text-3xl bg-zinc-100 text-zinc-600 font-bold">{photographer.name[0]}</AvatarFallback>
             </Avatar>
-            <div className="pb-2 flex flex-col items-center sm:items-start">
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight flex items-center gap-3 text-white mb-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight flex items-center gap-2 flex-wrap text-zinc-950 mb-1">
                 {photographer.name}
-                {photographer.verified && <Badge variant="secondary" className="bg-foreground text-background px-2 py-0.5 text-xs">PRO</Badge>}
+                {photographer.verified && <Badge variant="secondary" className="bg-zinc-950 text-white px-2 py-0.5 text-xs">PRO</Badge>}
               </h1>
-              <div className="text-zinc-400 font-medium mt-1 flex items-center gap-3 flex-wrap justify-center sm:justify-start">
-                <span className="text-zinc-300">@{photographer.username}</span>
-                <span className="text-zinc-600">•</span>
+              <div className="text-zinc-500 font-medium flex items-center gap-2 flex-wrap text-sm">
+                <span>@{photographer.username}</span>
+                <span className="text-zinc-300">•</span>
                 <span>{photographer.location}</span>
                 {photographer.role === 'photographer' && (
                   <>
-                    <span className="text-zinc-600">•</span>
-                    <span className="flex items-center gap-1.5 text-yellow-500 font-bold tracking-wide bg-yellow-500/10 px-2 py-0.5 rounded-md border border-yellow-500/20">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                      {photographer.points || 1200} ELO
+                    <span className="text-zinc-300">•</span>
+                    <span className="flex items-center gap-1 text-yellow-600 font-bold bg-yellow-50 px-2 py-0.5 rounded-md border border-yellow-200 text-xs">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      {photographer.points || 0} ELO
                     </span>
-                    <span className="text-zinc-600">•</span>
-                    <span className="text-zinc-100 font-bold tracking-wide">{photographer.starting_rate ? `STARTING AT $${photographer.starting_rate}` : 'RATES ON REQUEST'}</span>
+                    {photographer.global_rank && (
+                      <span className="text-zinc-400 font-bold text-xs bg-zinc-100 px-2 py-0.5 rounded-md border border-zinc-200">
+                        #{photographer.global_rank} Global
+                      </span>
+                    )}
                   </>
                 )}
               </div>
               {photographer.role === 'photographer' && (
-                <div className="mt-4 flex flex-wrap gap-2 justify-center sm:justify-start">
-                  <Badge variant="outline" className={cn("px-3 py-1 text-xs tracking-wide", photographer.availability_status === 'Unavailable' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-white/5 border-white/10 text-white')}>
-                    <div className={cn("w-2 h-2 rounded-full mr-2", photographer.availability_status === 'Unavailable' ? "bg-red-500" : "bg-white animate-pulse")} />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge variant="outline" className={cn("px-3 py-1 text-xs tracking-wide bg-zinc-100 border-zinc-200 text-zinc-950", photographer.availability_status === 'Unavailable' ? 'bg-red-50 border-red-200 text-red-600' : '')}>
+                    <div className={cn("w-2 h-2 rounded-full mr-2", photographer.availability_status === 'Unavailable' ? "bg-red-500" : "bg-green-500 animate-pulse")} />
                     {photographer.availability_status || 'AVAILABLE FOR BOOKING'}
                   </Badge>
                   {photographer.service_categories?.map(cat => (
-                    <Badge key={cat} variant="secondary" className="bg-zinc-800/50 border border-white/5 backdrop-blur-md px-3 py-1 text-xs font-medium tracking-wide text-zinc-300 hover:bg-zinc-700/50 transition-colors">
+                    <Badge key={cat} variant="secondary" className="bg-white border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600">
                       {cat}
                     </Badge>
                   ))}
@@ -365,19 +422,20 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-          
-          <div className="flex flex-wrap gap-4 items-center justify-center sm:justify-end pb-2">
+
+          {/* Bottom row: action buttons — full width on mobile, right-aligned on desktop */}
+          <div className="flex flex-wrap gap-3">
             {isOwnProfile ? (
               <>
                 <Button 
                   onClick={() => navigate('/upload')}
-                  className="rounded-md px-6 h-10 font-bold text-black bg-white hover:bg-zinc-200 transition-colors"
+                  className="rounded-md px-6 h-10 font-bold text-white bg-zinc-950 hover:bg-zinc-800 transition-colors"
                 >
                   <Plus className="w-5 h-5 mr-2" strokeWidth={2.5} /> Upload Shoot
                 </Button>
                 <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="rounded-md px-6 h-10 font-bold bg-transparent border-white/10 hover:bg-white/10 text-white transition-colors">
+                    <Button variant="outline" className="rounded-md px-6 h-10 font-bold bg-white border-zinc-200 hover:bg-zinc-50 text-zinc-950 transition-colors">
                       <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
                     </Button>
                   </DialogTrigger>
@@ -429,16 +487,16 @@ export default function ProfilePage() {
               </>
             ) : (
               <>
-                <Button variant="secondary" className="rounded-md px-6 h-10 font-bold bg-white/5 border-white/10 hover:bg-white/10 text-white transition-colors" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
+                <Button variant="outline" className="rounded-md px-6 h-10 font-bold bg-white border-zinc-200 hover:bg-zinc-50 text-zinc-950 transition-colors" onClick={() => navigate(`/inbox?chat=${photographer.id}`)}>
                   Message
                 </Button>
-                <Button variant={isFollowing ? "outline" : "secondary"} className={cn("rounded-md px-6 h-10 font-bold transition-colors", isFollowing ? "bg-transparent border-white/10 hover:bg-white/10 text-white" : "bg-white text-black hover:bg-zinc-200")} onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
+                <Button variant={isFollowing ? "outline" : "default"} className={cn("rounded-md px-6 h-10 font-bold transition-colors", isFollowing ? "bg-zinc-100 border-transparent hover:bg-zinc-200 text-zinc-900" : "bg-zinc-950 text-white hover:bg-zinc-800")} onClick={() => isFollowing ? unfollowUser(photographer.id) : followUser(photographer.id)}>
                   {isFollowing ? 'Following' : 'Follow'}
                 </Button>
                 <Dialog open={bookingModalOpen} onOpenChange={setBookingModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-md px-6 h-10 font-bold tracking-widest bg-white hover:bg-zinc-200 text-black border border-transparent transition-colors">
-                      REQUEST BOOKING
+                    <Button className="rounded-md px-6 h-10 font-bold tracking-widest bg-zinc-950 hover:bg-zinc-800 text-white border border-transparent transition-colors">
+                      INQUIRE
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px] bg-card border-border/50">
@@ -469,21 +527,23 @@ export default function ProfilePage() {
         </div>
 
         {photographer.bio && (
-          <p className="text-lg leading-relaxed max-w-3xl mb-8 text-zinc-300">{photographer.bio}</p>
+          <p className="text-lg leading-relaxed max-w-3xl mb-8 text-zinc-700">{photographer.bio}</p>
         )}
 
         {/* Stats Flex */}
-        <div className="flex flex-wrap items-center gap-4 mb-12">
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 hover:scale-105 transition-transform cursor-default">👥 <span className="font-bold">{follows.filter(f=>f.following_id===photographer.id).length}</span> followers</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 hover:scale-105 transition-transform cursor-default">🏆 <span className="font-bold">{photographer.wins||0}</span> wins</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 hover:scale-105 transition-transform cursor-default">⭐ <span className="font-bold">{photographer.avgRating||'5.0'}</span> rating</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 text-primary border border-primary/20 bg-primary/10 hover:scale-105 transition-transform cursor-default">💎 <span className="font-bold">{photographer.points||0}</span> pts</Badge>
-          <Badge variant="secondary" className="px-4 py-2 rounded-xl text-sm gap-2 bg-gradient-to-r from-muted to-muted hover:scale-105 transition-transform cursor-default">🌍 <span className="font-bold">#{photographer.global_rank || 99}</span> Global</Badge>
+        <div className="flex flex-wrap items-center gap-3 mb-10">
+          <Badge variant="secondary" className="px-3 py-1.5 rounded-xl text-sm gap-1.5 hover:scale-105 transition-transform cursor-default">👥 <span className="font-bold">{follows.filter(f=>f.following_id===photographer.id).length}</span> followers</Badge>
+          <Badge variant="secondary" className="px-3 py-1.5 rounded-xl text-sm gap-1.5 hover:scale-105 transition-transform cursor-default">🏆 <span className="font-bold">{photographer.wins||0}</span> wins</Badge>
+          <Badge variant="secondary" className="px-3 py-1.5 rounded-xl text-sm gap-1.5 hover:scale-105 transition-transform cursor-default">⭐ <span className="font-bold">{photographer.avgRating||'5.0'}</span> rating</Badge>
+          <Badge variant="secondary" className="px-3 py-1.5 rounded-xl text-sm gap-1.5 text-yellow-700 border border-yellow-200 bg-yellow-50 hover:scale-105 transition-transform cursor-default">💎 <span className="font-bold">{photographer.points||0}</span> ELO pts</Badge>
+          {photographer.global_rank && (
+            <Badge variant="secondary" className="px-3 py-1.5 rounded-xl text-sm gap-1.5 bg-zinc-950 text-white hover:scale-105 transition-transform cursor-default">🌍 <span className="font-bold">#{photographer.global_rank}</span> Global</Badge>
+          )}
         </div>
 
-        <Tabs defaultValue="portfolio" className="w-full">
+        <Tabs defaultValue="gallery" className="w-full">
           <TabsList className="bg-transparent border-b border-border/40 w-full justify-start rounded-none p-0 h-auto mb-8 space-x-6 overflow-x-auto">
-            {['Portfolio', 'Timeline', 'Achievements', 'Reviews'].map(tab => (
+            {['Gallery', 'Timeline', 'Achievements', 'Reviews'].map(tab => (
               <TabsTrigger 
                 key={tab} 
                 value={tab.toLowerCase()}
@@ -494,7 +554,7 @@ export default function ProfilePage() {
             ))}
           </TabsList>
 
-          <TabsContent value="portfolio" className="animate-in fade-in duration-300">
+          <TabsContent value="gallery" className="animate-in fade-in duration-300">
             {userPhotos.length > 0 ? (
               <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
                 {userPhotos.map(p => (
@@ -506,8 +566,8 @@ export default function ProfilePage() {
             ) : (
               <EmptyState 
                 icon={ImageOff} 
-                title="No Portfolio Yet" 
-                desc={isOwnProfile ? "Upload your first high-res shoot or video to start building your portfolio." : "This creator hasn't uploaded any visual work yet."}
+                title="No Gallery Yet" 
+                desc={isOwnProfile ? "Upload your first high-res shoot or video to start building your gallery." : "This creator hasn't uploaded any visual work yet."}
                 action={isOwnProfile && (
                   <Button onClick={() => navigate('/upload')} className="rounded-full bg-zinc-100 text-black font-bold hover:bg-white hover:scale-105 active:scale-95 transition-all">
                     Upload Shoot

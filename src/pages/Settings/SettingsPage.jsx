@@ -95,15 +95,30 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { logoutUser, currentUser: profile, currentRole, updateProfileSettings } = useApp();
 
+  const isAvailable = (status) => !status || status === 'Available' || status === 'Available for booking';
+
   const [pushNotifs, setPushNotifs] = useState(profile?.push_notifs ?? true);
   const [emailNotifs, setEmailNotifs] = useState(profile?.email_notifs ?? true);
   const [publicProfile, setPublicProfile] = useState(profile?.is_public ?? true);
-  const [availableForBookings, setAvailableForBookings] = useState(profile?.availability_status === 'Available');
+  const [availableForBookings, setAvailableForBookings] = useState(isAvailable(profile?.availability_status));
+  const [authEmail, setAuthEmail] = useState('');
+  const [saveToast, setSaveToast] = useState(null); // null | 'saved' | 'error'
 
   const [activeModal, setActiveModal] = useState(null); // 'email' | 'username' | 'plan' | 'deactivate'
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Fetch auth email on mount
+  useEffect(() => {
+    const getEmail = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) setAuthEmail(user.email);
+      } catch (e) { /* ignore */ }
+    };
+    getEmail();
+  }, []);
 
   // Sync state if profile loads slightly after mount
   useEffect(() => {
@@ -111,9 +126,14 @@ export default function SettingsPage() {
       setPushNotifs(profile.push_notifs ?? true);
       setEmailNotifs(profile.email_notifs ?? true);
       setPublicProfile(profile.is_public ?? true);
-      setAvailableForBookings(profile.availability_status === 'Available');
+      setAvailableForBookings(isAvailable(profile.availability_status));
     }
   }, [profile]);
+
+  const showToast = (type) => {
+    setSaveToast(type);
+    setTimeout(() => setSaveToast(null), 2000);
+  };
 
   const handleLogout = async () => {
     await logoutUser();
@@ -135,6 +155,9 @@ export default function SettingsPage() {
     if (!success) {
       // Revert on failure
       setter(currentValue);
+      showToast('error');
+    } else {
+      showToast('saved');
     }
   };
 
@@ -142,7 +165,7 @@ export default function SettingsPage() {
     setActiveModal(type);
     setErrorMsg('');
     if (type === 'username') setInputValue(profile?.username || '');
-    if (type === 'email') setInputValue(profile?.email || ''); // Often Supabase doesn't put email in profile directly, might be in auth
+    if (type === 'email') setInputValue(authEmail || profile?.email || '');
   };
 
   const handleSaveModal = async () => {
@@ -168,15 +191,28 @@ export default function SettingsPage() {
       }
 
       setActiveModal(null);
+      showToast('saved');
+      if (activeModal === 'email') setAuthEmail(inputValue.trim());
     } catch (err) {
       setErrorMsg(err.message);
+      showToast('error');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-950 pb-20 md:pb-0">
+    <div className="min-h-screen bg-zinc-50 text-zinc-950 pb-20 md:pb-0 relative">
+      
+      {/* Save Toast */}
+      {saveToast && (
+        <div className={cn(
+          "fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-sm font-bold tracking-wide animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300",
+          saveToast === 'saved' ? 'bg-zinc-950 text-white' : 'bg-red-600 text-white'
+        )}>
+          {saveToast === 'saved' ? '✓ Saved' : '✕ Failed to save'}
+        </div>
+      )}
       
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-zinc-200">
@@ -226,7 +262,7 @@ export default function SettingsPage() {
           
           {/* Account */}
           <SettingsSection title="Account">
-            <SettingsRow id="settings-email" icon={Mail} label="Email" value={profile?.email || 'Update'} onClick={() => openModal('email')} />
+            <SettingsRow id="settings-email" icon={Mail} label="Email" value={authEmail || profile?.email || 'Update'} onClick={() => openModal('email')} />
             <SettingsRow id="settings-username" icon={User} label="Username" value={`@${profile?.username || 'not set'}`} onClick={() => openModal('username')} />
             <SettingsRow id="settings-plan" icon={Star} label="Plan" value="Free" onClick={() => openModal('plan')} />
           </SettingsSection>

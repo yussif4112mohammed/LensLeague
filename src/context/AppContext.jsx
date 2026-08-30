@@ -4,11 +4,28 @@ import { supabase } from '../lib/supabaseClient';
 
 const AppContext = createContext(null);
 
+// profiles.email and profiles.phone are no longer readable by the anon/authenticated
+// roles (migration v11). Selecting '*' would fail, and would have leaked every
+// user's email address to anyone holding the public key. Ask for columns by name.
+const PROFILE_COLUMNS = [
+  'id', 'username', 'name', 'display_name', 'bio', 'location',
+  'avatar', 'avatar_url', 'cover', 'cover_url', 'website',
+  'role', 'account_type', 'verified', 'banned',
+  'points', 'wins', 'global_rank', 'rating', 'review_count',
+  'followers_count', 'following_count', 'posts_count', 'competitions_won',
+  'camera_gear', 'photography_style', 'specialties', 'service_categories',
+  'starting_rate', 'availability_status', 'packages',
+  'is_public', 'push_notifs', 'email_notifs', 'is_deactivated',
+  'profile_completed', 'created_at', 'updated_at'
+].join(', ');
+
 export function AppProvider({ children }) {
   const [userEmail, setUserEmail] = useState('');
   const [currentRole, setCurrentRole] = useState('photographer');
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  // Answered by the database (admin_console_access), not by an email string.
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Photos list state
   const [photos, setPhotos] = useState([]);
@@ -40,6 +57,7 @@ export function AppProvider({ children }) {
   // Follows and comments states
   const [follows, setFollows] = useState([]);
   const [comments, setComments] = useState([]);
+  const [savedItemIds, setSavedItemIds] = useState([]);
 
   // ── Username Availability Check (calls DB RPC) ──
   const checkUsernameAvailable = async (username) => {
@@ -71,8 +89,6 @@ export function AppProvider({ children }) {
         role,
         verified: false,
         banned: false,
-        points: 100,
-        global_rank: 42,
         onboarding_completed: false
       };
 
@@ -100,7 +116,7 @@ export function AppProvider({ children }) {
         createdProfile.id = data.user.id;
         // Fetch the trigger-created profile to get the canonical data
         const { data: profile } = await supabase
-          .from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+          .from('profiles').select(PROFILE_COLUMNS).eq('id', data.user.id).maybeSingle();
         if (profile) {
           createdProfile = { ...createdProfile, ...profile };
         }
@@ -135,7 +151,7 @@ export function AppProvider({ children }) {
       }
 
       if (data.user) {
-        let { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).maybeSingle();
+        let { data: profile } = await supabase.from('profiles').select(PROFILE_COLUMNS).eq('id', data.user.id).maybeSingle();
         if (!profile) {
           const meta = data.user.user_metadata || {};
           const userRole = meta.role || 'photographer';
@@ -147,14 +163,10 @@ export function AppProvider({ children }) {
             bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
             location: meta.location || 'Accra, Ghana',
             role: userRole,
-            points: 0,
-            wins: 0,
-            rating: 5.0,
-            followers: 0,
-            cover: null,
-            verified: false,
-            banned: false,
-            global_rank: 99
+            cover: null
+            // points / wins / rating / verified / banned / global_rank are
+            // owned by the database. The client must not send them: they are
+            // reverted by the guard trigger added in migration v11.
           };
           await supabase.from('profiles').insert(newProfileData);
           profile = newProfileData;
@@ -242,14 +254,16 @@ export function AppProvider({ children }) {
     if (!userId) return false;
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', userId);
+        .eq('id', userId)
+        .select()
+        .single();
         
       if (error) throw error;
       
-      setCurrentUser(prev => ({ ...prev, ...updates }));
+      setCurrentUser(prev => ({ ...prev, ...data }));
       return true;
     } catch (err) {
       console.error('Update profile settings error:', err.message);
@@ -262,21 +276,38 @@ export function AppProvider({ children }) {
     try {
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_COLUMNS)
         .eq('id', uid)
         .maybeSingle();
 
       if (existingProfile) {
         // Normalize avatar: keep both avatar and avatar_url in sync
         const avatarUrl = existingProfile.avatar_url || existingProfile.avatar || null;
-        const normalized = { ...existingProfile, avatar: avatarUrl, avatar_url: avatarUrl };
+        const normalized = {
+          ...existingProfile,
+          role: existingProfile.role || existingProfile.account_type || 'photographer',
+          avatar: avatarUrl,
+          avatar_url: avatarUrl
+        };
         setCurrentUser(normalized);
-        setCurrentRole(existingProfile.role);
+        setCurrentRole(normalized.role);
       }
     } catch (err) {
       console.warn('Error fetching user profile:', err);
     }
   };
+
+  // Ask the database whether this session may open the admin console. The old
+  // check compared userEmail against a hardcoded string in the browser, which
+  // any visitor could satisfy in devtools.
+  const refreshAdminAccess = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_console_access');
+      setIsAdmin(!error && data === true);
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
 
   // Listen to Authentication State Changes
   useEffect(() => {
@@ -284,6 +315,7 @@ export function AppProvider({ children }) {
       if (session) {
         setUserEmail(session.user.email);
         await fetchUserProfile(session.user.id);
+        await refreshAdminAccess();
       }
       setAuthLoading(false);
     }).catch(() => {
@@ -294,9 +326,11 @@ export function AppProvider({ children }) {
       if (session) {
         setUserEmail(session.user.email);
         await fetchUserProfile(session.user.id);
+        refreshAdminAccess();
       } else {
         setUserEmail('');
         setCurrentUser(null);
+        setIsAdmin(false);
       }
     });
 
@@ -309,8 +343,13 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const syncFromSupabase = async () => {
       // 1. Fetch profiles (users list) - Limit to 100 for now to prevent memory bloat
-      const { data: profilesData } = await supabase.from('profiles').select('*').limit(100);
-      const fetchedUsers = profilesData || [];
+      const { data: profilesData } = await supabase.from('profiles').select(PROFILE_COLUMNS).limit(100);
+      const fetchedUsers = (profilesData || []).map(profile => ({
+        ...profile,
+        role: profile.role || profile.account_type || 'photographer',
+        avatar: profile.avatar_url || profile.avatar || null,
+        avatar_url: profile.avatar_url || profile.avatar || null
+      }));
       setUsers(fetchedUsers);
 
       // 2. Fetch photos (from portfolio_items)
@@ -332,6 +371,8 @@ export function AppProvider({ children }) {
             ownerAvatar: owner.avatar_url || '',
             caption: p.caption,
             category: p.categories?.[0] || 'General',
+            customStyle: p.custom_style || null,
+            gear: p.exif_data?.camera || p.exif_data?.camera_model || null,
             likes: 0,
             aspectRatio: p.media_url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4',
             timestamp: new Date(p.created_at).toLocaleDateString()
@@ -379,7 +420,34 @@ export function AppProvider({ children }) {
           return dynamicBattles;
         };
         
-        setBattles(generateFairBattles(mappedPhotos));
+        // Prefer persisted battles. This keeps voting and winners consistent
+        // across devices and sessions; the generated pairing is only a
+        // compatibility fallback until migration_v10 has been applied.
+        const { data: battleRows, error: battleError } = await supabase
+          .from('photo_battles')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (!battleError && battleRows) {
+          const photoById = new Map(mappedPhotos.map(photo => [photo.id, photo]));
+          setBattles(battleRows.flatMap(battle => {
+            const photoA = photoById.get(battle.photo_a_id);
+            const photoB = photoById.get(battle.photo_b_id);
+            if (!photoA || !photoB) return [];
+            return [{
+              id: battle.id,
+              category: battle.category,
+              endsIn: battle.closes_at ? `${Math.max(0, Math.ceil((new Date(battle.closes_at) - Date.now()) / 3600000))}h left` : 'Live',
+              photoA: { ...photoA, votes: battle.votes_a, rating: 1200, photographerName: photoA.ownerName, photographerId: photoA.ownerId },
+              photoB: { ...photoB, votes: battle.votes_b, rating: 1200, photographerName: photoB.ownerName, photographerId: photoB.ownerId },
+              totalVotes: battle.votes_a + battle.votes_b,
+              status: battle.status
+            }];
+          }));
+        } else {
+          setBattles(generateFairBattles(mappedPhotos));
+        }
       } else {
         setPhotos([]);
         setBattles([]);
@@ -465,11 +533,21 @@ export function AppProvider({ children }) {
           .select('*')
           .or(`follower_id.eq.${currentUser.id},following_id.eq.${currentUser.id}`);
         if (followsData) setFollows(followsData);
+
+        // Saved work is private to the current account.  Keep just identifiers
+        // here so cards and the Saved page share the same source of truth.
+        const { data: savedData } = await supabase
+          .from('saved_items')
+          .select('target_id')
+          .eq('user_id', currentUser.id)
+          .eq('target_type', 'portfolio_item');
+        setSavedItemIds((savedData || []).map(item => item.target_id));
       } else {
         // If logged out, clear private data from memory
         setBookings([]);
         setThreads([]);
         setFollows([]);
+        setSavedItemIds([]);
       }
 
       // 5. Comments - Limit to recent 500 across app
@@ -588,8 +666,9 @@ export function AppProvider({ children }) {
   // Booking requests
   const addBookingRequest = async (photographerId, details) => {
     const photographer = users.find(p => p.id === photographerId) || { name: 'Unknown', avatar: '' };
-    const clientUid = currentUser?.id || 'client_1';
-    const clientName = currentUser?.name || 'Sarah Jenkins';
+    const clientUid = currentUser?.id;
+    const clientName = currentUser?.name || 'Client';
+    if (!clientUid) return { success: false, error: 'Please sign in to request a booking.' };
 
     const newBooking = {
       id: `bk_${Date.now()}`,
@@ -609,7 +688,7 @@ export function AppProvider({ children }) {
     setBookings(prev => [newBooking, ...prev]);
 
     const priceVal = details.budget ? parseFloat(details.budget.replace(/[^0-9.]/g, '')) || 0 : 0;
-    await supabase.from('bookings').insert({
+    const { data: createdBooking, error: bookingError } = await supabase.from('bookings').insert({
       client_id: clientUid,
       photographer_id: photographerId,
       event_date: details.date,
@@ -617,7 +696,12 @@ export function AppProvider({ children }) {
       location: details.location,
       notes: details.message,
       status: 'requested'
-    });
+    }).select().single();
+    if (bookingError) {
+      setBookings(prev => prev.filter(booking => booking.id !== newBooking.id));
+      return { success: false, error: bookingError.message };
+    }
+    setBookings(prev => prev.map(booking => booking.id === newBooking.id ? { ...booking, id: createdBooking.id } : booking));
 
     // Auto seed default message thread
     const newThread = {
@@ -667,6 +751,7 @@ export function AppProvider({ children }) {
     } catch (err) {
       console.warn('Thread/message creation error:', err.message);
     }
+    return { success: true, booking: createdBooking };
   };
 
   const acceptBooking = async (bookingId) => {
@@ -718,6 +803,23 @@ export function AppProvider({ children }) {
       body,
       timestamp
     });
+    return { success: true };
+  };
+
+  const toggleSavedItem = async (itemId) => {
+    const userId = currentUser?.id;
+    if (!userId || !itemId) return { success: false, error: 'Please sign in to save work.' };
+    const alreadySaved = savedItemIds.includes(itemId);
+    setSavedItemIds(previous => alreadySaved ? previous.filter(id => id !== itemId) : [...previous, itemId]);
+    const query = alreadySaved
+      ? supabase.from('saved_items').delete().eq('user_id', userId).eq('target_type', 'portfolio_item').eq('target_id', itemId)
+      : supabase.from('saved_items').insert({ user_id: userId, target_type: 'portfolio_item', target_id: itemId });
+    const { error } = await query;
+    if (error) {
+      setSavedItemIds(previous => alreadySaved ? [...previous, itemId] : previous.filter(id => id !== itemId));
+      return { success: false, error: error.message };
+    }
+    return { success: true, saved: !alreadySaved };
   };
 
   // Chats
@@ -775,16 +877,34 @@ export function AppProvider({ children }) {
   };
 
   // Admin actions
+  // Moderation runs through SECURITY DEFINER RPCs that check a real permission
+  // in the database. The browser can no longer write to reports/profiles directly.
   const approvePhotoReport = async (reportId) => {
+    const { error } = await supabase.rpc('admin_resolve_report', {
+      p_report_id: reportId,
+      p_status: 'dismissed',
+      p_notes: 'Dismissed by moderator'
+    });
+    if (error) {
+      console.warn('Dismiss report refused:', error.message);
+      return { success: false, error: error.message };
+    }
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'dismissed' } : rep));
-    await supabase.from('reports').update({ status: 'dismissed', resolution_notes: 'Dismissed by moderator' }).eq('id', reportId);
-    await recordAuditLog('REPORT_DISMISSED', reportId, { action: 'dismiss' });
+    return { success: true };
   };
 
   const removeReportedPhoto = async (reportId) => {
+    const { error } = await supabase.rpc('admin_resolve_report', {
+      p_report_id: reportId,
+      p_status: 'resolved',
+      p_notes: 'Content removed by moderator'
+    });
+    if (error) {
+      console.warn('Resolve report refused:', error.message);
+      return { success: false, error: error.message };
+    }
     setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'resolved' } : rep));
-    await supabase.from('reports').update({ status: 'resolved', resolution_notes: 'Content removed by moderator' }).eq('id', reportId);
-    await recordAuditLog('REPORT_RESOLVED', reportId, { action: 'remove_content' });
+    return { success: true };
   };
 
   // User-facing: submit a report against any entity
@@ -815,24 +935,65 @@ export function AppProvider({ children }) {
   };
 
   const verifyPhotographer = async (userId) => {
+    const { error } = await supabase.rpc('admin_set_user_verified', {
+      p_user_id: userId,
+      p_verified: true
+    });
+    if (error) {
+      console.warn('Verify refused:', error.message);
+      return { success: false, error: error.message };
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: true } : u));
-    await supabase.from('profiles').update({ verified: true }).eq('id', userId);
-    await recordAuditLog('USER_VERIFIED', userId, { action: 'verify' });
+    return { success: true };
   };
 
   const banPhotographer = async (userId) => {
     const userObj = users.find(u => u.id === userId);
-    if (!userObj) return;
+    if (!userObj) return { success: false, error: 'User not found' };
     const nextBanned = !userObj.banned;
+    const { error } = await supabase.rpc('admin_set_user_banned', {
+      p_user_id: userId,
+      p_banned: nextBanned
+    });
+    if (error) {
+      console.warn('Ban refused:', error.message);
+      return { success: false, error: error.message };
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, banned: nextBanned } : u));
-    await supabase.from('profiles').update({ banned: nextBanned }).eq('id', userId);
-    await recordAuditLog(nextBanned ? 'USER_BANNED' : 'USER_UNBANNED', userId, { action: nextBanned ? 'ban' : 'unban' });
+    return { success: true };
   };
 
   const castBattleVote = async (battleId, side) => {
     // 1. Find the battle
     const battle = battles.find(b => b.id === battleId);
     if (!battle) return null;
+
+    // The production competition engine enforces one vote, prevents voting on
+    // your own work, and awards the win server-side when a battle closes.
+    const selectedPhotoId = side === 'a' ? battle.photoA.id : battle.photoB.id;
+    const { data: persistedVote, error: persistedVoteError } = await supabase.rpc('cast_photo_battle_vote', {
+      p_battle_id: battleId,
+      p_selected_photo_id: selectedPhotoId
+    });
+    if (!persistedVoteError && persistedVote?.[0]) {
+      const result = persistedVote[0];
+      setBattles(previous => previous.map(item => item.id === battleId ? {
+        ...item,
+        totalVotes: result.votes_a + result.votes_b,
+        status: result.status,
+        photoA: { ...item.photoA, votes: result.votes_a },
+        photoB: { ...item.photoB, votes: result.votes_b }
+      } : item));
+      if (result.status === 'finalized' && result.winner_id) {
+        const winnerOwnerId = result.winner_id === battle.photoA.id ? battle.photoA.ownerId : battle.photoB.ownerId;
+        setUsers(previous => previous.map(user => user.id === winnerOwnerId ? { ...user, wins: (user.wins || 0) + 1, points: (user.points || 0) + 10 } : user));
+        setCurrentUser(previous => previous?.id === winnerOwnerId ? { ...previous, wins: (previous.wins || 0) + 1, points: (previous.points || 0) + 10 } : previous);
+      }
+      return {
+        changeA: side === 'a' ? '+1 vote' : '—', changeB: side === 'b' ? '+1 vote' : '—',
+        newRatingA: battle.photoA.rating || 1200, newRatingB: battle.photoB.rating || 1200
+      };
+    }
 
     // 2. Fetch current ratings (default to 1200)
     const ratingA = battle.photoA.rating || 1200;
@@ -897,42 +1058,12 @@ export function AppProvider({ children }) {
       return prev;
     });
 
-    // 6. Supabase DB Updates
-    try {
-      await supabase.from('portfolio_items').update({ votes: eloResults.newRatingA }).eq('id', battle.photoA.id);
-      await supabase.from('portfolio_items').update({ votes: eloResults.newRatingB }).eq('id', battle.photoB.id);
-
-      const { data: pA } = await supabase.from('profiles').select('points').eq('id', battle.photoA.ownerId || battle.photoA.photographerId).single();
-      const { data: pB } = await supabase.from('profiles').select('points').eq('id', battle.photoB.ownerId || battle.photoB.photographerId).single();
-
-      const newPointsA = Math.max(0, (pA?.points || 0) + changeA);
-      const newPointsB = Math.max(0, (pB?.points || 0) + changeB);
-
-      if (pA) {
-        await supabase.from('profiles').update({ points: newPointsA }).eq('id', battle.photoA.ownerId || battle.photoA.photographerId);
-      }
-      if (pB) {
-        await supabase.from('profiles').update({ points: newPointsB }).eq('id', battle.photoB.ownerId || battle.photoB.photographerId);
-      }
-
-      // Recompute global_rank for all users in DB
-      try {
-        const { data: allProfiles } = await supabase
-          .from('profiles')
-          .select('id, points')
-          .order('points', { ascending: false });
-        if (allProfiles && allProfiles.length > 0) {
-          // Batch update ranks (fire-and-forget, no await to not block UI)
-          allProfiles.forEach((u, idx) => {
-            supabase.from('profiles').update({ global_rank: idx + 1 }).eq('id', u.id).then(() => {});
-          });
-        }
-      } catch (rankErr) {
-        console.warn('Rank recompute error:', rankErr.message);
-      }
-    } catch (err) {
-      console.warn('Supabase DB Elo update error:', err.message);
-    }
+    // 6. No database writes on this path.
+    // Scores, points and global_rank are awarded by cast_photo_battle_vote()
+    // in the database. Writing them from the browser meant any signed-in user
+    // could set their own points and rank; migration v11 reverts such writes,
+    // so attempting them here would only produce failed requests. The state
+    // updates above keep the offline/mock experience responsive.
 
     return {
       changeA: eloResults.changeA,
@@ -943,8 +1074,16 @@ export function AppProvider({ children }) {
   };
 
   const resolveDispute = async (disputeId, resolution) => {
+    const { error } = await supabase.rpc('admin_resolve_dispute', {
+      p_dispute_id: disputeId,
+      p_resolution: resolution
+    });
+    if (error) {
+      console.warn('Resolve dispute refused:', error.message);
+      return { success: false, error: error.message };
+    }
     setDisputes(prev => prev.map(dsp => dsp.id === disputeId ? { ...dsp, status: 'resolved', resolution } : dsp));
-    await supabase.from('disputes').update({ status: 'resolved', resolution }).eq('id', disputeId);
+    return { success: true };
   };
 
   const updateProfile = async (userId, data) => {
@@ -953,11 +1092,26 @@ export function AppProvider({ children }) {
     if (data.avatar && !data.avatar_url) normalized.avatar_url = data.avatar;
     if (data.avatar_url && !data.avatar) normalized.avatar = data.avatar_url;
 
+    const previousUser = users.find(user => user.id === userId);
+    const previousCurrentUser = currentUser;
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...normalized } : u));
     if (currentUser && currentUser.id === userId) {
       setCurrentUser(prev => ({ ...prev, ...normalized }));
     }
-    await supabase.from('profiles').update(normalized).eq('id', userId);
+    const { data: updatedProfile, error } = await supabase
+      .from('profiles')
+      .update(normalized)
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) {
+      setUsers(prev => prev.map(user => user.id === userId ? previousUser : user));
+      if (previousCurrentUser?.id === userId) setCurrentUser(previousCurrentUser);
+      throw error;
+    }
+    setUsers(prev => prev.map(user => user.id === userId ? updatedProfile : user));
+    if (currentUser?.id === userId) setCurrentUser(updatedProfile);
+    return updatedProfile;
   };
 
   const searchUsers = async (query) => {
@@ -1043,14 +1197,17 @@ export function AppProvider({ children }) {
         }
       }
 
-      let query = supabase.from('photos').select('*, profiles:owner_id(*)');
+      let query = supabase
+        .from('portfolio_items')
+        .select('*, albums!inner(privacy_level), profiles:photographer_id(*)')
+        .eq('albums.privacy_level', 'public');
 
       if (filterType === 'following' && currentUser) {
         const followedIds = (follows || []).filter(f => f.follower_id === currentUser.id).map(f => f.following_id);
         if (followedIds.length === 0) {
           return []; // return empty if not following anyone
         }
-        query = query.in('owner_id', followedIds);
+        query = query.in('photographer_id', followedIds);
       }
 
       const { data, error } = await query
@@ -1066,22 +1223,23 @@ export function AppProvider({ children }) {
           const owner = p.profiles || { name: 'Photographer', avatar: '' };
           return {
             id: p.id,
-            url: p.url,
-            isVideo: p.url?.toLowerCase()?.includes('.mp4') || p.url?.toLowerCase()?.includes('.webm') || p.url?.includes('/video/'),
-            ownerId: p.owner_id,
+            url: p.media_url,
+            isVideo: p.media_url?.toLowerCase()?.includes('.mp4') || p.media_url?.toLowerCase()?.includes('.webm') || p.media_url?.includes('/video/'),
+            ownerId: p.photographer_id,
             ownerName: owner.name || 'Photographer',
             ownerAvatar: owner.avatar || '',
             caption: p.caption,
-            category: p.category,
-            gear: p.gear,
-            location: p.location,
+            category: p.categories?.[0] || 'General',
+            customStyle: p.custom_style || null,
+            gear: p.exif_data?.camera_model,
+            location: owner.location,
             likes: p.votes || 0,
-            aspectRatio: p.aspect_ratio || (p.url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4'),
+            aspectRatio: p.media_url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4',
             timestamp: 'Just now'
           };
         });
       } else {
-        // Fallback to local mock photos if database is empty
+        // The in-memory list is populated from the same database on app load.
         return basePhotos.slice(start, end + 1);
       }
     } catch (err) {
@@ -1092,7 +1250,7 @@ export function AppProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
-  const uploadPhoto = async ({ file, url, caption, category, customStyle, destination = 'feed', alt_text = '' }) => {
+  const uploadPhoto = async ({ file, url, caption, category, customStyle, gear, location, exifData, destination = 'feed', alt_text = '' }) => {
     const userId = currentUser?.id || 'anon_user';
     const userName = currentUser?.display_name || currentUser?.name || 'Anonymous Photographer';
     const userAvatar = currentUser?.avatar_url || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
@@ -1102,11 +1260,23 @@ export function AppProvider({ children }) {
     // Handle Storage File upload if a File object is provided
     if (file) {
       try {
-        const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
+        // Derive the extension from the MIME type rather than the filename.
+        // A user-supplied name like "photo.html" would otherwise be stored, and
+        // post-media is a public bucket that serves whatever it holds.
+        const EXT_BY_TYPE = {
+          'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+          'image/avif': 'avif', 'image/heic': 'heic',
+          'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov'
+        };
+        const contentType = (file.type || '').toLowerCase();
+        const fileExt = EXT_BY_TYPE[contentType];
+        if (!fileExt) {
+          throw new Error('Unsupported file type. Upload a JPEG, PNG, WEBP, AVIF, HEIC, MP4, WEBM or MOV.');
+        }
         const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
         const { error: uploadErr } = await supabase.storage
           .from('post-media')
-          .upload(fileName, file, { contentType: file.type || 'image/jpeg' });
+          .upload(fileName, file, { contentType });
 
         if (!uploadErr) {
           const { data: urlData } = supabase.storage
@@ -1143,26 +1313,51 @@ export function AppProvider({ children }) {
 
     setPhotos(prev => [newPhoto, ...prev]);
 
-    // Auto-enter battle if there's an opponent available
-    setBattles(prev => {
-      const opponents = photos.filter(p => p.category === newPhoto.category && p.id !== newPhoto.id);
-      if (opponents.length > 0) {
-        const opponent = opponents[Math.floor(Math.random() * opponents.length)];
-        const newBattle = {
-          id: `b_${Date.now()}`,
-          category: newPhoto.category,
-          photoA: { ...newPhoto, rating: 1200, votes: 0, photographerName: newPhoto.ownerName, photographerId: newPhoto.ownerId },
-          photoB: { ...opponent, rating: 1200, votes: 0, photographerName: opponent.ownerName, photographerId: opponent.ownerId },
-          totalVotes: 0,
-          endsIn: '24h left',
-          status: 'active'
-        };
-        return [newBattle, ...prev];
-      }
-      return prev;
-    });
-
     try {
+      // portfolio_items is the canonical public gallery used by profile, feed,
+      // search, likes and saved items in the current schema.
+      if (userId && !userId.startsWith('usr_') && !userId.startsWith('anon_')) {
+        let { data: album } = await supabase
+          .from('albums')
+          .select('id')
+          .eq('photographer_id', userId)
+          .eq('privacy_level', 'public')
+          .limit(1)
+          .maybeSingle();
+        if (!album) {
+          const { data: createdAlbum, error: albumError } = await supabase
+            .from('albums')
+            .insert({ photographer_id: userId, title: 'Portfolio', privacy_level: 'public' })
+            .select('id')
+            .single();
+          if (albumError) throw albumError;
+          album = createdAlbum;
+        }
+        const { data: portfolioItem, error: portfolioError } = await supabase
+          .from('portfolio_items')
+          .insert({
+            album_id: album.id,
+            photographer_id: userId,
+            media_url: finalUrl,
+            caption: caption || '',
+            categories: [category || 'Nature'],
+            custom_style: customStyle || null,
+            exif_data: exifData || null
+          })
+          .select('id')
+          .single();
+        if (portfolioError) throw portfolioError;
+        newPhoto.id = portfolioItem.id;
+        newPhoto.gear = gear || null;
+        newPhoto.location = location || null;
+        newPhoto.customStyle = customStyle || null;
+        setPhotos(prev => prev.map(photo => photo.id.startsWith('p_') && photo.created_at === newPhoto.created_at ? newPhoto : photo));
+        // This is intentionally automatic: publishing work queues it for a fair
+        // same-category match without asking the creator to opt in.
+        const { error: queueError } = await supabase.rpc('queue_portfolio_item_for_battle', { p_item_id: portfolioItem.id });
+        if (queueError) console.warn('Competition queue note:', queueError.message);
+      }
+
       // Insert into legacy photos table for backward compatibility
       await supabase.from('photos').insert({
         url: finalUrl,
@@ -1258,11 +1453,14 @@ export function AppProvider({ children }) {
     if (!actorId) return;
 
     try {
+      // audit_logs stores the target as (target_type, target_id) — the old
+      // single `target` column does not exist, so every insert was failing.
       await supabase.from('audit_logs').insert({
         actor_id: actorId,
         action,
-        target,
-        metadata
+        target_type: metadata?.target_type || null,
+        target_id: typeof target === 'string' && /^[0-9a-f]{8}-/i.test(target) ? target : null,
+        metadata: { ...metadata, target: String(target ?? '') }
       });
     } catch (err) {
       console.warn('Audit log insert warning:', err.message);
@@ -1316,6 +1514,7 @@ export function AppProvider({ children }) {
       currentRole,
       switchRole,
       userEmail,
+      isAdmin,
       setUserEmail,
       currentUser,
       authLoading,
@@ -1351,6 +1550,7 @@ export function AppProvider({ children }) {
       logoutUser,
       follows,
       comments,
+      savedItemIds,
       connections,
       requestConnection,
       acceptConnection,
@@ -1358,6 +1558,7 @@ export function AppProvider({ children }) {
       followUser,
       unfollowUser,
       addPhotoComment,
+      toggleSavedItem,
       // Phase 2 & 6 additions
       checkUsernameAvailable,
       uploadAvatar,

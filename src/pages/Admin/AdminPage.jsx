@@ -13,7 +13,8 @@ import { Shield, ArrowLeft, ShieldAlert, Ban, CheckCircle, Trophy, Star, AlertTr
 export default function AdminPage() {
   const navigate = useNavigate();
   const { 
-    userEmail,
+    isAdmin,
+    authLoading,
     users, 
     reports, 
     disputes, 
@@ -24,8 +25,20 @@ export default function AdminPage() {
     resolveDispute 
   } = useApp();
 
-  // Route guard
-  if (userEmail !== 'admin@lensleague.com') {
+  // Route guard.
+  // This is a convenience check only — it hides the console from people who
+  // should not see it. Every action below is independently authorised in the
+  // database by a SECURITY DEFINER RPC, so bypassing this in devtools grants
+  // nothing. isAdmin comes from the admin_console_access() RPC.
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh] bg-background">
+        <span className="text-sm font-medium text-muted-foreground tracking-wide">Checking access...</span>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 text-center p-6 bg-background animate-in fade-in zoom-in duration-500">
         <div className="text-7xl drop-shadow-[0_4px_12px_rgba(255,77,109,0.2)]">🔒</div>
@@ -115,13 +128,13 @@ export default function AdminPage() {
         {/* Tabs */}
         <Tabs defaultValue="mod" className="w-full">
           <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1 rounded-xl w-full md:w-auto h-auto grid grid-cols-3 gap-1">
-            <TabsTrigger value="mod" className="rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 py-2.5">
+            <TabsTrigger value="mod" className="rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white text-zinc-400 py-2.5">
               Moderation Queue
             </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 py-2.5">
+            <TabsTrigger value="users" className="rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white text-zinc-400 py-2.5">
               User Directory
             </TabsTrigger>
-            <TabsTrigger value="disputes" className="rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400 py-2.5">
+            <TabsTrigger value="disputes" className="rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white text-zinc-400 py-2.5">
               Battle Disputes
             </TabsTrigger>
           </TabsList>

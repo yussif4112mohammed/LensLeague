@@ -10,10 +10,10 @@ export default function ThemeSwitcher() {
       className="theme-trigger"
       onClick={toggleMode}
       id="theme-switcher-btn"
-      aria-label="Toggle theme"
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      aria-label="Dark theme enabled"
+      title="Dark theme enabled"
     >
-      {isDark ? '🌙' : '☀️'}
+      {isDark ? '🌙' : '🌙'}
     </button>
   );
 }

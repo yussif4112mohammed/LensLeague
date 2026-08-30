@@ -26,7 +26,7 @@ export default function BattleCard({ battle, onVote, onSkip }) {
   };
 
   const total = battle.photoA.votes + battle.photoB.votes;
-  const pctA = Math.round((battle.photoA.votes / total) * 100);
+  const pctA = total ? Math.round((battle.photoA.votes / total) * 100) : 50;
   const pctB = 100 - pctA;
 
   const exifA = parseGearOrGetExif(battle.photoA.gear, battle.photoA.id, battle.photoA.photographerName);

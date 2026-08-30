@@ -8,7 +8,7 @@ import Logo from '@/components/Logo';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 
 const HOW_STEPS = [
-  { icon: '📷', step: '01', title: 'Upload Your Work', desc: 'Share photos to your portfolio, feed, or enter live competitions.' },
+  { icon: '📷', step: '01', title: 'Upload Your Work', desc: 'Publish once to your gallery and feed; eligible work joins a live competition automatically.' },
   { icon: '⚔️', step: '02', title: 'Compete & Get Voted', desc: 'Battle other photographers head-to-head. Community votes decide.' },
   { icon: '💼', step: '03', title: 'Get Hired', desc: 'Clients search by rank, style, and location. Your score is your credential.' },
 ];
@@ -28,7 +28,7 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
-        const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
         if (count !== null) setUserCount(count);
       } catch (err) {
         console.warn('Failed to fetch user count');
@@ -62,7 +62,7 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
             <button onClick={() => navigate('/signup?role=photographer')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer flex items-center gap-1.5">
-              Photographers <span className="text-xs bg-secondary px-1.5 py-0.5 rounded-full text-foreground" title="Registered users">{userCount > 0 ? userCount.toLocaleString() : '1.4k'}</span>
+              Photographers <span className="text-xs bg-secondary px-1.5 py-0.5 rounded-full text-foreground" title="Registered users">{userCount > 0 ? userCount.toLocaleString() : 'Join early'}</span>
             </button>
             <button onClick={() => navigate('/signup?role=client')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer">
               Leaderboard

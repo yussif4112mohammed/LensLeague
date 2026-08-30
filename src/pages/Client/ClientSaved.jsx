@@ -8,10 +8,9 @@ import { Heart, Search } from 'lucide-react';
 
 export default function ClientSaved() {
   const navigate = useNavigate();
-  const { photos } = useApp();
+  const { photos, savedItemIds, toggleSavedItem } = useApp();
   
-  // Using some mock photos for the saved state as per original
-  const savedPhotos = photos.slice(0, 6);
+  const savedPhotos = photos.filter(photo => savedItemIds.includes(photo.id));
 
   return (
     <div className="min-h-screen bg-background text-zinc-400 p-4 pb-24 animate-in fade-in duration-500">
@@ -52,7 +51,7 @@ export default function ClientSaved() {
                   className="absolute top-2 right-2 h-8 w-8 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 hover:text-red-500 border border-white/10"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // In a real app, this would remove it
+                    toggleSavedItem(p.id);
                   }}
                 >
                   <Heart className="h-4 w-4 fill-red-500 text-red-500" />

@@ -14,7 +14,7 @@ import FeedPage from './pages/Feed/FeedPage';
 import DiscoverPage from './pages/Discover/DiscoverPage';
 import VotePage from './pages/Vote/VotePage';
 import ChallengesPage from './pages/Challenges/ChallengesPage';
-import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
+import LeaguesPage from './pages/Leagues/LeaguesPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 import UploadPage from './pages/Upload/UploadPage';
@@ -51,8 +51,10 @@ const router = createBrowserRouter([
       { path: '/compete/challenges', element: <ChallengesPage /> },
       // Redirect /compete → /compete/vote
       { path: '/compete', element: <Navigate to="/compete/vote" replace /> },
-      // Leaderboard
-      { path: '/leaderboard', element: <LeaderboardPage /> },
+      // Leagues — category rooms with four-tier recognition (replaces the
+      // ranked leaderboard, per the product spec's "no public display of losses")
+      { path: '/leagues', element: <LeaguesPage /> },
+      { path: '/leaderboard', element: <Navigate to="/leagues" replace /> },
       // Profile (own or others)
       { path: '/profile/:id', element: <ProfilePage /> },
       { path: '/profile', element: <Navigate to="/profile/me" replace /> },
@@ -64,6 +66,10 @@ const router = createBrowserRouter([
       { path: '/settings', element: <SettingsPage /> },
       // Inbox
       { path: '/inbox', element: <InboxPage /> },
+      // Saved — rail destination from mockup 2a
+      { path: '/saved', element: <ClientSaved /> },
+      // Explore is the mockups' name for Discover; keep both entry points
+      { path: '/explore', element: <Navigate to="/discover" replace /> },
     ]
   },
 

@@ -70,17 +70,17 @@ export function LoginPage() {
             avatar: null,
             bio: userRole === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
             location: meta.location || 'Global',
-            role: userRole,
-            verified: false,
-            banned: false,
-            points: 0,
-            global_rank: 99
+            role: userRole
+            // verified / banned / points / global_rank are database-owned.
+            // The client no longer sends them (see migration v11).
           });
 
           if (!seedError) {
             const { data: newProfile } = await supabase
               .from('profiles')
-              .select('*')
+              // Not '*': profiles.email/phone are not readable by the
+              // anon and authenticated roles (migration v11).
+              .select('id, username, name, display_name, bio, location, avatar, avatar_url, role, account_type, verified, banned, points, wins, global_rank, created_at')
               .eq('id', data.user.id)
               .single();
             profile = newProfile;
@@ -88,9 +88,14 @@ export function LoginPage() {
         }
 
         const finalRole = profile?.role || data.user.user_metadata?.role || 'photographer';
-        if (email === 'admin@lensleague.com') {
+
+        // Ask the database whether this account may open the admin console,
+        // instead of matching the typed address against a hardcoded string.
+        const { data: hasAdminConsole } = await supabase.rpc('admin_console_access');
+
+        if (hasAdminConsole === true) {
           navigate('/admin');
-        } else if (finalRole === 'client' || email.includes('client')) {
+        } else if (finalRole === 'client') {
           navigate('/client/home');
         } else {
           navigate('/feed');

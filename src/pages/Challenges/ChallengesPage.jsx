@@ -90,10 +90,10 @@ export default function ChallengesPage() {
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="bg-zinc-900 border border-zinc-800 mb-8 p-1 rounded-xl">
-            <TabsTrigger value="active" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-bold transition-all active:scale-95">
+            <TabsTrigger value="active" className="rounded-lg data-[active]:bg-primary data-[active]:text-primary-foreground font-bold transition-all active:scale-95">
               Active Battles
             </TabsTrigger>
-            <TabsTrigger value="past" className="rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white font-bold transition-all active:scale-95">
+            <TabsTrigger value="past" className="rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white font-bold transition-all active:scale-95">
               Past Winners
             </TabsTrigger>
           </TabsList>

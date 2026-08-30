@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { supabase } from '../../lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +15,7 @@ const DESTINATIONS = [
 
 export default function UploadPage() {
   const navigate = useNavigate();
-  const { currentUser, setPhotos, photos, setBattles } = useApp();
+  const { currentUser, uploadPhoto } = useApp();
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);
   const [isVideo, setIsVideo] = useState(false);
@@ -36,11 +35,37 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [fileObj, setFileObj] = useState(null);
 
+  // The accept="" attribute is only a file-picker hint — it is trivially
+  // bypassed. The bucket enforces these same limits server-side (migration v11);
+  // this check is here so the user gets a clear message instead of a failed
+  // upload, and so an .html or .svg masquerading as an image never gets sent.
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic'];
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+  const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB, matches the post-media bucket
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const type = (file.type || '').toLowerCase();
+    const isAllowedImage = ALLOWED_IMAGE_TYPES.includes(type);
+    const isAllowedVideo = ALLOWED_VIDEO_TYPES.includes(type);
+
+    if (!isAllowedImage && !isAllowedVideo) {
+      setError('That file type is not supported. Upload a JPEG, PNG, WEBP, AVIF, HEIC, MP4, WEBM or MOV.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(`That file is ${(file.size / 1024 / 1024).toFixed(1)}MB. The limit is 50MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
     setFileObj(file);
-    setIsVideo(file.type.startsWith('video'));
+    setIsVideo(isAllowedVideo);
     const url = URL.createObjectURL(file);
     setPreview(url);
     setStep(2);
@@ -51,85 +76,18 @@ export default function UploadPage() {
     setError('');
     
     try {
-      let imageUrl = preview;
-
-      // 1. If user selected a real file, upload it to Supabase Storage
-      if (fileObj) {
-        const fileExt = fileObj.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('post-media')
-          .upload(fileName, fileObj);
-
-        if (uploadError) {
-          // If bucket doesn't exist or RLS issue, we fallback gracefully to using local URL simulation
-          console.warn('Storage upload error (falling back to URL):', uploadError.message);
-        } else {
-          const { data } = supabase.storage.from('post-media').getPublicUrl(fileName);
-          imageUrl = data.publicUrl;
-        }
-      }
-
-      // 2. Insert record into public.photos table
-      const photoId = `p_${Date.now()}`;
-      const newDbRow = {
-        url: imageUrl,
-        owner_id: currentUser?.id || '1',
-        caption: caption,
-        category: category,
-        aspect_ratio: isVideo ? '9/16' : '3/4',
+      if (!currentUser) throw new Error('Please sign in before publishing.');
+      await uploadPhoto({
+        file: fileObj,
+        url: fileObj ? undefined : preview,
+        caption,
+        category,
+        customStyle,
         gear: gear || camera,
-        location: location
-      };
-
-      const { data: insertData } = await supabase
-        .from('photos')
-        .insert(newDbRow)
-        .select()
-        .single();
-
-      // Add to local state context
-      const newPhoto = {
-        id: insertData?.id || photoId,
-        url: imageUrl,
-        isVideo: isVideo,
-        ownerId: currentUser?.id || '1',
-        ownerName: currentUser?.name || 'Photographer',
-        ownerAvatar: currentUser?.avatar || '',
-        caption: caption,
-        category: category,
-        customStyle: customStyle || null,
-        destination: destination,
-        gear: gear || camera,
-        lens: lens,
-        aperture: aperture,
-        shutter: shutter,
-        iso: iso,
-        location: location,
-        likes: 0,
-        aspectRatio: isVideo ? '9/16' : '3/4',
-        timestamp: 'Just now'
-      };
-
-      setPhotos(prev => [newPhoto, ...prev]);
-
-      // Auto-enter battle if there's an opponent available
-      setBattles(prev => {
-        const opponents = photos.filter(p => p.category === newPhoto.category && p.id !== newPhoto.id);
-        if (opponents.length > 0) {
-          const opponent = opponents[Math.floor(Math.random() * opponents.length)];
-          const newBattle = {
-            id: `b_${Date.now()}`,
-            category: newPhoto.category,
-            photoA: { ...newPhoto, rating: 1200, votes: 0, photographerName: newPhoto.ownerName, photographerId: newPhoto.ownerId },
-            photoB: { ...opponent, rating: 1200, votes: 0, photographerName: opponent.ownerName, photographerId: opponent.ownerId },
-            totalVotes: 0,
-            endsIn: '24h left',
-            status: 'active'
-          };
-          return [newBattle, ...prev];
-        }
-        return prev;
+        location,
+        destination,
+        alt_text: altText,
+        exifData: { camera, lens, aperture, shutter, iso }
       });
 
       setModStatus('clear');
@@ -184,7 +142,7 @@ export default function UploadPage() {
                 <input
                   id="file-input"
                   type="file"
-                  accept="image/*,video/*"
+                  accept="image/jpeg,image/png,image/webp,image/avif,image/heic,video/mp4,video/webm,video/quicktime"
                   className="hidden"
                   onChange={handleFileChange}
                 />
@@ -266,6 +224,43 @@ export default function UploadPage() {
             <h1 className="text-3xl font-bold text-white mb-8">Details & Destination</h1>
 
             <div className="space-y-8 bg-zinc-900/30 border border-zinc-800/50 p-6 sm:p-8 rounded-3xl mb-8">
+              {/* 1g: category is required, so it is asked first — not last. */}
+              <div className="space-y-3">
+                <span className="block font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]">
+                  CATEGORY · REQUIRED
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORIES.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setCategory(c)}
+                      aria-pressed={category === c}
+                      className={cn(
+                        'rounded-[7px] px-2.5 py-[7px] text-[11.5px] transition-colors',
+                        category === c
+                          ? 'bg-brand font-semibold text-brand-foreground'
+                          : 'bg-white/[.07] text-white/70 hover:bg-white/[.12] hover:text-foreground'
+                      )}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                {category && (
+                  <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="text-sm font-semibold text-zinc-300" htmlFor="custom-style">What do you call your style of {category}?</label>
+                    <Input
+                      id="custom-style"
+                      type="text"
+                      className="mt-2 h-12 rounded-xl border-zinc-800 bg-zinc-900/50 text-white placeholder:text-zinc-600"
+                      placeholder="e.g. Cinematic Portrait, Moody Street, Dreamy Landscape"
+                      value={customStyle}
+                      onChange={e => setCustomStyle(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-4">
                 <label className="text-sm font-semibold text-zinc-300">Publish to</label>
                 <div className="grid sm:grid-cols-3 gap-4">
@@ -328,38 +323,6 @@ export default function UploadPage() {
                 <p className="text-xs text-zinc-500">Adding alt text helps more people experience your work.</p>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-zinc-300">Category</label>
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setCategory(c)}
-                      className={cn(
-                        "px-4 py-2 rounded-xl text-sm font-medium transition-colors border",
-                        category === c 
-                          ? "bg-primary text-primary-foreground border-white" 
-                          : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200"
-                      )}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                {category && (
-                  <div className="mt-4 animate-in slide-in-from-top-2 fade-in duration-300">
-                    <label className="text-sm font-semibold text-zinc-300" htmlFor="custom-style">What do you call your style of {category}?</label>
-                    <Input
-                      id="custom-style"
-                      type="text"
-                      className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12 mt-2"
-                      placeholder="e.g. Cinematic Portrait, Moody Street, Dreamy Landscape"
-                      value={customStyle}
-                      onChange={e => setCustomStyle(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -390,7 +353,8 @@ export default function UploadPage() {
               </Button>
               <Button 
                 onClick={() => setStep(4)} 
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl px-8"
+                disabled={!category} 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl px-8 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Review <ArrowRight className="w-4 h-4 ml-2" />
               </Button>

@@ -11,45 +11,75 @@
     --font-geist-sans: 'Geist Sans', sans-serif;
     --font-geist-mono: 'Geist Mono', monospace;
     
-    /* Light Gray Professional Theme */
-    --background: 240 5% 96%; /* zinc-100 #f4f4f5 */
-    --foreground: 240 10% 4%; /* zinc-950 #09090b */
+    /* Sleek OLED Dark Theme */
+    --background: 240 10% 4%; /* zinc-950 #09090b */
+    --foreground: 0 0% 98%; /* zinc-50 / white */
     
-    --card: 0 0% 100%; /* white */
-    --card-foreground: 240 10% 4%;
+    --card: 240 10% 6%; /* slightly lighter than bg */
+    --card-foreground: 0 0% 98%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
     
-    --primary: 240 10% 4%; /* zinc-950 */
-    --primary-foreground: 0 0% 100%; /* white */
+    --primary: 0 0% 98%; /* white */
+    --primary-foreground: 240 10% 4%; /* zinc-950 */
     
-    --secondary: 240 5% 96%; /* zinc-100 */
-    --secondary-foreground: 240 10% 4%;
+    --secondary: 240 4% 16%; /* zinc-800 */
+    --secondary-foreground: 0 0% 98%;
     
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%; /* zinc-500 */
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%; /* zinc-400 */
     
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 10% 4%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
     
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
     
-    --border: 240 6% 90%; /* zinc-200 #e4e4e7 */
-    --input: 240 6% 90%;
-    --ring: 240 10% 4%;
+    --border: 240 6% 15%; /* zinc-800 */
+    --input: 240 6% 15%;
+    --ring: 240 5% 65%;
     
     --radius: 0.375rem; 
+
+    /* ── LensLeague gallery surface — from the desktop mockups (2a–2d) ── */
+    --background: 240 3% 6%;         /* #101011  canvas */
+    --foreground: 40 12% 95%;        /* #f4f3f1  primary text */
+    --card: 220 5% 10%;              /* #17181a  raised surface */
+    --card-foreground: 40 12% 95%;
+    --popover: 220 5% 10%;
+    --popover-foreground: 40 12% 95%;
+    --rail: 240 4% 5%;               /* #0d0d0e  left nav rail */
+
+    /* Brand accent. Flip the whole app to monochrome with
+       <html data-accent="mono"> — see the override block below. */
+    --brand: 150 60% 46%;            /* #2fbe77 */
+    --brand-foreground: 150 39% 5%;  /* #08120d  text on brand fills */
+    --brand-tint: 146 62% 69%;       /* #7fe0ac  text on 10-14% brand washes */
+
+    /* Primary actions and focus rings follow the brand */
+    --primary: 150 60% 46%;
+    --primary-foreground: 150 39% 5%;
+    --ring: 150 60% 46%;
+  }
+
+  /* Monochrome fallback: <html data-accent="mono"> */
+  :root[data-accent="mono"] {
+    --brand: 0 0% 98%;
+    --brand-foreground: 240 10% 4%;
+    --brand-tint: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 10% 4%;
+    --ring: 240 5% 65%;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white/40 backdrop-blur-xl border border-white/40;
+    @apply bg-zinc-900/60 backdrop-blur-xl border border-zinc-800;
   }
   .glass-card {
-    @apply bg-white/40 backdrop-blur-2xl border border-zinc-200/50 shadow-lg;
+    @apply bg-zinc-900/60 backdrop-blur-2xl border border-zinc-800 shadow-lg shadow-black/50;
   }
   .text-glow {
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);

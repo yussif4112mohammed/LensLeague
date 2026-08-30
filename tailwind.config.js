@@ -41,6 +41,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))",
+          tint: "hsl(var(--brand-tint))",
+        },
+        rail: "hsl(var(--rail))",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "sans-serif"],

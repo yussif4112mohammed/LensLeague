@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import FeedbackButton from './components/FeedbackButton/FeedbackButton';
 
 // Layouts
 import PhotographerShell from './layouts/PhotographerShell/PhotographerShell';
@@ -97,6 +98,7 @@ export default function App() {
     <div className="w-full min-h-screen">
       <ErrorBoundary>
         <RouterProvider router={router} />
+        <FeedbackButton />
       </ErrorBoundary>
     </div>
   );

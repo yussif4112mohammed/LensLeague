@@ -1441,6 +1441,37 @@ export function AppProvider({ children }) {
     }
   };
 
+  // User-facing: send a free-text product feedback note. Anyone may submit —
+  // signed-out visitors leave user_id NULL (migration v13). There is no local
+  // list to update: feedback is write-only from the client's point of view.
+  const submitFeedback = async (message) => {
+    const text = (message || '').trim();
+    if (!text) return { success: false, error: 'Please enter a message before sending.' };
+    if (text.length > 2000) return { success: false, error: 'Feedback must be 2000 characters or fewer.' };
+
+    // Only a real Supabase auth id belongs in a foreign key. The placeholder
+    // ids minted for mock/offline sessions (usr_/anon_) are not rows in profiles.
+    const rawId = currentUser?.id ? String(currentUser.id) : '';
+    const userId = rawId && !rawId.startsWith('usr_') && !rawId.startsWith('anon_') ? rawId : null;
+
+    try {
+      const { error } = await supabase.from('feedback').insert({
+        user_id: userId,
+        message: text,
+        page: typeof window !== 'undefined' ? window.location.pathname : null,
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      });
+      if (error) throw error;
+      await recordAuditLog('FEEDBACK_SUBMITTED', 'feedback', {
+        page: typeof window !== 'undefined' ? window.location.pathname : null,
+      });
+      return { success: true };
+    } catch (err) {
+      console.warn('submitFeedback error:', err.message);
+      return { success: false, error: err.message || 'Could not send feedback. Please try again.' };
+    }
+  };
+
   const logoutUser = async () => {
     setUserEmail('');
     setCurrentUser(null);
@@ -1548,6 +1579,7 @@ export function AppProvider({ children }) {
       signUpUser,
       loginUser,
       logoutUser,
+      submitFeedback,
       follows,
       comments,
       savedItemIds,

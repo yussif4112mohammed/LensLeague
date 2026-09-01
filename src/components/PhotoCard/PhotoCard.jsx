@@ -22,10 +22,10 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
-  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, users } = useApp();
+  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, users } = useApp();
   const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
   const [liked, setLiked] = useState(() => localStorage.getItem(`liked_${photo.id}`) === 'true');
-  const [saved, setSaved] = useState(() => localStorage.getItem(`saved_${photo.id}`) === 'true');
+  const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(photo.likes + (localStorage.getItem(`liked_${photo.id}`) === 'true' && !photo.likes ? 1 : 0));
   const [heartBurst, setHeartBurst] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -42,6 +42,10 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
     const isLocalLiked = localStorage.getItem(`liked_${photo.id}`) === 'true';
     setLikeCount(photo.likes + (isLocalLiked && !photo.likes ? 1 : 0));
   }, [photo.likes, photo.id]);
+
+  useEffect(() => {
+    setSaved(savedItemIds.includes(photo.id));
+  }, [photo.id, savedItemIds]);
 
   // Check if current user has already liked this photo
   useEffect(() => {
@@ -118,9 +122,12 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
     onPhotoClick?.();
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.stopPropagation();
-    setSaved(prev => !prev);
+    const previous = saved;
+    setSaved(!previous);
+    const result = await toggleSavedItem(photo.id);
+    if (!result.success) setSaved(previous);
   };
 
   const handleShare = (e) => {
@@ -168,31 +175,25 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
   return (
     <>
-      <article className="max-w-3xl mx-auto w-full mb-16 sm:mb-24 relative bg-white shadow-sm border border-zinc-200 rounded-xl overflow-hidden" id={`post-${photo.id}`}>
+      <article className="max-w-3xl mx-auto w-full mb-16 sm:mb-24 relative bg-zinc-950 shadow-sm border border-zinc-800 rounded-xl overflow-hidden" id={`post-${photo.id}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-5 mb-1 border-b border-zinc-100">
+        <div className="flex items-center justify-between p-4 sm:p-5 mb-1 border-b border-zinc-800">
           <button
             className="flex items-center gap-4 text-left group"
             onClick={() => navigate(`/profile/${photo.ownerId || '1'}`)}
             id={`post-author-${photo.id}`}
           >
-            <Avatar className="w-12 h-12 ring-1 ring-zinc-200 group-hover:ring-zinc-400 transition-all duration-300 shadow-sm">
+            <Avatar className="w-12 h-12 ring-1 ring-zinc-800 group-hover:ring-zinc-600 transition-all duration-300 shadow-sm">
               <AvatarImage src={photo.ownerAvatar} alt={photo.ownerName} className="object-cover" />
-              <AvatarFallback className="bg-zinc-100 text-zinc-600 text-xs font-bold">{photo.ownerName?.charAt(0) || 'U'}</AvatarFallback>
+              <AvatarFallback className="bg-zinc-900 text-zinc-400 text-xs font-bold">{photo.ownerName?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-bold text-base tracking-tight text-zinc-950 flex items-center gap-2">
+              <div className="font-bold text-base tracking-tight text-white flex items-center gap-2">
                 {photo.ownerName}
-                {ownerProfile.verified && <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-zinc-950 text-white uppercase">PRO</Badge>}
+                {ownerProfile.verified && <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-white text-zinc-950 uppercase">PRO</Badge>}
               </div>
-              <div className="text-xs text-zinc-500 font-medium tracking-wide mt-0.5 flex items-center gap-2">
+              <div className="text-xs text-zinc-400 font-medium tracking-wide mt-0.5 flex items-center gap-2">
                 {photo.location && <span>{photo.location}</span>}
-                {ownerProfile.role === 'photographer' && ownerProfile.starting_rate > 0 && (
-                  <>
-                    <span className="text-zinc-300">•</span>
-                    <span className="text-zinc-900 font-bold tracking-wider">STARTS AT ${ownerProfile.starting_rate}</span>
-                  </>
-                )}
               </div>
             </div>
           </button>
@@ -204,10 +205,10 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
                   <Button
                     variant="default"
                     size="sm"
-                    className="h-9 px-5 rounded-md text-xs font-bold tracking-widest transition-all duration-300 ease-out bg-zinc-950 text-white hover:bg-zinc-800 hover:scale-[1.02] active:scale-[0.96]"
+                    className="h-9 px-5 rounded-md text-xs font-bold tracking-widest transition-all duration-300 ease-out bg-white text-zinc-950 hover:bg-zinc-200 hover:scale-[1.02] active:scale-[0.96]"
                     onClick={(e) => { e.stopPropagation(); navigate(`/profile/${photo.ownerId}`); }}
                   >
-                    HIRE
+                    INQUIRE
                   </Button>
                 )}
                 <Button
@@ -216,8 +217,8 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
                   className={cn(
                     "h-9 px-5 rounded-md text-xs font-bold tracking-wide transition-all duration-300 ease-out",
                     isFollowing 
-                      ? "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border-transparent" 
-                      : "bg-white text-zinc-950 border-zinc-200 hover:bg-zinc-50 hover:scale-[1.02] active:scale-[0.96]"
+                      ? "bg-zinc-800 hover:bg-zinc-700 text-white border-transparent"
+                      : "bg-zinc-950 text-white border-zinc-800 hover:bg-zinc-900 hover:scale-[1.02] active:scale-[0.96]"
                   )}
                   onClick={handleFollowClick}
                   id={`follow-${photo.id}`}
@@ -228,7 +229,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             )}
             <button 
               onClick={(e) => { e.stopPropagation(); alert('Post options (Share, Report, Copy Link) coming soon.'); }}
-              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors"
+              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
             >
               <MoreHorizontal className="w-5 h-5" />
             </button>
@@ -237,7 +238,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
         {/* Media Frame */}
         <div 
-          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-zinc-50 flex items-center justify-center cursor-pointer group overflow-hidden border-b border-zinc-100 transition-transform duration-500"
+          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-black flex items-center justify-center cursor-pointer group overflow-hidden border-b border-zinc-800 transition-transform duration-500"
           onClick={handleTap}
         >
           {photo.isVideo ? (
@@ -303,7 +304,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             <div className="flex items-center gap-6">
               <button 
                 onClick={handleLike} 
-                className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] flex items-center gap-2 group", liked ? "text-red-500" : "text-zinc-400 hover:text-zinc-950")}
+                className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] flex items-center gap-2 group", liked ? "text-red-500" : "text-zinc-500 hover:text-white")}
               >
                 <Heart className={cn("w-7 h-7 transition-colors", liked ? "fill-red-500" : "")} strokeWidth={2} />
                 <span className="text-sm font-bold tracking-wide">{formatCount(likeCount)}</span>
@@ -311,7 +312,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
               <button 
                 onClick={handleComment}
-                className="transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] text-zinc-400 hover:text-zinc-950 flex items-center gap-2 group"
+                className="transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] text-zinc-500 hover:text-white flex items-center gap-2 group"
               >
                 <MessageCircle className="w-7 h-7 transition-colors" strokeWidth={2} />
                 <span className="text-sm font-bold tracking-wide">{formatCount(commentCount)}</span>
@@ -319,7 +320,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
               <button 
                 onClick={handleShare}
-                className="transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] text-zinc-400 hover:text-zinc-950 group"
+                className="transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96] text-zinc-500 hover:text-white group"
               >
                 <Share className="w-6 h-6 transition-colors" strokeWidth={2} />
               </button>
@@ -327,16 +328,16 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             
             <button 
               onClick={handleSave}
-              className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96]", saved ? "text-zinc-950" : "text-zinc-400 hover:text-zinc-950")}
+              className={cn("transition-transform duration-200 ease-out hover:scale-110 active:scale-[0.96]", saved ? "text-white" : "text-zinc-500 hover:text-white")}
             >
-              <Bookmark className={cn("w-6 h-6 transition-colors", saved ? "fill-zinc-950" : "")} strokeWidth={2} />
+              <Bookmark className={cn("w-6 h-6 transition-colors", saved ? "fill-white" : "")} strokeWidth={2} />
             </button>
           </div>
           
           <div className="space-y-1">
             {photo.caption && (
-              <div className="text-sm text-zinc-700">
-                <span className="font-bold text-zinc-950 mr-2 cursor-pointer hover:underline">{photo.ownerName}</span>
+              <div className="text-sm text-zinc-300">
+                <span className="font-bold text-white mr-2 cursor-pointer hover:underline">{photo.ownerName}</span>
                 {photo.caption}
               </div>
             )}
@@ -344,21 +345,21 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             {commentCount > 0 && (
               <button 
                 onClick={handleComment}
-                className="text-sm text-zinc-500 font-medium hover:text-zinc-700 transition-colors pt-1"
+                className="text-sm text-zinc-500 font-medium hover:text-zinc-300 transition-colors pt-1"
               >
                 View all {formatCount(commentCount)} comments
               </button>
             )}
 
             <div className="flex items-center gap-3 pt-2">
-              <span className="text-[11px] text-zinc-400 font-medium uppercase tracking-widest">{photo.timestamp || '2 HOURS AGO'}</span>
+              <span className="text-[11px] text-zinc-500 font-medium uppercase tracking-widest">{photo.timestamp || '2 HOURS AGO'}</span>
               {photo.category && (
-                <Badge variant="secondary" className="bg-zinc-100 text-zinc-500 hover:bg-zinc-200 text-[10px] uppercase tracking-wider rounded border border-zinc-200">
+                <Badge variant="secondary" className="bg-zinc-900 text-zinc-400 hover:bg-zinc-800 text-[10px] uppercase tracking-wider rounded border border-zinc-800">
                   {photo.category}
                 </Badge>
               )}
               {photo.customStyle && (
-                <Badge variant="outline" className="bg-white text-zinc-700 hover:bg-zinc-50 text-[10px] uppercase tracking-wider rounded border border-zinc-300">
+                <Badge variant="outline" className="bg-zinc-950 text-zinc-300 hover:bg-zinc-900 text-[10px] uppercase tracking-wider rounded border border-zinc-700">
                   {photo.customStyle}
                 </Badge>
               )}

@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, MapPin, MessageSquare, Verified, Users } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Portrait', 'Wedding', 'Commercial', 'Street', 'Nature'];
-const SORT_OPTS = ['Top Rated', 'Most Booked', 'Nearest', 'Price'];
+const SORT_OPTS = ['Top Rated', 'Most Booked', 'Nearest'];
 
 export default function ClientSearch() {
   const navigate = useNavigate();
@@ -34,12 +34,11 @@ export default function ClientSearch() {
     avgRating: u.rating || 5.0, 
     globalRank: u.global_rank || 1, 
     categories: u.categories || ['Portrait'], 
-    startingPrice: u.startingPrice || '$500', 
     wins: u.wins || 0,
     location: u.location || 'Global'
   }));
 
-  const filtered = mappedUsers.filter(p =>
+  const filtered = mappedUsers.filter(p => p.role === 'photographer' &&
     (category === 'All' || p.categories.includes(category)) &&
     p.avgRating >= minRating &&
     (searchLower === '' || 
@@ -195,20 +194,15 @@ export default function ClientSearch() {
                       </div>
                     </div>
 
-                    {/* Actions & Price */}
+                    {/* Inquiry-only action; photographers set scope after contact. */}
                     <div className="flex flex-col md:items-end justify-between gap-4 md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-zinc-800 pt-4 md:pt-0 md:pl-6">
-                      <div className="text-left md:text-right w-full">
-                        <div className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-1">Starting at</div>
-                        <div className="text-2xl font-black text-white">{p.startingPrice}</div>
-                      </div>
-                      
                       <div className="flex flex-col gap-2 w-full">
                         <Button onClick={() => navigate(`/profile/${p.id}`)} className="w-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95">
                           View Portfolio
                         </Button>
-                        <Button variant="outline" className="w-full border-zinc-700 text-white hover:bg-zinc-800 transition-all hover:scale-[1.02] active:scale-95">
+                        <Button variant="outline" onClick={() => navigate(`/client/inbox?chat=${p.id}`)} className="w-full border-zinc-700 text-white hover:bg-zinc-800 transition-all hover:scale-[1.02] active:scale-95">
                           <MessageSquare className="w-4 h-4 mr-2" />
-                          Message
+                          Inquire
                         </Button>
                       </div>
                     </div>

@@ -52,16 +52,16 @@ export default function LeaderboardPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <Tabs value={scope} onValueChange={setScope} className="w-full sm:w-auto">
               <TabsList className="bg-white border border-zinc-200 shadow-sm">
-                <TabsTrigger value="global" className="data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-950 text-zinc-500 font-bold">Global</TabsTrigger>
-                <TabsTrigger value="country" className="data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-950 text-zinc-500 font-bold">Country</TabsTrigger>
-                <TabsTrigger value="category" className="data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-950 text-zinc-500 font-bold">Category</TabsTrigger>
+                <TabsTrigger value="global" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Global</TabsTrigger>
+                <TabsTrigger value="country" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Country</TabsTrigger>
+                <TabsTrigger value="category" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Category</TabsTrigger>
               </TabsList>
             </Tabs>
             <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
               <TabsList className="bg-white border border-zinc-200 shadow-sm">
-                <TabsTrigger value="all" className="data-[state=active]:bg-zinc-950 data-[state=active]:text-white text-zinc-500 font-bold">All-Time</TabsTrigger>
-                <TabsTrigger value="month" className="data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-950 text-zinc-500 font-bold">Month</TabsTrigger>
-                <TabsTrigger value="week" className="data-[state=active]:bg-zinc-100 data-[state=active]:text-zinc-950 text-zinc-500 font-bold">Week</TabsTrigger>
+                <TabsTrigger value="all" className="data-[active]:bg-zinc-950 data-[active]:text-white text-zinc-500 font-bold">All-Time</TabsTrigger>
+                <TabsTrigger value="month" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Month</TabsTrigger>
+                <TabsTrigger value="week" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Week</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>

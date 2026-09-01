@@ -157,7 +157,7 @@ export default function AnalyticsPage() {
               <TabsTrigger 
                 key={opt.value} 
                 value={opt.value}
-                className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-black font-medium transition-all h-full"
+                className="rounded-lg px-6 data-[active]:bg-white data-[active]:text-black font-medium transition-all h-full"
               >
                 {opt.label}
               </TabsTrigger>

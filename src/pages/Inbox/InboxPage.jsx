@@ -78,13 +78,13 @@ export default function InboxPage() {
           <TabsList className="grid w-full grid-cols-2 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-1 h-auto">
             <TabsTrigger 
               value="chats" 
-              className="rounded-lg py-2 data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400"
+              className="rounded-lg py-2 data-[active]:bg-zinc-800 data-[active]:text-white text-zinc-400"
             >
               Chats
             </TabsTrigger>
             <TabsTrigger 
               value="bookings"
-              className="rounded-lg py-2 data-[state=active]:bg-zinc-800 data-[state=active]:text-white text-zinc-400"
+              className="rounded-lg py-2 data-[active]:bg-zinc-800 data-[active]:text-white text-zinc-400"
             >
               {isPhotographer ? 'Requests' : 'Bookings'}
             </TabsTrigger>

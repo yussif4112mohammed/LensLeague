@@ -6,19 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="LensLeague — The world's most beautiful and intuitive photography platform. Showcasing photography as the hero." />
     <meta name="theme-color" content="#08080A" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>LensLeague — The World's Most Beautiful Photography Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Leica Aperture Edition brand fonts: Outfit, Inter, JetBrains Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <script>
-      window.addEventListener('error', function(event) {
-        document.body.innerHTML = '<div style="color: red; background: black; padding: 20px; z-index: 999999; position: fixed; inset: 0;"><h2>Fatal Error</h2><pre style="white-space: pre-wrap;">' + event.error?.stack + '\n' + event.message + '</pre></div>';
-      });
-      window.addEventListener('unhandledrejection', function(event) {
-        document.body.innerHTML = '<div style="color: red; background: black; padding: 20px; z-index: 999999; position: fixed; inset: 0;"><h2>Unhandled Rejection</h2><pre style="white-space: pre-wrap;">' + event.reason?.stack + '\n' + event.reason + '</pre></div>';
-      });
-    </script>
   </head>
   <body>
     <div id="root"></div>

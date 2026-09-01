@@ -18,9 +18,9 @@ const STATUS_CONFIG = {
 
 export default function ClientBookings() {
   const navigate = useNavigate();
-  const { bookings, threads } = useApp();
+  const { bookings, currentUser } = useApp();
 
-  const clientBookings = bookings.filter(b => b.clientId === 'client_1');
+  const clientBookings = bookings.filter(b => b.clientId === currentUser?.id);
 
   const getFilteredBookings = (status) => {
     if (status === 'all') return clientBookings;
@@ -123,10 +123,10 @@ export default function ClientBookings() {
 
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="w-full bg-zinc-900 border border-zinc-800 rounded-xl mb-6 p-1">
-          <TabsTrigger value="all" className="flex-1 rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white">All</TabsTrigger>
-          <TabsTrigger value="requested" className="flex-1 rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white">Pending</TabsTrigger>
-          <TabsTrigger value="confirmed" className="flex-1 rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white">Confirmed</TabsTrigger>
-          <TabsTrigger value="completed" className="flex-1 rounded-lg data-[state=active]:bg-zinc-800 data-[state=active]:text-white">Completed</TabsTrigger>
+          <TabsTrigger value="all" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">All</TabsTrigger>
+          <TabsTrigger value="requested" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">Pending</TabsTrigger>
+          <TabsTrigger value="confirmed" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">Confirmed</TabsTrigger>
+          <TabsTrigger value="completed" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">Completed</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all"><BookingList status="all" /></TabsContent>

@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/check-design-tokens.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:tokens": "node scripts/check-design-tokens.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

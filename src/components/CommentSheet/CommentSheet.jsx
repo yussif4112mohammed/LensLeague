@@ -56,13 +56,13 @@ export default function CommentSheet({ photo, onClose }) {
         aria-label="Comments"
       >
         {/* Handle */}
-        <div className="w-12 h-1.5 bg-zinc-700/50 rounded-full mx-auto mt-4 mb-2 shrink-0" />
+        <div className="w-12 h-1.5 bg-muted/50 rounded-full mx-auto mt-4 mb-2 shrink-0" />
 
         {/* Header */}
         <div className="flex items-center justify-center relative p-4 border-b border-white/5 shrink-0">
-          <span className="text-lg font-bold text-white tracking-wide text-glow">Comments</span>
+          <span className="text-lg font-bold text-foreground tracking-wide text-glow">Comments</span>
           <button 
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/5 text-zinc-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-colors" 
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/5 text-muted-foreground flex items-center justify-center hover:bg-white/10 hover:text-foreground transition-colors" 
             onClick={onClose} 
             aria-label="Close comments" 
             id="comment-sheet-close"
@@ -79,15 +79,15 @@ export default function CommentSheet({ photo, onClose }) {
             <div key={c.id} className="flex gap-4 items-start animate-in fade-in slide-in-from-bottom-2 duration-300" id={`comment-${c.id}`}>
               <img src={c.userAvatar} alt={c.userName} className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-white/10 shadow-lg" />
               <div className="flex-1 min-w-0 flex flex-col gap-1">
-                <div className="text-[15px] leading-relaxed text-zinc-200">
-                  <span className="font-bold text-white mr-2">{c.userName}</span>
+                <div className="text-[15px] leading-relaxed text-foreground">
+                  <span className="font-bold text-foreground mr-2">{c.userName}</span>
                   {c.body}
                 </div>
-                <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium tracking-wide">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground font-medium tracking-wide">
                   <span>{c.time || 'just now'}</span>
                   <button
                     className={cn(
-                      "flex items-center gap-1.5 transition-colors duration-200 hover:text-white group",
+                      "flex items-center gap-1.5 transition-colors duration-200 hover:text-foreground group",
                       likedComments.has(c.id) ? "text-emerald-400 hover:text-emerald-300" : ""
                     )}
                     onClick={() => toggleCommentLike(c.id)}
@@ -107,12 +107,12 @@ export default function CommentSheet({ photo, onClose }) {
         </div>
 
         {/* Input row */}
-        <form className="flex items-center gap-3 p-4 bg-zinc-900/50 backdrop-blur-md border-t border-white/5 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0" onSubmit={handleSend}>
+        <form className="flex items-center gap-3 p-4 bg-card/50 backdrop-blur-md border-t border-white/5 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0" onSubmit={handleSend}>
           <img src={currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80'} alt="You" className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-white/10" />
           <input
             ref={inputRef}
             id="comment-input"
-            className="flex-1 h-12 bg-zinc-950/80 border border-white/10 rounded-full px-5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-inner"
+            className="flex-1 h-12 bg-background/80 border border-white/10 rounded-full px-5 text-sm text-foreground placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all shadow-inner"
             type="text"
             placeholder="Add a comment..."
             value={newComment}
@@ -123,7 +123,7 @@ export default function CommentSheet({ photo, onClose }) {
             type="submit"
             className={cn(
               "text-sm font-extrabold tracking-wide uppercase px-2 transition-colors",
-              newComment.trim() ? "text-emerald-400 hover:text-emerald-300" : "text-zinc-600"
+              newComment.trim() ? "text-emerald-400 hover:text-emerald-300" : "text-muted-foreground"
             )}
             disabled={!newComment.trim()}
             aria-label="Post comment"

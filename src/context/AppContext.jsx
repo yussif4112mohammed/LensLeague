@@ -7,9 +7,16 @@ const AppContext = createContext(null);
 // profiles.email and profiles.phone are no longer readable by the anon/authenticated
 // roles (migration v11). Selecting '*' would fail, and would have leaked every
 // user's email address to anyone holding the public key. Ask for columns by name.
+//
+// Every name in this list MUST exist. PostgREST rejects the WHOLE select when one
+// named column is absent, so a single wrong name silently breaks every profile
+// query in the app - which is exactly what `cover` was doing. The column is
+// `cover_url`; there was never a `cover`. The other six names this list carried
+// (account_type, rating, review_count, specialties, profile_completed) are added
+// by migration_v14, so this list and the database now agree.
 const PROFILE_COLUMNS = [
   'id', 'username', 'name', 'display_name', 'bio', 'location',
-  'avatar', 'avatar_url', 'cover', 'cover_url', 'website',
+  'avatar', 'avatar_url', 'cover_url', 'website',
   'role', 'account_type', 'verified', 'banned',
   'points', 'wins', 'global_rank', 'rating', 'review_count',
   'followers_count', 'following_count', 'posts_count', 'competitions_won',
@@ -553,7 +560,7 @@ export function AppProvider({ children }) {
       // 5. Comments - Limit to recent 500 across app
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, profiles:user_id(*)')
+        .select(`*, profiles:user_id(${PROFILE_COLUMNS})`)
         .order('created_at', { ascending: false })
         .limit(500);
       if (commentsData) {
@@ -629,7 +636,9 @@ export function AppProvider({ children }) {
 
   // Helper: push live incoming message from real-time channel to state array
   const appendRealtimeMessage = (m) => {
-    const myId = currentUser?.id || '1';
+    // No '1' fallback - it is not a UUID, so it could never match a real sender
+    // and every incoming realtime message was classed as "from someone else".
+    const myId = currentUser?.id || null;
     setThreads(prev => {
       // Find the thread by thread_id (v3 schema)
       const exists = prev.find(t => t.id === m.thread_id);
@@ -825,8 +834,11 @@ export function AppProvider({ children }) {
   // Chats
   const sendMessage = async (threadId, body) => {
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const senderId = currentUser?.id || (currentRole === 'photographer' ? '1' : 'client_1');
-    const senderName = currentUser?.name || (currentRole === 'photographer' ? 'Aria Nakamura' : 'Sarah Jenkins');
+    // No mock identity fallback. '1' / 'client_1' are not UUIDs, so every write
+    // using them failed - and messages were attributed to a fictional person.
+    const senderId = currentUser?.id;
+    const senderName = currentUser?.name || currentUser?.display_name || 'You';
+    if (!senderId) return { success: false, error: 'Sign in to send a message.' };
 
     setThreads(prev => prev.map(t => {
       if (t.id === threadId) {
@@ -869,11 +881,16 @@ export function AppProvider({ children }) {
       return ch;
     }));
 
-    await supabase.from('challenge_entries').insert({
+    // Was: photographer_id: currentUser?.id || '1' - a non-UUID that made the
+    // insert fail its foreign key while the UI reported the entry as submitted.
+    if (!currentUser?.id) return { success: false, error: 'Sign in to enter a challenge.' };
+    const { error: entryError } = await supabase.from('challenge_entries').insert({
       challenge_id: challengeId,
       photo_url: photoUrl,
-      photographer_id: currentUser?.id || '1'
+      photographer_id: currentUser.id
     });
+    if (entryError) return { success: false, error: entryError.message };
+    return { success: true };
   };
 
   // Admin actions
@@ -1144,27 +1161,54 @@ export function AppProvider({ children }) {
     }
   };
 
+  /**
+   * Like / unlike a photograph.
+   *
+   * Three things were wrong here and all three are the same mistake in
+   * different clothes - trusting a write without looking at what came back:
+   *
+   *   1. It fell back to the string 'anon_user' when signed out. That is not a
+   *      UUID, so the insert always failed - and the UI still showed a like.
+   *   2. supabase-js RESOLVES with { error }; it does not throw. The try/catch
+   *      never fired, so a rejected write looked identical to a successful one.
+   *   3. There was no rollback, so the optimistic count survived a failure and
+   *      only corrected itself on the next full reload.
+   *
+   * The count itself is now maintained by a database trigger (migration v14),
+   * so the optimistic number here is presentation only - the server owns truth.
+   */
   const toggleLikePost = async (postId) => {
-    const userId = currentUser?.id || 'anon_user';
+    const userId = currentUser?.id;
+    if (!userId) return { success: false, error: 'Sign in to like work.' };
+    if (!postId)  return { success: false, error: 'Unknown photograph.' };
 
-    try {
-      const { data: existing } = await supabase
-        .from('likes')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('item_id', postId)
-        .maybeSingle();
+    const { data: existing, error: readErr } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('item_id', postId)
+      .maybeSingle();
 
-      if (existing) {
-        await supabase.from('likes').delete().eq('user_id', userId).eq('item_id', postId);
-        setPhotos(prev => prev.map(p => p.id === postId ? { ...p, likes: Math.max(0, p.likes - 1) } : p));
-      } else {
-        await supabase.from('likes').insert({ user_id: userId, item_id: postId });
-        setPhotos(prev => prev.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
-      }
-    } catch (err) {
-      console.warn('toggleLikePost error:', err.message);
+    if (readErr) return { success: false, error: readErr.message };
+
+    const liked = !existing;
+    const delta = liked ? 1 : -1;
+
+    // Optimistic: respond now, correct later if the server disagrees.
+    setPhotos(prev => prev.map(p =>
+      p.id === postId ? { ...p, likes: Math.max(0, (p.likes || 0) + delta) } : p));
+
+    const { error } = liked
+      ? await supabase.from('likes').insert({ user_id: userId, item_id: postId })
+      : await supabase.from('likes').delete().eq('user_id', userId).eq('item_id', postId);
+
+    if (error) {
+      // Roll the optimistic change back rather than leaving a lie on screen.
+      setPhotos(prev => prev.map(p =>
+        p.id === postId ? { ...p, likes: Math.max(0, (p.likes || 0) - delta) } : p));
+      return { success: false, error: error.message };
     }
+    return { success: true, liked };
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1176,30 +1220,23 @@ export function AppProvider({ children }) {
     }
 
     try {
-      // Try get_feed RPC first for algorithmically ranked timeline
-      if (filterType === 'for-you' && currentUser?.id && !currentUser.id.startsWith('usr_')) {
-        const { data: feedPosts, error: rpcErr } = await supabase.rpc('get_feed', {
-          p_user_id: currentUser.id,
-          p_limit: end - start + 1
-        });
-        if (!rpcErr && feedPosts && feedPosts.length > 0) {
-          return feedPosts.map(p => ({
-            id: p.id,
-            url: p.image_url,
-            isVideo: p.image_url?.toLowerCase()?.includes('.mp4') || p.image_url?.includes('/video/'),
-            ownerId: p.author_id,
-            caption: p.caption,
-            likes: p.like_count || 0,
-            comments: p.comment_count || 0,
-            aspectRatio: '3/4',
-            timestamp: 'Just now'
-          }));
-        }
-      }
+      // The get_feed RPC is deliberately NOT used here yet.
+      //
+      // Its signature is get_feed(p_user_id, p_cursor, p_limit) and it has no
+      // offset. The client only ever passed p_limit, so page 2 asked for the
+      // same top rows as page 1: the feed re-fetched the first page forever
+      // while hasMore stayed true, and infinite scroll appended nothing. Its
+      // return shape also omits the author, so posts rendered with a blank
+      // avatar and no name.
+      //
+      // Rather than paper over that, we page portfolio_items directly below -
+      // it paginates correctly with .range() and returns the full author. The
+      // ranked timeline can come back once get_feed takes a real cursor and
+      // returns the photographer; that needs a migration, not a client change.
 
       let query = supabase
         .from('portfolio_items')
-        .select('*, albums!inner(privacy_level), profiles:photographer_id(*)')
+        .select(`*, albums!inner(privacy_level), profiles:photographer_id(${PROFILE_COLUMNS})`)
         .eq('albums.privacy_level', 'public');
 
       if (filterType === 'following' && currentUser) {
@@ -1251,8 +1288,9 @@ export function AppProvider({ children }) {
   }, [currentUser?.id]);
 
   const uploadPhoto = async ({ file, url, caption, category, customStyle, gear, location, exifData, destination = 'feed', alt_text = '' }) => {
-    const userId = currentUser?.id || 'anon_user';
-    const userName = currentUser?.display_name || currentUser?.name || 'Anonymous Photographer';
+    const userId = currentUser?.id;
+    if (!userId) return { success: false, error: 'Sign in to upload.' };
+    const userName = currentUser?.display_name || currentUser?.name || 'Photographer';
     const userAvatar = currentUser?.avatar_url || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
 
     let finalUrl = url;
@@ -1342,7 +1380,13 @@ export function AppProvider({ children }) {
             caption: caption || '',
             categories: [category || 'Nature'],
             custom_style: customStyle || null,
-            exif_data: exifData || null
+            exif_data: exifData || null,
+            // alt_text and location were collected from the photographer and
+            // then thrown away: the old code wrote them to `photos`, which has
+            // neither column, inside a swallowed catch. Both columns now exist
+            // on portfolio_items (migration v14), so they are finally kept.
+            alt_text: alt_text || null,
+            location: location || null
           })
           .select('id')
           .single();
@@ -1415,61 +1459,56 @@ export function AppProvider({ children }) {
     }
   };
 
+  /**
+   * Post a comment on a photograph.
+   *
+   * Same corrections as likes: require a real signed-in user, check the result,
+   * and roll back the optimistic row if the write is rejected. Additionally the
+   * temporary row is now REPLACED by the row the database returns, so the
+   * comment carries its real id and timestamp - previously it kept a
+   * client-invented `c_1699...` id, which meant deleting it, or replying to it,
+   * would have addressed a row that does not exist.
+   */
   const addPhotoComment = async (photoId, body) => {
-    const userId = currentUser?.id || 'anon_user';
+    const userId = currentUser?.id;
+    if (!userId) return { success: false, error: 'Sign in to comment.' };
 
-    const newComment = {
-      id: `c_${Date.now()}`,
+    const text = (body || '').trim();
+    if (!text)             return { success: false, error: 'Write something first.' };
+    if (text.length > 2000) return { success: false, error: 'Comments are limited to 2000 characters.' };
+
+    const tempId = `pending_${Date.now()}`;
+    const optimistic = {
+      id: tempId,
       photo_id: photoId,
       user_id: userId,
-      body: body,
+      body: text,
       created_at: new Date().toISOString(),
-      userName: currentUser.name || 'Anonymous',
-      userAvatar: currentUser.avatar || ''
+      userName: currentUser?.name || 'You',
+      userAvatar: currentUser?.avatar_url || currentUser?.avatar || '',
+      pending: true,
     };
+    setComments(prev => [...prev, optimistic]);
 
-    setComments(prev => [...prev, newComment]);
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({ item_id: photoId, user_id: userId, body: text })
+      .select('id, item_id, user_id, body, created_at')
+      .single();
 
-    try {
-      await supabase.from('comments').insert({
-        item_id: photoId,
-        user_id: userId,
-        body: body
-      });
-    } catch (err) {
-      console.warn('Supabase comment insert error:', err.message);
+    if (error) {
+      setComments(prev => prev.filter(c => c.id !== tempId));
+      return { success: false, error: error.message };
     }
-  };
 
-  // User-facing: send a free-text product feedback note. Anyone may submit —
-  // signed-out visitors leave user_id NULL (migration v13). There is no local
-  // list to update: feedback is write-only from the client's point of view.
-  const submitFeedback = async (message) => {
-    const text = (message || '').trim();
-    if (!text) return { success: false, error: 'Please enter a message before sending.' };
-    if (text.length > 2000) return { success: false, error: 'Feedback must be 2000 characters or fewer.' };
-
-    // Only a real Supabase auth id belongs in a foreign key. The placeholder
-    // ids minted for mock/offline sessions (usr_/anon_) are not rows in profiles.
-    const rawId = currentUser?.id ? String(currentUser.id) : '';
-    const userId = rawId && !rawId.startsWith('usr_') && !rawId.startsWith('anon_') ? rawId : null;
-
-    try {
-      const { error } = await supabase.from('feedback').insert({
-        user_id: userId,
-        message: text,
-        page: typeof window !== 'undefined' ? window.location.pathname : null,
-        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-      });
-      if (error) throw error;
-      await recordAuditLog('FEEDBACK_SUBMITTED', 'feedback', {
-        page: typeof window !== 'undefined' ? window.location.pathname : null,
-      });
-      return { success: true };
-    } catch (err) {
-      console.warn('submitFeedback error:', err.message);
-      return { success: false, error: err.message || 'Could not send feedback. Please try again.' };
-    }
+    // Swap the placeholder for the real record.
+    setComments(prev => prev.map(c => c.id === tempId ? {
+      ...optimistic,
+      id: data.id,
+      created_at: data.created_at,
+      pending: false,
+    } : c));
+    return { success: true, comment: data };
   };
 
   const logoutUser = async () => {
@@ -1579,7 +1618,6 @@ export function AppProvider({ children }) {
       signUpUser,
       loginUser,
       logoutUser,
-      submitFeedback,
       follows,
       comments,
       savedItemIds,

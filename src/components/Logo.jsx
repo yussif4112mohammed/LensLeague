@@ -11,7 +11,7 @@ export default function Logo({ className = "w-8 h-8", withText = false }) {
         />
       </div>
       {withText && (
-        <span className="font-bold text-xl tracking-tight text-white flex items-center">
+        <span className="font-bold text-xl tracking-tight text-foreground flex items-center">
           LensLeague
         </span>
       )}

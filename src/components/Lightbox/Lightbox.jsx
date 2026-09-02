@@ -149,7 +149,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
 
   const TagRow = () =>
     tags.length === 0 ? null : (
-      <div className="flex flex-wrap gap-1.5 font-mono text-[10.5px] text-white/[.62]">
+      <div className="flex flex-wrap gap-1.5 font-mono text-[10.5px] text-foreground/[.62]">
         {tags.map((tag, i) => (
           <span
             key={`${tag}-${i}`}
@@ -174,7 +174,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
       aria-label={photo.caption || 'Photo detail'}
     >
       {/* ══ Mobile: immersive frame with an info sheet (mockup 1e) ══ */}
-      <div className="flex h-full flex-col bg-[#08080a] md:hidden">
+      <div className="flex h-full flex-col bg-background md:hidden">
         <div className="flex flex-none items-center justify-between px-5 pb-2.5 pt-4 text-white/60">
           <button onClick={onClose} aria-label="Back" className="text-[18px] leading-none">←</button>
           <span className="font-mono text-[10px] tracking-[.1em]">
@@ -191,14 +191,14 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
           )}
         </div>
 
-        <div className="relative -mt-3.5 flex max-h-[62%] flex-none flex-col gap-[11px] overflow-y-auto rounded-t-[18px] border-t border-white/[.08] bg-[#151618] px-5 pb-6 pt-2.5">
+        <div className="relative -mt-3.5 flex max-h-[62%] flex-none flex-col gap-[11px] overflow-y-auto rounded-t-[18px] border-t border-white/[.08] bg-card px-5 pb-6 pt-2.5">
           <span className="h-1 w-9 flex-none self-center rounded-sm bg-white/20" />
 
           <div className="flex flex-col gap-1">
             <h2 className="text-[15px] font-semibold leading-[1.2]">{photo.caption || 'Untitled'}</h2>
             <button
               onClick={() => navigate(`/profile/${photo.ownerId}`)}
-              className="text-left text-[12px] leading-[1.4] text-white/[.55]"
+              className="text-left text-[12px] leading-[1.4] text-foreground/[.55]"
             >
               {[photo.ownerName, photo.location, dateLabel].filter(Boolean).join(' · ')}
             </button>
@@ -225,7 +225,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
               </div>
               <button
                 onClick={() => setSheetExpanded(v => !v)}
-                className="self-start text-[11px] text-white/[.42] hover:text-white/70"
+                className="self-start text-[11px] text-foreground/[.42] hover:text-white/70"
               >
                 {sheetExpanded ? 'Hide comments' : `View all ${photoComments.length} comments`}
               </button>
@@ -251,7 +251,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder="Add a comment…"
                   aria-label="Add a comment"
-                  className="h-[38px] w-full rounded-[9px] border border-white/10 bg-[#1a1b1d] px-3 text-[12px] text-foreground outline-none placeholder:text-white/[.36] focus:border-brand/50"
+                  className="h-[38px] w-full rounded-[9px] border border-white/10 bg-card px-3 text-[12px] text-foreground outline-none placeholder:text-foreground/[.36] focus:border-brand/50"
                 />
               </form>
             </div>
@@ -272,9 +272,9 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
           <div
             ref={dialogRef}
             tabIndex={-1}
-            className="flex h-full max-h-[700px] w-full max-w-[1080px] overflow-hidden rounded-xl border border-white/10 bg-[#121315] outline-none"
+            className="flex h-full max-h-[700px] w-full max-w-[1080px] overflow-hidden rounded-xl border border-white/10 bg-background outline-none"
           >
-            <div className="flex min-h-0 flex-1 items-center justify-center bg-[#17181a]">
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-card">
               {photo.isVideo ? (
                 <video src={photo.url} controls autoPlay loop className="h-full w-full object-contain" />
               ) : (
@@ -301,7 +301,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
                   >
                     {photo.ownerName || 'Photographer'}
                   </button>
-                  <span className="truncate font-mono text-[10.5px] leading-none text-white/[.44]">
+                  <span className="truncate font-mono text-[10.5px] leading-none text-foreground/[.44]">
                     {(photo.location || 'lensleague').toLowerCase()}
                   </span>
                 </div>
@@ -323,7 +323,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
                   {photo.caption || 'Untitled'}
                 </h2>
                 {photo.gear && (
-                  <p className="text-[13px] leading-[1.5] text-white/[.62] text-pretty">{photo.gear}</p>
+                  <p className="text-[13px] leading-[1.5] text-foreground/[.62] text-pretty">{photo.gear}</p>
                 )}
               </div>
 
@@ -331,7 +331,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
               <ActionRow />
 
               <div className="flex min-h-0 flex-1 flex-col gap-3 border-t border-white/[.08] pt-3.5">
-                <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]">
+                <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]">
                   {photoComments.length} {photoComments.length === 1 ? 'COMMENT' : 'COMMENTS'}
                 </span>
 
@@ -351,7 +351,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
                           style={{ backgroundImage: 'repeating-linear-gradient(135deg,#232427 0 6px,#1b1c1f 6px 12px)' }}
                         />
                       )}
-                      <p className="text-[12px] leading-[1.45] text-white/[.68]">
+                      <p className="text-[12px] leading-[1.45] text-foreground/[.68]">
                         <b className="font-semibold text-foreground">{c.userName || 'Someone'}</b> {c.body}
                       </p>
                     </div>
@@ -364,7 +364,7 @@ export default function Lightbox({ photos = [], index, onIndexChange, onClose })
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder="Add a comment…"
                     aria-label="Add a comment"
-                    className="h-[38px] w-full rounded-[9px] border border-white/10 bg-[#1a1b1d] px-3 text-[12px] text-foreground outline-none placeholder:text-white/[.36] focus:border-brand/50"
+                    className="h-[38px] w-full rounded-[9px] border border-white/10 bg-card px-3 text-[12px] text-foreground outline-none placeholder:text-foreground/[.36] focus:border-brand/50"
                   />
                 </form>
               </div>

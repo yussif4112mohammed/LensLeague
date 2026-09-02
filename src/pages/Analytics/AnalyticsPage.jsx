@@ -118,46 +118,46 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white pb-20 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-background text-foreground pb-20 animate-in fade-in duration-500">
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-zinc-400" />
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <BarChart3 className="w-8 h-8 text-muted-foreground" />
               Your Analytics
             </h1>
-            <p className="text-zinc-400 text-lg">Track your growth and performance.</p>
+            <p className="text-muted-foreground text-lg">Track your growth and performance.</p>
           </div>
           
           <div className="flex items-center gap-4 w-full md:w-auto">
             <Button 
               onClick={handleOpenWrapped} 
               id="wrapped-btn"
-              className="bg-gradient-to-r from-zinc-800 to-zinc-900 border border-zinc-700 hover:border-zinc-500 text-white h-14 px-6 rounded-2xl shadow-lg relative overflow-hidden group transition-all duration-300 w-full md:w-auto flex items-center gap-4"
+              className="bg-gradient-to-r from-muted to-card border border-border hover:border-ring text-foreground h-14 px-6 rounded-2xl shadow-lg relative overflow-hidden group transition-all duration-300 w-full md:w-auto flex items-center gap-4"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
               <div className="bg-white/10 p-2 rounded-xl">
-                <BarChart3 className="w-5 h-5 text-white" />
+                <BarChart3 className="w-5 h-5 text-foreground" />
               </div>
               <div className="text-left flex-1">
                 <div className="font-bold text-sm leading-tight">July Wrapped</div>
-                <div className="text-xs text-zinc-400">Tap to view</div>
+                <div className="text-xs text-muted-foreground">Tap to view</div>
               </div>
-              <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             </Button>
           </div>
         </div>
 
         {/* Period Tabs */}
         <Tabs value={period} onValueChange={setPeriod} className="w-full md:w-auto">
-          <TabsList className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-1 h-12">
+          <TabsList className="bg-card/50 border border-border/50 rounded-xl p-1 h-12">
             {PERIOD_OPTS.map(opt => (
               <TabsTrigger 
                 key={opt.value} 
                 value={opt.value}
-                className="rounded-lg px-6 data-[active]:bg-white data-[active]:text-black font-medium transition-all h-full"
+                className="rounded-lg px-6 data-[active]:bg-primary data-[active]:text-primary-foreground font-medium transition-all h-full"
               >
                 {opt.label}
               </TabsTrigger>
@@ -171,20 +171,20 @@ export default function AnalyticsPage() {
             const Icon = s.icon;
             const isPositive = s.delta.startsWith('+');
             return (
-              <Card key={s.label} className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl hover:bg-zinc-900/80 transition-colors">
+              <Card key={s.label} className="bg-card/50 border-border/50 rounded-2xl hover:bg-card/80 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Icon className="w-4 h-4" />
                     {s.label}
                   </CardTitle>
                   <MiniSparkline data={s.sparkline} />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-white tracking-tight">{s.value}</div>
+                  <div className="text-3xl font-bold text-foreground tracking-tight">{s.value}</div>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className={cn(
                       "bg-transparent rounded-lg font-medium border-0 px-0",
-                      isPositive ? "text-emerald-400" : "text-zinc-500"
+                      isPositive ? "text-emerald-400" : "text-muted-foreground"
                     )}>
                       {isPositive && <TrendingUp className="w-3 h-3 mr-1" />}
                       {s.delta}
@@ -199,27 +199,27 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Top Performing Work */}
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-zinc-400" />
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Award className="w-5 h-5 text-muted-foreground" />
               Top Performing Work
             </h2>
-            <Card className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl overflow-hidden">
-              <div className="divide-y divide-zinc-800/50">
+            <Card className="bg-card/50 border-border/50 rounded-2xl overflow-hidden">
+              <div className="divide-y divide-border/50">
                 {TOP_PHOTOS.map((p, i) => (
-                  <div key={p.id} className="flex items-center gap-4 p-4 hover:bg-zinc-800/20 transition-colors group">
-                    <div className="w-8 text-center font-bold text-zinc-500">#{i + 1}</div>
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-800 flex-shrink-0 relative">
+                  <div key={p.id} className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors group">
+                    <div className="w-8 text-center font-bold text-muted-foreground">#{i + 1}</div>
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0 relative">
                       <img src={p.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-xl" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white truncate">{p.category}</div>
-                      <div className="text-sm text-zinc-400 flex items-center gap-1.5 mt-1">
+                      <div className="font-semibold text-foreground truncate">{p.category}</div>
+                      <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
                         <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
                         {p.votes.toLocaleString()} votes
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="hidden sm:flex bg-zinc-900 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-lg">
+                    <Button variant="outline" size="sm" className="hidden sm:flex bg-card border-border text-foreground hover:bg-muted hover:text-foreground rounded-lg">
                       + Portfolio
                     </Button>
                   </div>
@@ -230,11 +230,11 @@ export default function AnalyticsPage() {
 
           {/* Audience */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-zinc-400" />
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Users className="w-5 h-5 text-muted-foreground" />
               Audience
             </h2>
-            <Card className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl p-6">
+            <Card className="bg-card/50 border-border/50 rounded-2xl p-6">
               <div className="space-y-6">
                 {[
                   { country: 'United States', pct: 28, flag: '🇺🇸' },
@@ -247,11 +247,11 @@ export default function AnalyticsPage() {
                     <span className="text-xl">{a.flag}</span>
                     <div className="flex-1">
                       <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-sm font-medium text-zinc-300">{a.country}</span>
-                        <span className="text-xs font-bold text-zinc-500">{a.pct}%</span>
+                        <span className="text-sm font-medium text-foreground">{a.country}</span>
+                        <span className="text-xs font-bold text-muted-foreground">{a.pct}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${a.pct}%` }} />
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-card rounded-full transition-all duration-1000" style={{ width: `${a.pct}%` }} />
                       </div>
                     </div>
                   </div>
@@ -264,17 +264,17 @@ export default function AnalyticsPage() {
 
       {/* Interactive Story-style Wrapped Modal */}
       <Dialog open={showWrapped} onOpenChange={setShowWrapped}>
-        <DialogContent className="sm:max-w-[400px] h-[700px] max-h-[90vh] p-0 bg-black border-zinc-800 rounded-[2rem] overflow-hidden flex flex-col shadow-2xl [&>button]:hidden">
+        <DialogContent className="sm:max-w-[400px] h-[700px] max-h-[90vh] p-0 bg-black border-border rounded-[2rem] overflow-hidden flex flex-col shadow-2xl [&>button]:hidden">
           
           {/* Progress Bars */}
           <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-4 pt-6 bg-gradient-to-b from-black/80 to-transparent">
             {[0, 1, 2, 3, 4].map(idx => (
-              <div key={idx} className="h-1 flex-1 bg-zinc-800/50 rounded-full overflow-hidden backdrop-blur-sm">
+              <div key={idx} className="h-1 flex-1 bg-muted/50 rounded-full overflow-hidden backdrop-blur-sm">
                 <div 
                   className={cn(
                     "h-full rounded-full transition-all duration-[4000ms] ease-linear",
-                    idx < currentSlide ? "bg-white w-full" : 
-                    idx === currentSlide ? "bg-white w-full" : "bg-transparent w-0"
+                    idx < currentSlide ? "bg-card w-full" : 
+                    idx === currentSlide ? "bg-card w-full" : "bg-transparent w-0"
                   )}
                   style={{
                     transitionDuration: idx === currentSlide ? '4000ms' : '0ms',
@@ -287,7 +287,7 @@ export default function AnalyticsPage() {
 
           <button 
             onClick={handleCloseWrapped}
-            className="absolute top-12 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white/70 hover:bg-black/80 hover:text-white backdrop-blur-md transition-colors"
+            className="absolute top-12 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white/70 hover:bg-black/80 hover:text-foreground backdrop-blur-md transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -303,16 +303,16 @@ export default function AnalyticsPage() {
             
             {currentSlide === 0 && (
               <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700">
-                <div className="w-20 h-20 mx-auto bg-zinc-900 rounded-3xl flex items-center justify-center rotate-12 shadow-2xl border border-zinc-800/50">
-                  <Camera className="w-10 h-10 text-white -rotate-12" />
+                <div className="w-20 h-20 mx-auto bg-card rounded-3xl flex items-center justify-center rotate-12 shadow-2xl border border-border/50">
+                  <Camera className="w-10 h-10 text-foreground -rotate-12" />
                 </div>
                 <div>
-                  <h2 className="text-4xl font-black text-white leading-tight">
+                  <h2 className="text-4xl font-black text-foreground leading-tight">
                     Your July<br/>
                     <span className="bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-transparent">Wrapped</span>
                   </h2>
                 </div>
-                <p className="text-zinc-400 text-lg">Let's look back at your creative achievements this month on LensLeague.</p>
+                <p className="text-muted-foreground text-lg">Let's look back at your creative achievements this month on LensLeague.</p>
               </div>
             )}
 
@@ -323,10 +323,10 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <div className="text-sm uppercase tracking-widest font-bold text-rose-500/80 mb-2">Total Love</div>
-                  <h2 className="text-6xl font-black text-white">3,241</h2>
-                  <h3 className="text-2xl font-bold text-zinc-300 mt-2">Votes Received</h3>
+                  <h2 className="text-6xl font-black text-foreground">3,241</h2>
+                  <h3 className="text-2xl font-bold text-foreground mt-2">Votes Received</h3>
                 </div>
-                <p className="text-zinc-400">Your photos inspired the global community, racking up thousands of visual reactions!</p>
+                <p className="text-muted-foreground">Your photos inspired the global community, racking up thousands of visual reactions!</p>
               </div>
             )}
 
@@ -337,19 +337,19 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <div className="text-sm uppercase tracking-widest font-bold text-amber-500/80 mb-2">Victory Lap</div>
-                  <h2 className="text-5xl font-black text-white">87 Wins</h2>
+                  <h2 className="text-5xl font-black text-foreground">87 Wins</h2>
                 </div>
-                <p className="text-zinc-400">You dominated head-to-head vote battles with a max 12-day upload streak.</p>
+                <p className="text-muted-foreground">You dominated head-to-head vote battles with a max 12-day upload streak.</p>
               </div>
             )}
 
             {currentSlide === 3 && (
               <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700 w-full">
-                <div className="text-sm uppercase tracking-widest font-bold text-zinc-500 mb-2">Your Masterpiece</div>
-                <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
+                <div className="text-sm uppercase tracking-widest font-bold text-muted-foreground mb-2">Your Masterpiece</div>
+                <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border border-border">
                   <img src={TOP_PHOTOS[0].url} alt="Masterpiece" className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 text-left">
-                    <p className="text-2xl font-bold text-white mb-1">Portrait Session</p>
+                    <p className="text-2xl font-bold text-foreground mb-1">Portrait Session</p>
                     <div className="flex items-center gap-2 text-rose-400 font-medium">
                       <Heart className="w-4 h-4 fill-rose-400" />
                       {TOP_PHOTOS[0].votes.toLocaleString()} votes
@@ -362,36 +362,36 @@ export default function AnalyticsPage() {
             {currentSlide === 4 && (
               <div className="w-full space-y-6 animate-in zoom-in-95 fade-in duration-700">
                 <Crown className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-white">Your July Scorecard</h2>
+                <h2 className="text-2xl font-bold text-foreground">Your July Scorecard</h2>
                 
-                <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
+                <div className="bg-card/80 border border-border rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
                   <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 blur-3xl rounded-full" />
                   
                   <div className="flex flex-col items-center gap-4 relative z-10">
-                    <Avatar className="w-20 h-20 border-2 border-zinc-700">
+                    <Avatar className="w-20 h-20 border-2 border-border">
                       <AvatarImage src={ME.avatar} alt={ME.name} />
                       <AvatarFallback>{ME.name[0]}</AvatarFallback>
                     </Avatar>
                     
                     <div className="text-center">
-                      <div className="text-xl font-bold text-white">{ME.name}</div>
+                      <div className="text-xl font-bold text-foreground">{ME.name}</div>
                       <Badge variant="secondary" className="mt-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-0">
                         Rank #{ME.globalRank || 42} Globally
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-4 w-full mt-4 pt-4 border-t border-zinc-800/50">
+                    <div className="grid grid-cols-3 gap-4 w-full mt-4 pt-4 border-t border-border/50">
                       <div className="text-center">
-                        <div className="text-2xl font-black text-white">3.2k</div>
-                        <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider mt-1">Votes</div>
+                        <div className="text-2xl font-black text-foreground">3.2k</div>
+                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Votes</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-black text-white">87</div>
-                        <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider mt-1">Wins</div>
+                        <div className="text-2xl font-black text-foreground">87</div>
+                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Wins</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-black text-white">4.97</div>
-                        <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider mt-1">Rating</div>
+                        <div className="text-2xl font-black text-foreground">4.97</div>
+                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Rating</div>
                       </div>
                     </div>
                   </div>
@@ -403,7 +403,7 @@ export default function AnalyticsPage() {
                     className={cn(
                       "w-full h-14 rounded-xl font-bold text-base transition-all duration-300",
                       scorecardShared 
-                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-foreground"
                         : "bg-primary text-primary-foreground hover:bg-primary/90"
                     )}
                   >

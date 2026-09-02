@@ -33,11 +33,11 @@ export default function ClientBookings() {
     
     if (list.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
-          <div className="h-16 w-16 rounded-full bg-zinc-900 flex items-center justify-center mb-4 border border-zinc-800">
-            <Calendar className="h-8 w-8 text-zinc-700" />
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+          <div className="h-16 w-16 rounded-full bg-card flex items-center justify-center mb-4 border border-border">
+            <Calendar className="h-8 w-8 text-foreground" />
           </div>
-          <p className="text-zinc-400 font-medium">No {status !== 'all' ? status : ''} bookings found</p>
+          <p className="text-muted-foreground font-medium">No {status !== 'all' ? status : ''} bookings found</p>
           <p className="text-sm mt-1">Ready for your next photoshoot?</p>
           <Button className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl" onClick={() => navigate('/client/search')}>
             Find Photographers
@@ -51,17 +51,17 @@ export default function ClientBookings() {
         {list.map(b => {
           const st = STATUS_CONFIG[b.status] || STATUS_CONFIG.requested;
           return (
-            <Card key={b.id} className="bg-zinc-900/50 border-zinc-800/50 rounded-2xl overflow-hidden">
+            <Card key={b.id} className="bg-card/50 border-border/50 rounded-2xl overflow-hidden">
               <CardContent className="p-0">
-                <div className="p-4 border-b border-zinc-800/50 flex justify-between items-start">
+                <div className="p-4 border-b border-border/50 flex justify-between items-start">
                   <div className="flex gap-3">
-                    <Avatar className="h-12 w-12 border border-zinc-700 cursor-pointer" onClick={() => navigate(`/profile/${b.photographerId}`)}>
+                    <Avatar className="h-12 w-12 border border-border cursor-pointer" onClick={() => navigate(`/profile/${b.photographerId}`)}>
                       <AvatarImage src={b.photographerAvatar} alt={b.photographerName} />
                       <AvatarFallback>{b.photographerName[0]}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="text-white font-bold cursor-pointer" onClick={() => navigate(`/profile/${b.photographerId}`)}>{b.photographerName}</h3>
-                      <p className="text-zinc-500 text-sm">Photography Shoot</p>
+                      <h3 className="text-foreground font-bold cursor-pointer" onClick={() => navigate(`/profile/${b.photographerId}`)}>{b.photographerName}</h3>
+                      <p className="text-muted-foreground text-sm">Photography Shoot</p>
                     </div>
                   </div>
                   <Badge className={cn("px-2 py-1 border", st.bg, st.color, st.border)}>
@@ -71,19 +71,19 @@ export default function ClientBookings() {
                 
                 <div className="p-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center text-zinc-300">
-                      <Calendar className="h-4 w-4 mr-2 text-zinc-500" /> {b.date}
+                    <div className="flex items-center text-foreground">
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" /> {b.date}
                     </div>
-                    <div className="flex items-center text-zinc-300">
-                      <DollarSign className="h-4 w-4 mr-2 text-zinc-500" /> {b.budget}
+                    <div className="flex items-center text-foreground">
+                      <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" /> {b.budget}
                     </div>
-                    <div className="flex items-center text-zinc-300 col-span-2">
-                      <MapPin className="h-4 w-4 mr-2 text-zinc-500" /> {b.location}
+                    <div className="flex items-center text-foreground col-span-2">
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" /> {b.location}
                     </div>
                   </div>
                   
                   {b.message && (
-                    <div className="mt-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800/50 text-zinc-400 text-sm italic">
+                    <div className="mt-3 p-3 bg-card rounded-xl border border-border/50 text-muted-foreground text-sm italic">
                       "{b.message}"
                     </div>
                   )}
@@ -100,7 +100,7 @@ export default function ClientBookings() {
                       <Star className="h-4 w-4 mr-2" /> Leave Review
                     </Button>
                   )}
-                  <Button variant="outline" className="flex-1 bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800 rounded-xl" onClick={() => navigate(`/profile/${b.photographerId}`)}>
+                  <Button variant="outline" className="flex-1 bg-card text-foreground border-border hover:bg-muted rounded-xl" onClick={() => navigate(`/profile/${b.photographerId}`)}>
                     View Profile
                   </Button>
                 </div>
@@ -113,20 +113,20 @@ export default function ClientBookings() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-zinc-400 p-4 pb-24 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-background text-muted-foreground p-4 pb-24 animate-in fade-in duration-500">
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-white font-bold text-2xl">My Bookings</h1>
+        <h1 className="text-foreground font-bold text-2xl">My Bookings</h1>
         <Button size="icon" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl" onClick={() => navigate('/client/search')}>
           <Plus className="h-5 w-5" />
         </Button>
       </header>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="w-full bg-zinc-900 border border-zinc-800 rounded-xl mb-6 p-1">
-          <TabsTrigger value="all" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">All</TabsTrigger>
-          <TabsTrigger value="requested" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">Pending</TabsTrigger>
-          <TabsTrigger value="confirmed" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">Confirmed</TabsTrigger>
-          <TabsTrigger value="completed" className="flex-1 rounded-lg data-[active]:bg-zinc-800 data-[active]:text-white">Completed</TabsTrigger>
+        <TabsList className="w-full bg-card border border-border rounded-xl mb-6 p-1">
+          <TabsTrigger value="all" className="flex-1 rounded-lg data-[active]:bg-muted data-[active]:text-foreground">All</TabsTrigger>
+          <TabsTrigger value="requested" className="flex-1 rounded-lg data-[active]:bg-muted data-[active]:text-foreground">Pending</TabsTrigger>
+          <TabsTrigger value="confirmed" className="flex-1 rounded-lg data-[active]:bg-muted data-[active]:text-foreground">Confirmed</TabsTrigger>
+          <TabsTrigger value="completed" className="flex-1 rounded-lg data-[active]:bg-muted data-[active]:text-foreground">Completed</TabsTrigger>
         </TabsList>
         
         <TabsContent value="all"><BookingList status="all" /></TabsContent>

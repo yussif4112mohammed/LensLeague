@@ -55,13 +55,13 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
         <Card className="max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row bg-card shadow-2xl border-border/50 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
           <div className="relative flex-1 bg-black/90 flex items-center justify-center overflow-hidden min-h-[300px] md:min-h-0">
             <img src={photo.url} alt={photo.caption} className="max-w-full max-h-full object-contain" />
-            <button className="absolute top-4 left-4 p-2 bg-black/50 hover:bg-black text-white rounded-full transition-colors md:hidden" onClick={onClose}>✕</button>
+            <button className="absolute top-4 left-4 p-2 bg-black/50 hover:bg-black text-foreground rounded-full transition-colors md:hidden" onClick={onClose}>✕</button>
           </div>
           
           <div className="w-full md:w-[380px] flex flex-col bg-card border-l border-border/40">
             <div className="p-4 border-b border-border/40 flex items-center justify-between">
               <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { onClose(); onNavigateProfile?.(); }}>
-                <Avatar className="h-10 w-10 border border-border group-hover:border-zinc-500 transition-colors">
+                <Avatar className="h-10 w-10 border border-border group-hover:border-ring transition-colors">
                   <AvatarImage src={photo.ownerAvatar} />
                   <AvatarFallback>{photo.ownerName[0]}</AvatarFallback>
                 </Avatar>
@@ -123,29 +123,29 @@ function PhotoDetailModal({ photo, onClose, onNavigateProfile }) {
 function SkeletonProfile() {
   return (
     <div className="w-full min-h-screen bg-background animate-pulse pb-20">
-      <div className="relative h-64 md:h-80 w-full bg-zinc-900 border-b border-border/50" />
+      <div className="relative h-64 md:h-80 w-full bg-card border-b border-border/50" />
       <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10">
         <div className="flex flex-col md:flex-row gap-6 md:items-end justify-between mb-8">
           <div className="flex items-end gap-6">
-            <div className="h-32 w-32 rounded-full bg-zinc-800 border-4 border-background shadow-xl" />
+            <div className="h-32 w-32 rounded-full bg-muted border-4 border-background shadow-xl" />
             <div className="pb-2 space-y-3">
-              <div className="h-8 w-48 bg-zinc-800 rounded-md" />
-              <div className="h-4 w-32 bg-zinc-800 rounded-md" />
+              <div className="h-8 w-48 bg-muted rounded-md" />
+              <div className="h-4 w-32 bg-muted rounded-md" />
             </div>
           </div>
           <div className="pb-2">
-            <div className="h-10 w-32 bg-zinc-800 rounded-full" />
+            <div className="h-10 w-32 bg-muted rounded-full" />
           </div>
         </div>
         <div className="space-y-3 mb-8 max-w-3xl">
-          <div className="h-4 w-full bg-zinc-800 rounded-md" />
-          <div className="h-4 w-5/6 bg-zinc-800 rounded-md" />
-          <div className="h-4 w-4/6 bg-zinc-800 rounded-md" />
+          <div className="h-4 w-full bg-muted rounded-md" />
+          <div className="h-4 w-5/6 bg-muted rounded-md" />
+          <div className="h-4 w-4/6 bg-muted rounded-md" />
         </div>
         <div className="flex gap-4 mb-12">
-          <div className="h-8 w-24 bg-zinc-800 rounded-xl" />
-          <div className="h-8 w-24 bg-zinc-800 rounded-xl" />
-          <div className="h-8 w-24 bg-zinc-800 rounded-xl" />
+          <div className="h-8 w-24 bg-muted rounded-xl" />
+          <div className="h-8 w-24 bg-muted rounded-xl" />
+          <div className="h-8 w-24 bg-muted rounded-xl" />
         </div>
       </div>
     </div>
@@ -154,9 +154,9 @@ function SkeletonProfile() {
 
 function EmptyState({ icon: Icon, title, desc, action }) {
   return (
-    <div className="flex flex-col items-center justify-center p-12 text-center border border-zinc-800 rounded-3xl bg-zinc-900 shadow-sm transition-all hover:bg-zinc-800/50 my-8">
-      <div className="w-20 h-20 bg-zinc-950 rounded-full flex items-center justify-center mb-6 shadow-inner border border-zinc-800">
-        <Icon className="w-10 h-10 text-zinc-500" />
+    <div className="flex flex-col items-center justify-center p-12 text-center border border-border rounded-3xl bg-card shadow-sm transition-all hover:bg-muted/50 my-8">
+      <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mb-6 shadow-inner border border-border">
+        <Icon className="w-10 h-10 text-muted-foreground" />
       </div>
       <h2 className="text-2xl font-bold tracking-tight mb-3">{title}</h2>
       <p className="text-muted-foreground text-sm max-w-sm mb-8 leading-relaxed">
@@ -428,7 +428,7 @@ export default function ProfilePage() {
         <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end gap-4 px-5 pb-5 md:px-7 md:gap-[18px] xl:gap-5 xl:px-[34px] xl:pb-[22px]">
           <Avatar className="h-[72px] w-[72px] flex-none border-[3px] border-background md:h-[88px] md:w-[88px] xl:h-[104px] xl:w-[104px]">
             <AvatarImage src={photographer.avatar_url || photographer.avatar} className="object-cover" />
-            <AvatarFallback className="bg-[#2a2b2f] text-xl font-bold text-white/60">
+            <AvatarFallback className="bg-muted text-xl font-bold text-white/60">
               {photographer.name?.[0]}
             </AvatarFallback>
           </Avatar>
@@ -471,16 +471,16 @@ export default function ProfilePage() {
                       Edit profile
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="border-zinc-800 bg-zinc-950 text-white sm:max-w-[425px]">
+                  <DialogContent className="border-border bg-background text-foreground sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold">Edit Profile</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleEditSubmit} className="space-y-4 py-4">
                       <div className="flex flex-col items-center gap-4">
-                        <Avatar className="h-24 w-24 border border-zinc-800 shadow-xl">
+                        <Avatar className="h-24 w-24 border border-border shadow-xl">
                           <AvatarImage src={avatarPreview} />
                         </Avatar>
-                        <Button variant="secondary" size="sm" type="button" className="relative cursor-pointer overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800">
+                        <Button variant="secondary" size="sm" type="button" className="relative cursor-pointer overflow-hidden rounded-full border border-border bg-card text-foreground hover:bg-muted">
                           Change Avatar
                           <input type="file" className="absolute inset-0 cursor-pointer opacity-0" accept="image/*" onChange={(e) => {
                             const file = e.target.files[0];
@@ -489,26 +489,26 @@ export default function ProfilePage() {
                         </Button>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-400">Name</label>
-                        <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} className="border-zinc-800 bg-zinc-900" />
+                        <label className="text-sm font-medium text-muted-foreground">Name</label>
+                        <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} className="border-border bg-card" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-400">Bio</label>
-                        <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none border-zinc-800 bg-zinc-900" />
+                        <label className="text-sm font-medium text-muted-foreground">Bio</label>
+                        <Textarea value={editForm.bio} onChange={e=>setEditForm({...editForm, bio: e.target.value})} className="resize-none border-border bg-card" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-zinc-400">Location</label>
-                        <Input placeholder="City, Country" value={editForm.location} onChange={e=>setEditForm({...editForm, location: e.target.value})} className="border-zinc-800 bg-zinc-900" />
+                        <label className="text-sm font-medium text-muted-foreground">Location</label>
+                        <Input placeholder="City, Country" value={editForm.location} onChange={e=>setEditForm({...editForm, location: e.target.value})} className="border-border bg-card" />
                       </div>
                       {photographer.role === 'photographer' && (
                         <>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Availability Status</label>
-                            <Input placeholder="e.g. Available for booking" value={editForm.availability_status} onChange={e=>setEditForm({...editForm, availability_status: e.target.value})} className="border-zinc-800 bg-zinc-900" />
+                            <label className="text-sm font-medium text-muted-foreground">Availability Status</label>
+                            <Input placeholder="e.g. Available for booking" value={editForm.availability_status} onChange={e=>setEditForm({...editForm, availability_status: e.target.value})} className="border-border bg-card" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-400">Services (comma separated)</label>
-                            <Input placeholder="Wedding, Portrait, Event" value={editForm.service_categories} onChange={e=>setEditForm({...editForm, service_categories: e.target.value})} className="border-zinc-800 bg-zinc-900" />
+                            <label className="text-sm font-medium text-muted-foreground">Services (comma separated)</label>
+                            <Input placeholder="Wedding, Portrait, Event" value={editForm.service_categories} onChange={e=>setEditForm({...editForm, service_categories: e.target.value})} className="border-border bg-card" />
                           </div>
                         </>
                       )}
@@ -536,7 +536,7 @@ export default function ProfilePage() {
                       Hire me
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="border-zinc-800 bg-zinc-950 text-white sm:max-w-[425px]">
+                  <DialogContent className="border-border bg-background text-foreground sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>Book {photographer.name}</DialogTitle>
                       <DialogDescription>Submit your project details directly to the creator.</DialogDescription>
@@ -549,10 +549,10 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       <form onSubmit={handleBookingSubmit} className="space-y-4 pt-4">
-                        <Input type="date" required value={bookingForm.date} onChange={e=>setBookingForm({...bookingForm, date: e.target.value})} className="border-zinc-800 bg-zinc-900" />
-                        <Input placeholder="Location" required value={bookingForm.location} onChange={e=>setBookingForm({...bookingForm, location: e.target.value})} className="border-zinc-800 bg-zinc-900" />
-                        <Input placeholder="Budget (e.g. $1000)" required value={bookingForm.budget} onChange={e=>setBookingForm({...bookingForm, budget: e.target.value})} className="border-zinc-800 bg-zinc-900" />
-                        <Textarea placeholder="Describe the shoot..." required value={bookingForm.message} onChange={e=>setBookingForm({...bookingForm, message: e.target.value})} className="border-zinc-800 bg-zinc-900" />
+                        <Input type="date" required value={bookingForm.date} onChange={e=>setBookingForm({...bookingForm, date: e.target.value})} className="border-border bg-card" />
+                        <Input placeholder="Location" required value={bookingForm.location} onChange={e=>setBookingForm({...bookingForm, location: e.target.value})} className="border-border bg-card" />
+                        <Input placeholder="Budget (e.g. $1000)" required value={bookingForm.budget} onChange={e=>setBookingForm({...bookingForm, budget: e.target.value})} className="border-border bg-card" />
+                        <Textarea placeholder="Describe the shoot..." required value={bookingForm.message} onChange={e=>setBookingForm({...bookingForm, message: e.target.value})} className="border-border bg-card" />
                         <Button type="submit" className="w-full rounded-full font-bold">Send Request</Button>
                       </form>
                     )}
@@ -571,7 +571,7 @@ export default function ProfilePage() {
       </header>
 
       {showLocationNudge && currentUser && isOwnProfile && (
-        <div className="mx-auto mt-4 flex max-w-[1400px] items-center justify-between gap-3 rounded-lg border border-white/[.08] bg-[#17181a] p-3 px-5 md:px-7">
+        <div className="mx-auto mt-4 flex max-w-[1400px] items-center justify-between gap-3 rounded-lg border border-white/[.08] bg-card p-3 px-5 md:px-7">
           <div className="flex items-center gap-3">
             <MapPin className="h-4 w-4 flex-none text-white/60" />
             <p className="text-[13px] text-white/70">
@@ -595,13 +595,13 @@ export default function ProfilePage() {
           {/* Tablet / mobile: bio, contact and recognition inline (2d) */}
           <div className="flex flex-col gap-3.5 pt-4 xl:hidden">
             {photographer.bio && (
-              <p className="max-w-[560px] text-[14px] leading-[1.55] text-white/[.78] text-pretty">{photographer.bio}</p>
+              <p className="max-w-[560px] text-[14px] leading-[1.55] text-foreground/[.78] text-pretty">{photographer.bio}</p>
             )}
             {contactRows.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {contactRows.map((c) => (
                   <a key={c.label} href={c.href} target="_blank" rel="noreferrer"
-                     className="flex h-[34px] items-center rounded-lg border border-white/[.13] px-3.5 text-[12px] text-white/[.72] transition-colors hover:text-foreground">
+                     className="flex h-[34px] items-center rounded-lg border border-white/[.13] px-3.5 text-[12px] text-foreground/[.72] transition-colors hover:text-foreground">
                     {c.label}
                   </a>
                 ))}
@@ -615,7 +615,7 @@ export default function ProfilePage() {
                           'rounded-lg px-[11px] py-2 text-[11.5px]',
                           i === 0
                             ? 'border border-brand/[.28] bg-brand/[.11] text-brand-tint'
-                            : 'bg-[#17181a] text-white/[.72]'
+                            : 'bg-card text-foreground/[.72]'
                         )}>
                     {r.tierLabel} · {r.label}
                   </span>
@@ -676,7 +676,7 @@ export default function ProfilePage() {
                       onClick={() => setLightboxIndex(i)}
                       aria-label={p.caption || 'Open photo'}
                       className={cn(
-                        'group relative overflow-hidden rounded-lg bg-[#1c1d20] outline-none ring-brand focus-visible:ring-2',
+                        'group relative overflow-hidden rounded-lg bg-muted outline-none ring-brand focus-visible:ring-2',
                         i === 0 && 'col-span-2 xl:row-span-2'
                       )}
                     >
@@ -699,7 +699,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-9">
                   <button
                     onClick={() => setLightboxIndex(0)}
-                    className="group relative h-[280px] w-full overflow-hidden rounded-xl bg-[#1c1d20] outline-none ring-brand focus-visible:ring-2 md:h-[380px]"
+                    className="group relative h-[280px] w-full overflow-hidden rounded-xl bg-muted outline-none ring-brand focus-visible:ring-2 md:h-[380px]"
                   >
                     <img src={userPhotos[0].url} alt={userPhotos[0].caption || ''} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
                     <span className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-start gap-1 bg-gradient-to-t from-black/85 to-transparent p-6 text-left">
@@ -711,7 +711,7 @@ export default function ProfilePage() {
                   {journeyYears.map(year => (
                     <section key={year} className="flex flex-col gap-3">
                       <div className="flex items-baseline gap-3">
-                        <h3 className="font-mono text-[11px] font-semibold tracking-[.11em] text-white/[.42]">{String(year).toUpperCase()}</h3>
+                        <h3 className="font-mono text-[11px] font-semibold tracking-[.11em] text-foreground/[.42]">{String(year).toUpperCase()}</h3>
                         <span className="h-px flex-1 bg-white/[.08]" />
                         <span className="text-[11px] text-white/35">{photosByYear[year].length} frames</span>
                       </div>
@@ -721,7 +721,7 @@ export default function ProfilePage() {
                             key={p.id}
                             onClick={() => setLightboxIndex(userPhotos.findIndex(x => x.id === p.id))}
                             aria-label={p.caption || 'Open photo'}
-                            className="group relative overflow-hidden rounded-lg bg-[#1c1d20] outline-none ring-brand focus-visible:ring-2"
+                            className="group relative overflow-hidden rounded-lg bg-muted outline-none ring-brand focus-visible:ring-2"
                           >
                             <img src={p.url} alt={p.caption || ''} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
                           </button>
@@ -737,7 +737,7 @@ export default function ProfilePage() {
                 title="No Gallery Yet" 
                 desc={isOwnProfile ? "Upload your first high-res shoot or video to start building your gallery." : "This creator hasn't uploaded any visual work yet."}
                 action={isOwnProfile && (
-                  <Button onClick={() => navigate('/upload')} className="rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-200 hover:scale-105 active:scale-95 transition-all">
+                  <Button onClick={() => navigate('/upload')} className="rounded-full bg-card text-foreground font-bold hover:bg-muted hover:scale-105 active:scale-95 transition-all">
                     Upload Shoot
                   </Button>
                 )}
@@ -751,11 +751,11 @@ export default function ProfilePage() {
                 <div className="mb-8 flex justify-end">
                   <Dialog open={milestoneModalOpen} onOpenChange={setMilestoneModalOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="secondary" className="rounded-full bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 hover:scale-105 active:scale-95 transition-all">
+                      <Button variant="secondary" className="rounded-full bg-card border border-border text-foreground hover:bg-muted hover:scale-105 active:scale-95 transition-all">
                         <Plus className="w-4 h-4 mr-2" /> Add Milestone
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-white">
+                    <DialogContent className="sm:max-w-[425px] bg-background border-border text-foreground">
                       <DialogHeader>
                         <DialogTitle>Add Career Milestone</DialogTitle>
                       </DialogHeader>
@@ -766,17 +766,17 @@ export default function ProfilePage() {
                         setMilestoneModalOpen(false);
                         setMilestoneForm({title:'',desc:'',date:'',icon:'🏆'});
                       }} className="space-y-4">
-                        <Input placeholder="Title" required value={milestoneForm.title} onChange={e=>setMilestoneForm({...milestoneForm, title: e.target.value})} className="bg-zinc-900 border-zinc-800" />
-                        <Input placeholder="Date (e.g. Sep 2026)" value={milestoneForm.date} onChange={e=>setMilestoneForm({...milestoneForm, date: e.target.value})} className="bg-zinc-900 border-zinc-800" />
-                        <Textarea placeholder="Description" value={milestoneForm.desc} onChange={e=>setMilestoneForm({...milestoneForm, desc: e.target.value})} className="bg-zinc-900 border-zinc-800" />
-                        <Button type="submit" className="w-full rounded-full bg-white text-zinc-950 font-bold hover:bg-zinc-200 hover:scale-[1.02] active:scale-95 transition-all">Add to Timeline</Button>
+                        <Input placeholder="Title" required value={milestoneForm.title} onChange={e=>setMilestoneForm({...milestoneForm, title: e.target.value})} className="bg-card border-border" />
+                        <Input placeholder="Date (e.g. Sep 2026)" value={milestoneForm.date} onChange={e=>setMilestoneForm({...milestoneForm, date: e.target.value})} className="bg-card border-border" />
+                        <Textarea placeholder="Description" value={milestoneForm.desc} onChange={e=>setMilestoneForm({...milestoneForm, desc: e.target.value})} className="bg-card border-border" />
+                        <Button type="submit" className="w-full rounded-full bg-card text-foreground font-bold hover:bg-muted hover:scale-[1.02] active:scale-95 transition-all">Add to Timeline</Button>
                       </form>
                     </DialogContent>
                   </Dialog>
                 </div>
               )}
               
-              <div className="relative pl-8 border-l-2 border-zinc-800 space-y-12 pb-12">
+              <div className="relative pl-8 border-l-2 border-border space-y-12 pb-12">
                 {[...customMilestones, ...userPhotos.map(p => ({
                     id: `ph_${p.id}`,
                     date: p.timestamp || 'Recently',
@@ -788,18 +788,18 @@ export default function ProfilePage() {
                   })), {id:'joined',date:'Member',icon:'✨',title:'Joined LensLeague',desc:'Created official creator profile.'}]
                 .map((item, idx) => (
                   <div key={item.id||idx} className="relative group">
-                    <div className="absolute -left-[45px] top-0 w-8 h-8 rounded-full bg-zinc-900 border-2 border-primary flex items-center justify-center text-sm shadow-xl transition-transform group-hover:scale-110">
+                    <div className="absolute -left-[45px] top-0 w-8 h-8 rounded-full bg-card border-2 border-primary flex items-center justify-center text-sm shadow-xl transition-transform group-hover:scale-110">
                       {item.icon}
                     </div>
-                    <Card className="bg-zinc-900/40 hover:bg-zinc-900 border-zinc-800 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                    <Card className="bg-card/40 hover:bg-card border-border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                       <CardContent className="p-5">
                         <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-bold text-lg group-hover:text-white transition-colors">{item.title}</h3>
-                          <span className="text-xs font-mono text-zinc-500">{item.date}</span>
+                          <h3 className="font-bold text-lg group-hover:text-foreground transition-colors">{item.title}</h3>
+                          <span className="text-xs font-mono text-muted-foreground">{item.date}</span>
                         </div>
-                        <p className="text-zinc-400 text-sm">{item.desc}</p>
-                        {item.photoUrl && <img src={item.photoUrl} className="mt-4 rounded-xl w-full h-48 object-cover border border-zinc-800 transition-transform duration-500 hover:scale-[1.02]" alt="" />}
-                        {item.gear && <div className="mt-3 text-xs text-zinc-500 font-mono">📷 {item.gear}</div>}
+                        <p className="text-muted-foreground text-sm">{item.desc}</p>
+                        {item.photoUrl && <img src={item.photoUrl} className="mt-4 rounded-xl w-full h-48 object-cover border border-border transition-transform duration-500 hover:scale-[1.02]" alt="" />}
+                        {item.gear && <div className="mt-3 text-xs text-muted-foreground font-mono">📷 {item.gear}</div>}
                       </CardContent>
                     </Card>
                   </div>
@@ -818,12 +818,12 @@ export default function ProfilePage() {
                 { id: 'a5', icon: '🔥', name: 'Prolific Creator', desc: 'Uploaded 5+ photos', unlocked: userPhotos.length >= 5 },
                 { id: 'a6', icon: '👑', name: 'League Leader', desc: 'Reached top 5 global rank', unlocked: (photographer.global_rank || 99) <= 5 }
               ].map(ach => (
-                <Card key={ach.id} className={`bg-zinc-900/40 border-zinc-800 transition-all duration-300 hover:-translate-y-1 hover:bg-zinc-900 ${ach.unlocked ? 'opacity-100 border-zinc-600' : 'opacity-40 grayscale'}`}>
+                <Card key={ach.id} className={`bg-card/40 border-border transition-all duration-300 hover:-translate-y-1 hover:bg-card ${ach.unlocked ? 'opacity-100 border-border' : 'opacity-40 grayscale'}`}>
                   <CardContent className="p-5 flex items-center gap-4">
                     <div className="text-4xl drop-shadow-md group-hover:scale-110 transition-transform">{ach.icon}</div>
                     <div>
-                      <div className="font-bold text-sm flex items-center gap-2">{ach.name} {ach.unlocked && <span className="text-white text-xs">✓</span>}</div>
-                      <div className="text-xs text-zinc-500">{ach.desc}</div>
+                      <div className="font-bold text-sm flex items-center gap-2">{ach.name} {ach.unlocked && <span className="text-foreground text-xs">✓</span>}</div>
+                      <div className="text-xs text-muted-foreground">{ach.desc}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -835,21 +835,21 @@ export default function ProfilePage() {
             {userReviews.length > 0 ? (
               <div className="space-y-4 max-w-3xl">
                 {userReviews.map(rev => (
-                  <Card key={rev.id} className="bg-zinc-900/40 border-zinc-800 transition-all duration-300 hover:-translate-y-1 hover:bg-zinc-900">
+                  <Card key={rev.id} className="bg-card/40 border-border transition-all duration-300 hover:-translate-y-1 hover:bg-card">
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border border-zinc-700">
+                          <Avatar className="h-10 w-10 border border-border">
                             <AvatarImage src={rev.reviewerAvatar || `https://ui-avatars.com/api/?name=${rev.reviewer}`} />
                           </Avatar>
                           <div>
                             <div className="font-bold text-sm">{rev.reviewer}</div>
-                            <div className="text-xs text-zinc-500">{rev.type || 'Booking'} · {rev.date || 'Recently'}</div>
+                            <div className="text-xs text-muted-foreground">{rev.type || 'Booking'} · {rev.date || 'Recently'}</div>
                           </div>
                         </div>
-                        <div className="text-white text-sm font-black tracking-widest">{'★'.repeat(rev.rating || 5)}</div>
+                        <div className="text-foreground text-sm font-black tracking-widest">{'★'.repeat(rev.rating || 5)}</div>
                       </div>
-                      <p className="text-sm leading-relaxed text-zinc-400">"{rev.body}"</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">"{rev.body}"</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -869,25 +869,25 @@ export default function ProfilePage() {
         {/* ── Context rail (2b) ── */}
         <aside className="hidden w-[290px] flex-none flex-col gap-5 border-l border-white/[.08] px-6 pt-5 xl:flex">
           {photographer.bio && (
-            <p className="text-[13.5px] leading-[1.55] text-white/[.78] text-pretty">{photographer.bio}</p>
+            <p className="text-[13.5px] leading-[1.55] text-foreground/[.78] text-pretty">{photographer.bio}</p>
           )}
 
           {recognition.length > 0 && (
             <div className="flex flex-col gap-2">
-              <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]">RECOGNITION</span>
+              <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]">RECOGNITION</span>
               {recognition.map((r, i) => (
                 <div key={r.label}
                      className={cn(
                        'flex items-center gap-[9px] rounded-[9px] p-2.5',
                        i === 0
                          ? 'border border-brand/[.28] bg-brand/[.1]'
-                         : 'bg-[#17181a]'
+                         : 'bg-card'
                      )}>
                   <span className={cn(
                     'flex-none font-mono text-[10px] font-semibold',
                     i === 0 ? 'text-brand-tint' : 'text-white/50'
                   )}>{r.tier}</span>
-                  <span className="text-[12px] leading-[1.3] text-white/[.85]">{r.label}</span>
+                  <span className="text-[12px] leading-[1.3] text-foreground/[.85]">{r.label}</span>
                 </div>
               ))}
             </div>
@@ -895,8 +895,8 @@ export default function ProfilePage() {
 
           {contactRows.length > 0 && (
             <div className="flex flex-col gap-2">
-              <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]">CONTACT</span>
-              <div className="flex flex-col gap-1.5 text-[12.5px] text-white/[.75]">
+              <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]">CONTACT</span>
+              <div className="flex flex-col gap-1.5 text-[12.5px] text-foreground/[.75]">
                 {contactRows.map((c) => (
                   <a key={c.label} href={c.href} target="_blank" rel="noreferrer"
                      className="flex h-9 items-center truncate rounded-lg border border-white/[.13] px-3 transition-colors hover:text-foreground">

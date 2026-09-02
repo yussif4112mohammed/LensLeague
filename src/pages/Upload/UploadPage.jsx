@@ -100,14 +100,14 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-zinc-100 p-6 md:p-10 pb-24">
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-10 pb-24">
       <div className="max-w-3xl mx-auto">
         {/* Step indicator */}
         <div className="mb-12">
           <div className="flex items-center justify-between relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-zinc-800 rounded-full z-0"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full z-0"></div>
             <div 
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-white rounded-full z-0 transition-all duration-300"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-card rounded-full z-0 transition-all duration-300"
               style={{ width: `${((step - 1) / 3) * 100}%` }}
             ></div>
             {[1, 2, 3, 4].map(s => (
@@ -115,7 +115,7 @@ export default function UploadPage() {
                 key={s} 
                 className={cn(
                   "relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300",
-                  step >= s ? "bg-primary text-primary-foreground" : "bg-zinc-900 text-zinc-500 border-2 border-zinc-800"
+                  step >= s ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground border-2 border-border"
                 )}
               >
                 {step > s ? <Check className="w-5 h-5" /> : s}
@@ -133,12 +133,12 @@ export default function UploadPage() {
         {step === 1 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white mb-3">Upload Photo or Video</h1>
-              <p className="text-zinc-400">Share high-res photos or video clips to your feed or portfolio.</p>
+              <h1 className="text-3xl font-bold text-foreground mb-3">Upload Photo or Video</h1>
+              <p className="text-muted-foreground">Share high-res photos or video clips to your feed or portfolio.</p>
             </div>
 
             <label htmlFor="file-input" className="group block cursor-pointer mb-8">
-              <div className="border-2 border-dashed border-zinc-800 hover:border-zinc-500 bg-zinc-900/50 hover:bg-zinc-900 transition-all rounded-3xl p-12 text-center">
+              <div className="border-2 border-dashed border-border hover:border-ring bg-card/50 hover:bg-card transition-all rounded-3xl p-12 text-center">
                 <input
                   id="file-input"
                   type="file"
@@ -146,17 +146,17 @@ export default function UploadPage() {
                   className="hidden"
                   onChange={handleFileChange}
                 />
-                <div className="w-20 h-20 bg-zinc-800/50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                  <Upload className="w-10 h-10 text-zinc-400" />
+                <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <Upload className="w-10 h-10 text-muted-foreground" />
                 </div>
-                <div className="text-xl font-semibold text-white mb-2">Choose photo or video</div>
-                <div className="text-zinc-500 mb-6">or drag and drop media file here</div>
-                <div className="text-sm text-zinc-600 font-medium">JPEG, PNG, WEBP, MP4, WEBM · Max 50MB</div>
+                <div className="text-xl font-semibold text-foreground mb-2">Choose photo or video</div>
+                <div className="text-muted-foreground mb-6">or drag and drop media file here</div>
+                <div className="text-sm text-muted-foreground font-medium">JPEG, PNG, WEBP, MP4, WEBM · Max 50MB</div>
               </div>
             </label>
 
             <div className="space-y-4">
-              <p className="text-sm font-medium text-zinc-500">Or use a sample photo:</p>
+              <p className="text-sm font-medium text-muted-foreground">Or use a sample photo:</p>
               <div className="grid grid-cols-3 gap-4">
                 {[
                   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
@@ -166,7 +166,7 @@ export default function UploadPage() {
                   <button 
                     key={i} 
                     onClick={() => { setPreview(url); setFileObj(null); setStep(2); }}
-                    className="relative aspect-[4/3] rounded-2xl overflow-hidden group border border-zinc-800 hover:border-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
+                    className="relative aspect-[4/3] rounded-2xl overflow-hidden group border border-border hover:border-ring transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <img src={url} alt={`Sample ${i+1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
@@ -179,8 +179,8 @@ export default function UploadPage() {
 
         {step === 2 && preview && (
           <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-            <h1 className="text-3xl font-bold text-white mb-8">Edit Photo</h1>
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-8">Edit Photo</h1>
+            <div className="bg-card/50 border border-border rounded-3xl p-6 mb-8">
               <div className="rounded-2xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center mb-6">
                 {isVideo ? (
                   <video src={preview} controls className="max-w-full max-h-[60vh] object-contain" />
@@ -189,13 +189,13 @@ export default function UploadPage() {
                 )}
               </div>
               <div className="flex gap-4 justify-center">
-                <Button variant="secondary" className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl">
+                <Button variant="secondary" className="bg-muted hover:bg-muted text-foreground rounded-xl">
                   <Crop className="w-4 h-4 mr-2" /> Crop
                 </Button>
-                <Button variant="secondary" className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl">
+                <Button variant="secondary" className="bg-muted hover:bg-muted text-foreground rounded-xl">
                   <RotateCcw className="w-4 h-4 mr-2" /> Rotate
                 </Button>
-                <Button variant="secondary" className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl">
+                <Button variant="secondary" className="bg-muted hover:bg-muted text-foreground rounded-xl">
                   <Sun className="w-4 h-4 mr-2" /> Adjust
                 </Button>
               </div>
@@ -205,7 +205,7 @@ export default function UploadPage() {
               <Button 
                 variant="ghost" 
                 onClick={() => setStep(1)} 
-                className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl"
+                className="text-muted-foreground hover:text-foreground hover:bg-card rounded-xl"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>
@@ -221,12 +221,12 @@ export default function UploadPage() {
 
         {step === 3 && (
           <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-            <h1 className="text-3xl font-bold text-white mb-8">Details & Destination</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-8">Details & Destination</h1>
 
-            <div className="space-y-8 bg-zinc-900/30 border border-zinc-800/50 p-6 sm:p-8 rounded-3xl mb-8">
+            <div className="space-y-8 bg-card/30 border border-border/50 p-6 sm:p-8 rounded-3xl mb-8">
               {/* 1g: category is required, so it is asked first — not last. */}
               <div className="space-y-3">
-                <span className="block font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]">
+                <span className="block font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]">
                   CATEGORY · REQUIRED
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -248,11 +248,11 @@ export default function UploadPage() {
                 </div>
                 {category && (
                   <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <label className="text-sm font-semibold text-zinc-300" htmlFor="custom-style">What do you call your style of {category}?</label>
+                    <label className="text-sm font-semibold text-foreground" htmlFor="custom-style">What do you call your style of {category}?</label>
                     <Input
                       id="custom-style"
                       type="text"
-                      className="mt-2 h-12 rounded-xl border-zinc-800 bg-zinc-900/50 text-white placeholder:text-zinc-600"
+                      className="mt-2 h-12 rounded-xl border-border bg-card/50 text-foreground placeholder:text-muted-foreground"
                       placeholder="e.g. Cinematic Portrait, Moody Street, Dreamy Landscape"
                       value={customStyle}
                       onChange={e => setCustomStyle(e.target.value)}
@@ -262,7 +262,7 @@ export default function UploadPage() {
               </div>
 
               <div className="space-y-4">
-                <label className="text-sm font-semibold text-zinc-300">Publish to</label>
+                <label className="text-sm font-semibold text-foreground">Publish to</label>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {DESTINATIONS.map(d => (
                     <label 
@@ -270,8 +270,8 @@ export default function UploadPage() {
                       className={cn(
                         "relative flex flex-col p-4 cursor-pointer rounded-2xl border transition-all duration-200",
                         destination === d.value 
-                          ? "bg-zinc-800/80 border-zinc-500 shadow-md" 
-                          : "bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800"
+                          ? "bg-muted/80 border-ring shadow-md" 
+                          : "bg-card/50 border-border hover:bg-muted"
                       )}
                     >
                       <input 
@@ -283,61 +283,61 @@ export default function UploadPage() {
                         className="sr-only" 
                       />
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-white">{d.label}</span>
+                        <span className="font-semibold text-foreground">{d.label}</span>
                         <div className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                          destination === d.value ? "border-white" : "border-zinc-700"
+                          destination === d.value ? "border-primary" : "border-border"
                         )}>
-                          {destination === d.value && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                          {destination === d.value && <div className="w-2.5 h-2.5 bg-card rounded-full" />}
                         </div>
                       </div>
-                      <span className="text-xs text-zinc-400">{d.desc}</span>
+                      <span className="text-xs text-muted-foreground">{d.desc}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-300" htmlFor="upload-caption">Caption</label>
+                <label className="text-sm font-semibold text-foreground" htmlFor="upload-caption">Caption</label>
                 <Textarea
                   id="upload-caption"
-                  className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl resize-none min-h-[100px]"
+                  className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl resize-none min-h-[100px]"
                   placeholder="Write a caption..."
                   value={caption}
                   onChange={e => setCaption(e.target.value)}
                   maxLength={500}
                 />
-                <div className="text-xs text-zinc-500 text-right">{caption.length}/500</div>
+                <div className="text-xs text-muted-foreground text-right">{caption.length}/500</div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-300" htmlFor="upload-alt-text">Screen Reader Alt Text</label>
+                <label className="text-sm font-semibold text-foreground" htmlFor="upload-alt-text">Screen Reader Alt Text</label>
                 <Input
                   id="upload-alt-text"
                   type="text"
-                  className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12"
+                  className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12"
                   placeholder="Describe the image for screen readers..."
                   value={altText}
                   onChange={e => setAltText(e.target.value)}
                 />
-                <p className="text-xs text-zinc-500">Adding alt text helps more people experience your work.</p>
+                <p className="text-xs text-muted-foreground">Adding alt text helps more people experience your work.</p>
               </div>
 
 
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-zinc-400" />
-                  <label className="text-sm font-semibold text-zinc-300">Camera & EXIF Metadata (Optional)</label>
+                  <Camera className="w-4 h-4 text-muted-foreground" />
+                  <label className="text-sm font-semibold text-foreground">Camera & EXIF Metadata (Optional)</label>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input id="upload-camera" className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12" placeholder="Camera Body (e.g. Sony A7IV)" value={camera} onChange={e => setCamera(e.target.value)} />
-                  <Input id="upload-lens" className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12" placeholder="Lens (e.g. 85mm f/1.4 GM)" value={lens} onChange={e => setLens(e.target.value)} />
-                  <Input id="upload-aperture" className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12" placeholder="Aperture (e.g. 1.4)" value={aperture} onChange={e => setAperture(e.target.value)} />
-                  <Input id="upload-shutter" className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12" placeholder="Shutter (e.g. 1/1000)" value={shutter} onChange={e => setShutter(e.target.value)} />
-                  <Input id="upload-iso" className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12" placeholder="ISO (e.g. 100)" value={iso} onChange={e => setIso(e.target.value)} />
+                  <Input id="upload-camera" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Camera Body (e.g. Sony A7IV)" value={camera} onChange={e => setCamera(e.target.value)} />
+                  <Input id="upload-lens" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Lens (e.g. 85mm f/1.4 GM)" value={lens} onChange={e => setLens(e.target.value)} />
+                  <Input id="upload-aperture" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Aperture (e.g. 1.4)" value={aperture} onChange={e => setAperture(e.target.value)} />
+                  <Input id="upload-shutter" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Shutter (e.g. 1/1000)" value={shutter} onChange={e => setShutter(e.target.value)} />
+                  <Input id="upload-iso" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="ISO (e.g. 100)" value={iso} onChange={e => setIso(e.target.value)} />
                   <div className="relative">
-                    <MapPin className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
-                    <Input id="upload-location" className="bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12 pl-10" placeholder="Location (e.g. Paris)" value={location} onChange={e => setLocation(e.target.value)} />
+                    <MapPin className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input id="upload-location" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12 pl-10" placeholder="Location (e.g. Paris)" value={location} onChange={e => setLocation(e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -347,7 +347,7 @@ export default function UploadPage() {
               <Button 
                 variant="ghost" 
                 onClick={() => setStep(2)} 
-                className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl"
+                className="text-muted-foreground hover:text-foreground hover:bg-card rounded-xl"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>
@@ -364,9 +364,9 @@ export default function UploadPage() {
 
         {step === 4 && (
           <div className="animate-in fade-in slide-in-from-right-8 duration-500">
-            <h1 className="text-3xl font-bold text-white mb-8">Review & Publish</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-8">Review & Publish</h1>
             
-            <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 mb-8">
+            <div className="bg-card/50 border border-border rounded-3xl p-6 mb-8">
               <div className="flex flex-col sm:flex-row gap-8">
                 <div className="sm:w-1/2 shrink-0">
                   <div className="rounded-2xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center">
@@ -378,25 +378,25 @@ export default function UploadPage() {
                   </div>
                 </div>
                 <div className="sm:w-1/2 flex flex-col justify-center space-y-6">
-                  <div className="space-y-4 bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                    <div className="flex justify-between items-start border-b border-zinc-800/50 pb-4">
-                      <span className="text-sm text-zinc-400">Destination</span>
-                      <span className="text-sm font-semibold text-white text-right">
+                  <div className="space-y-4 bg-card/50 p-6 rounded-2xl border border-border">
+                    <div className="flex justify-between items-start border-b border-border/50 pb-4">
+                      <span className="text-sm text-muted-foreground">Destination</span>
+                      <span className="text-sm font-semibold text-foreground text-right">
                         {DESTINATIONS.find(d => d.value === destination)?.label}
                       </span>
                     </div>
                     {caption && (
-                      <div className="flex justify-between items-start border-b border-zinc-800/50 pb-4">
-                        <span className="text-sm text-zinc-400">Caption</span>
-                        <span className="text-sm text-white text-right max-w-[200px] line-clamp-2">
+                      <div className="flex justify-between items-start border-b border-border/50 pb-4">
+                        <span className="text-sm text-muted-foreground">Caption</span>
+                        <span className="text-sm text-foreground text-right max-w-[200px] line-clamp-2">
                           {caption}
                         </span>
                       </div>
                     )}
                     {category && (
                       <div className="flex justify-between items-start">
-                        <span className="text-sm text-zinc-400">Category</span>
-                        <span className="text-sm font-medium text-white px-3 py-1 bg-zinc-800 rounded-full">
+                        <span className="text-sm text-muted-foreground">Category</span>
+                        <span className="text-sm font-medium text-foreground px-3 py-1 bg-muted rounded-full">
                           {category}
                         </span>
                       </div>
@@ -426,7 +426,7 @@ export default function UploadPage() {
                 variant="ghost" 
                 onClick={() => setStep(3)} 
                 disabled={!!modStatus}
-                className="text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl"
+                className="text-muted-foreground hover:text-foreground hover:bg-card rounded-xl"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" /> Back
               </Button>

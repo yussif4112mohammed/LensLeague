@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { 
   ArrowLeft, Mail, User, Star, Globe, Calendar, Bell, 
   HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight, Camera,
-  Loader2
+  Loader2, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '../../lib/supabaseClient';
@@ -22,14 +22,14 @@ function CustomSwitch({ checked, onCheckedChange }) {
       aria-checked={checked}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-white" : "bg-zinc-800"
+        "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-50",
+        checked ? "bg-card" : "bg-muted"
       )}
     >
       <span
         data-state={checked ? "checked" : "unchecked"}
         className={cn(
-          "pointer-events-none block h-5 w-5 rounded-full bg-zinc-950 shadow-lg ring-0 transition-transform",
+          "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
           checked ? "translate-x-5" : "translate-x-0"
         )}
       />
@@ -41,7 +41,7 @@ function SettingsRow({ icon: Icon, label, value, toggle, destructive, onClick, i
   return (
     <button
       className={cn(
-        "w-full flex items-center justify-between p-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-all first:rounded-t-2xl last:rounded-b-2xl border-b-0 last:border-b group text-left",
+        "w-full flex items-center justify-between p-4 bg-card hover:bg-muted border border-border transition-all first:rounded-t-2xl last:rounded-b-2xl border-b-0 last:border-b group text-left",
         destructive && "hover:bg-red-950/30 border-red-900/50"
       )}
       onClick={onClick}
@@ -52,14 +52,14 @@ function SettingsRow({ icon: Icon, label, value, toggle, destructive, onClick, i
         {Icon && (
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
-            destructive ? "bg-red-950/50 text-red-500 group-hover:bg-red-900/50" : "bg-zinc-800 text-zinc-400 group-hover:text-white group-hover:bg-zinc-700"
+            destructive ? "bg-red-950/50 text-red-500 group-hover:bg-red-900/50" : "bg-muted text-muted-foreground group-hover:text-foreground group-hover:bg-muted"
           )}>
             <Icon className="w-5 h-5" />
           </div>
         )}
         <span className={cn(
           "font-semibold text-sm",
-          destructive ? "text-red-500" : "text-zinc-100 group-hover:text-white"
+          destructive ? "text-red-500" : "text-foreground group-hover:text-foreground"
         )}>
           {label}
         </span>
@@ -71,9 +71,9 @@ function SettingsRow({ icon: Icon, label, value, toggle, destructive, onClick, i
             <CustomSwitch checked={toggle.value} onCheckedChange={toggle.onToggle} />
           </div>
         ) : value ? (
-          <span className="text-sm font-medium text-zinc-500">{value}</span>
+          <span className="text-sm font-medium text-muted-foreground">{value}</span>
         ) : !destructive ? (
-          <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
         ) : null}
       </div>
     </button>
@@ -83,7 +83,7 @@ function SettingsRow({ icon: Icon, label, value, toggle, destructive, onClick, i
 function SettingsSection({ title, children }) {
   return (
     <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-      {title && <div className="px-4 mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">{title}</div>}
+      {title && <div className="px-4 mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</div>}
       <div className="flex flex-col rounded-2xl shadow-sm">
         {children}
       </div>
@@ -202,54 +202,54 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-20 md:pb-0 relative">
+    <div className="min-h-screen bg-background text-foreground pb-20 md:pb-0 relative">
       
       {/* Save Toast */}
       {saveToast && (
         <div className={cn(
           "fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-sm font-bold tracking-wide animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300",
-          saveToast === 'saved' ? 'bg-zinc-950 text-white' : 'bg-red-600 text-white'
+          saveToast === 'saved' ? 'bg-background text-foreground' : 'bg-red-600 text-foreground'
         )}>
           {saveToast === 'saved' ? '✓ Saved' : '✕ Failed to save'}
         </div>
       )}
       
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center gap-4">
           <button 
-            className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-white"
+            className="w-10 h-10 rounded-full bg-card flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             onClick={() => navigate(-1)} 
             aria-label="Go back" 
             id="settings-back-btn"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-bold tracking-tight text-white">Settings</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Settings</h1>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         
         {/* Profile Summary Card */}
-        <div className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="p-6 bg-gradient-to-br from-card to-background border border-border rounded-3xl mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex items-center gap-5">
-            <Avatar className="w-20 h-20 ring-4 ring-zinc-950 shadow-md">
+            <Avatar className="w-20 h-20 ring-4 ring-background shadow-md">
               <AvatarImage src={profile?.avatar_url || profile?.avatar} alt={profile?.name || 'avatar'} className="object-cover" />
-              <AvatarFallback className="bg-zinc-800 text-zinc-300 text-2xl font-bold">{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
+              <AvatarFallback className="bg-muted text-foreground text-2xl font-bold">{profile?.name?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-white mb-1">{profile?.name || 'Your Name'}</h2>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-zinc-400 font-medium">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-1">{profile?.name || 'Your Name'}</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-muted-foreground font-medium">
                 <span>@{profile?.username || 'username'}</span>
-                <span className="hidden sm:inline text-zinc-700">•</span>
-                <span className="text-zinc-500">{currentRole === 'photographer' ? '📷 Photographer' : '🎯 Client'}</span>
+                <span className="hidden sm:inline text-foreground">•</span>
+                <span className="text-muted-foreground">{currentRole === 'photographer' ? '📷 Photographer' : '🎯 Client'}</span>
               </div>
             </div>
           </div>
           <Button 
             variant="outline" 
-            className="w-full sm:w-auto h-12 px-6 rounded-xl border-zinc-800 bg-zinc-950 hover:bg-zinc-800 text-white font-bold transition-colors"
+            className="w-full sm:w-auto h-12 px-6 rounded-xl border-border bg-background hover:bg-muted text-foreground font-bold transition-colors"
             onClick={() => navigate('/profile/me')}
             id="settings-edit-profile-btn"
           >
@@ -303,9 +303,9 @@ export default function SettingsPage() {
 
           {/* Support */}
           <SettingsSection title="Support">
-            <SettingsRow id="settings-help" icon={HelpCircle} label="Help Center" onClick={() => alert('Help Center coming soon!')} />
-            <SettingsRow id="settings-privacy-policy" icon={Shield} label="Privacy Policy" onClick={() => openModal('privacy')} />
-            <SettingsRow id="settings-terms" icon={FileText} label="Terms of Service" onClick={() => openModal('terms')} />
+            <SettingsRow id="settings-privacy-policy" icon={Shield} label="Privacy Policy" onClick={() => navigate('/privacy')} />
+            <SettingsRow id="settings-terms" icon={FileText} label="Terms of Service" onClick={() => navigate('/terms')} />
+            <SettingsRow id="settings-guidelines" icon={Users} label="Community Guidelines" onClick={() => navigate('/guidelines')} />
           </SettingsSection>
 
           {/* Danger zone */}
@@ -328,19 +328,19 @@ export default function SettingsPage() {
 
           {/* App version */}
           <div className="text-center pt-8 pb-12">
-            <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-zinc-800 shadow-sm">
-              <Camera className="w-6 h-6 text-zinc-500" />
+            <div className="w-12 h-12 bg-card rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border shadow-sm">
+              <Camera className="w-6 h-6 text-muted-foreground" />
             </div>
-            <div className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-2">LensLeague v2.0.0</div>
-            <div className="text-[11px] text-zinc-400 font-medium">Designed for Creators • Noble Stature Studios</div>
-            <div className="text-[11px] text-zinc-500 font-medium mt-1">A Noble Stature Studios company</div>
+            <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2">LensLeague v2.0.0</div>
+            <div className="text-[11px] text-muted-foreground font-medium">Designed for Creators • Noble Stature Studios</div>
+            <div className="text-[11px] text-muted-foreground font-medium mt-1">A Noble Stature Studios company</div>
           </div>
         </div>
       </main>
 
       {/* Dynamic Modal */}
       <Dialog open={!!activeModal} onOpenChange={(open) => !open && setActiveModal(null)}>
-        <DialogContent className="bg-zinc-950 border border-zinc-800 text-white sm:max-w-md">
+        <DialogContent className="bg-background border border-border text-foreground sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               {activeModal === 'email' && 'Update Email'}
@@ -350,13 +350,11 @@ export default function SettingsPage() {
               {activeModal === 'privacy' && 'Privacy Policy'}
               {activeModal === 'terms' && 'Terms of Service'}
             </DialogTitle>
-            <DialogDescription className="text-zinc-400">
+            <DialogDescription className="text-muted-foreground">
               {activeModal === 'email' && 'Enter your new email address below. You may need to verify it.'}
               {activeModal === 'username' && 'Choose a unique username for your profile.'}
               {activeModal === 'plan' && 'Pro subscriptions are coming soon! Stay tuned.'}
               {activeModal === 'deactivate' && 'Are you sure you want to deactivate your account? Your profile will be hidden from the platform until you log back in.'}
-              {activeModal === 'privacy' && 'Your privacy is critically important to us. LensLeague is committed to respecting your privacy regarding any information we may collect while operating our website.'}
-              {activeModal === 'terms' && 'By accessing the website at LensLeague, you are agreeing to be bound by these terms of service, all applicable laws and regulations, and agree that you are responsible for compliance with any applicable local laws.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -372,13 +370,13 @@ export default function SettingsPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder={activeModal === 'email' ? 'new@email.com' : 'new_username'}
-                className="bg-zinc-900 border-zinc-800 text-white shadow-sm"
+                className="bg-card border-border text-foreground shadow-sm"
               />
             </div>
           )}
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" className="border-zinc-800 bg-transparent hover:bg-zinc-900 hover:text-white text-zinc-300" onClick={() => setActiveModal(null)}>
+            <Button variant="outline" className="border-border bg-transparent hover:bg-card hover:text-foreground text-foreground" onClick={() => setActiveModal(null)}>
               {activeModal === 'privacy' || activeModal === 'terms' ? 'Close' : 'Cancel'}
             </Button>
             {activeModal !== 'plan' && activeModal !== 'privacy' && activeModal !== 'terms' && (
@@ -386,7 +384,7 @@ export default function SettingsPage() {
                 variant={activeModal === 'deactivate' ? 'destructive' : 'default'}
                 onClick={handleSaveModal} 
                 disabled={isLoading}
-                className={activeModal === 'deactivate' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-white text-zinc-950 hover:bg-zinc-200 font-bold'}
+                className={activeModal === 'deactivate' ? 'bg-red-600 hover:bg-red-700 text-foreground' : 'bg-card text-foreground hover:bg-muted font-bold'}
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (activeModal === 'deactivate' ? 'Deactivate' : 'Save')}
               </Button>

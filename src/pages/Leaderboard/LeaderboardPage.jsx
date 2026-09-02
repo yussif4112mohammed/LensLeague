@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TrendingUp, TrendingDown, Minus, Crown } from 'lucide-react';
 
 function TrendArrow({ trend }) {
-  if (trend === 0) return <div className="flex items-center text-zinc-500"><Minus className="w-4 h-4" /></div>;
+  if (trend === 0) return <div className="flex items-center text-muted-foreground"><Minus className="w-4 h-4" /></div>;
   if (trend > 0) return <div className="flex items-center text-emerald-500 font-bold"><TrendingUp className="w-4 h-4 mr-1" />{trend}</div>;
   return <div className="flex items-center text-red-500 font-bold"><TrendingDown className="w-4 h-4 mr-1" />{Math.abs(trend)}</div>;
 }
@@ -40,28 +40,28 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 pb-24 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-muted pb-24 animate-in fade-in duration-500">
       
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-zinc-200 px-4 py-6 md:px-8">
+      <div className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border px-4 py-6 md:px-8">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <h1 className="text-3xl font-black tracking-tight text-zinc-950 flex items-center gap-3">
-            <Crown className="w-8 h-8 text-zinc-950" />
+          <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
+            <Crown className="w-8 h-8 text-foreground" />
             Leaderboard
           </h1>
           <div className="flex flex-col sm:flex-row gap-3">
             <Tabs value={scope} onValueChange={setScope} className="w-full sm:w-auto">
-              <TabsList className="bg-white border border-zinc-200 shadow-sm">
-                <TabsTrigger value="global" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Global</TabsTrigger>
-                <TabsTrigger value="country" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Country</TabsTrigger>
-                <TabsTrigger value="category" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Category</TabsTrigger>
+              <TabsList className="bg-card border border-border shadow-sm">
+                <TabsTrigger value="global" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Global</TabsTrigger>
+                <TabsTrigger value="country" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Country</TabsTrigger>
+                <TabsTrigger value="category" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Category</TabsTrigger>
               </TabsList>
             </Tabs>
             <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
-              <TabsList className="bg-white border border-zinc-200 shadow-sm">
-                <TabsTrigger value="all" className="data-[active]:bg-zinc-950 data-[active]:text-white text-zinc-500 font-bold">All-Time</TabsTrigger>
-                <TabsTrigger value="month" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Month</TabsTrigger>
-                <TabsTrigger value="week" className="data-[active]:bg-zinc-100 data-[active]:text-zinc-950 text-zinc-500 font-bold">Week</TabsTrigger>
+              <TabsList className="bg-card border border-border shadow-sm">
+                <TabsTrigger value="all" className="data-[active]:bg-background data-[active]:text-foreground text-muted-foreground font-bold">All-Time</TabsTrigger>
+                <TabsTrigger value="month" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Month</TabsTrigger>
+                <TabsTrigger value="week" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Week</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -71,16 +71,16 @@ export default function LeaderboardPage() {
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         
         {/* My Rank Card */}
-        <div className="bg-gradient-to-r from-white to-zinc-50 border border-zinc-200 rounded-2xl p-5 mb-8 flex items-center justify-between shadow-sm">
+        <div className="bg-gradient-to-r from-white to-zinc-50 border border-border rounded-2xl p-5 mb-8 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-4">
             <RankBadge rank={myRank.global} size="lg" />
             <div>
-              <div className="text-lg md:text-xl font-bold text-zinc-950">{myRank.global > 0 ? `You're #${myRank.global} globally` : 'Not yet ranked'}</div>
-              <div className="text-sm font-medium text-zinc-500">Compete in battles to earn ELO points</div>
+              <div className="text-lg md:text-xl font-bold text-foreground">{myRank.global > 0 ? `You're #${myRank.global} globally` : 'Not yet ranked'}</div>
+              <div className="text-sm font-medium text-muted-foreground">Compete in battles to earn ELO points</div>
             </div>
           </div>
           <div className="flex flex-col items-end">
-            <div className="text-2xl font-black text-zinc-950">{myRank.points.toLocaleString()} <span className="text-sm font-medium text-zinc-500 uppercase">ELO</span></div>
+            <div className="text-2xl font-black text-foreground">{myRank.points.toLocaleString()} <span className="text-sm font-medium text-muted-foreground uppercase">ELO</span></div>
             <TrendArrow trend={myRank.trend} />
           </div>
         </div>
@@ -103,18 +103,18 @@ export default function LeaderboardPage() {
             onClick={() => navigate(`/profile/${entries[1]?.id}`)}
           >
             <div className="relative mb-4">
-              <Avatar className="w-16 h-16 md:w-24 md:h-24 border-4 border-zinc-300 shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:scale-105 transition-transform">
+              <Avatar className="w-16 h-16 md:w-24 md:h-24 border-4 border-border shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:scale-105 transition-transform">
                 <AvatarImage src={entries[1]?.avatar} className="object-cover" />
-                <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold text-xl">{entries[1]?.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-muted text-muted-foreground font-bold text-xl">{entries[1]?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
                 <RankBadge rank={2} size="md" />
               </div>
             </div>
-            <div className="text-center font-bold text-zinc-950 truncate w-full px-2 mb-1">{entries[1]?.name?.split(' ')[0]}</div>
-            <div className="text-xs font-bold text-zinc-500 mb-4">{(entries[1]?.points||0).toLocaleString()} ELO</div>
-            <div className="w-full h-32 md:h-40 bg-gradient-to-t from-zinc-300/20 to-zinc-300/5 rounded-t-xl border-t border-zinc-300/30 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-zinc-300" />
+            <div className="text-center font-bold text-foreground truncate w-full px-2 mb-1">{entries[1]?.name?.split(' ')[0]}</div>
+            <div className="text-xs font-bold text-muted-foreground mb-4">{(entries[1]?.points||0).toLocaleString()} ELO</div>
+            <div className="w-full h-32 md:h-40 bg-gradient-to-t from-zinc-300/20 to-zinc-300/5 rounded-t-xl border-t border-border/30 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute inset-x-0 bottom-0 h-1 bg-muted" />
             </div>
           </div>
 
@@ -127,16 +127,16 @@ export default function LeaderboardPage() {
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-4xl animate-bounce">👑</div>
               <Avatar className="w-20 h-20 md:w-32 md:h-32 border-4 border-yellow-400 shadow-[0_0_40px_rgba(250,204,21,0.2)] group-hover:scale-105 transition-transform">
                 <AvatarImage src={entries[0]?.avatar} className="object-cover" />
-                <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold text-2xl">{entries[0]?.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-muted text-muted-foreground font-bold text-2xl">{entries[0]?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
                 <RankBadge rank={1} size="lg" />
               </div>
             </div>
-            <div className="text-center font-black text-zinc-950 text-lg truncate w-full px-2 mb-1">{entries[0]?.name?.split(' ')[0]}</div>
-            <div className="text-xs font-black text-zinc-950 mb-4">{(entries[0]?.points||0).toLocaleString()} ELO</div>
+            <div className="text-center font-black text-foreground text-lg truncate w-full px-2 mb-1">{entries[0]?.name?.split(' ')[0]}</div>
+            <div className="text-xs font-black text-foreground mb-4">{(entries[0]?.points||0).toLocaleString()} ELO</div>
             <div className="w-full h-40 md:h-52 bg-gradient-to-t from-gold/20 to-gold/5 rounded-t-xl border-t-2 border-white/40 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-white shadow-[0_0_10px_rgba(255,255,255,1)]" />
+              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-card shadow-[0_0_10px_rgba(255,255,255,1)]" />
             </div>
           </div>
 
@@ -148,14 +148,14 @@ export default function LeaderboardPage() {
             <div className="relative mb-4">
               <Avatar className="w-16 h-16 md:w-24 md:h-24 border-4 border-amber-700 shadow-[0_0_20px_rgba(180,83,9,0.1)] group-hover:scale-105 transition-transform">
                 <AvatarImage src={entries[2]?.avatar} className="object-cover" />
-                <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold text-xl">{entries[2]?.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-muted text-muted-foreground font-bold text-xl">{entries[2]?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
                 <RankBadge rank={3} size="md" />
               </div>
             </div>
-            <div className="text-center font-bold text-zinc-950 truncate w-full px-2 mb-1">{entries[2]?.name?.split(' ')[0]}</div>
-            <div className="text-xs font-medium text-zinc-500 mb-4">{(entries[2]?.points||0).toLocaleString()} ELO</div>
+            <div className="text-center font-bold text-foreground truncate w-full px-2 mb-1">{entries[2]?.name?.split(' ')[0]}</div>
+            <div className="text-xs font-medium text-muted-foreground mb-4">{(entries[2]?.points||0).toLocaleString()} ELO</div>
             <div className="w-full h-24 md:h-32 bg-gradient-to-t from-amber-700/20 to-amber-700/5 rounded-t-xl border-t border-amber-700/30 backdrop-blur-sm relative overflow-hidden">
               <div className="absolute inset-x-0 bottom-0 h-1 bg-amber-700" />
             </div>
@@ -169,24 +169,24 @@ export default function LeaderboardPage() {
             <div
               key={p.id}
               onClick={() => navigate(`/profile/${p.id}`)}
-              className="flex items-center gap-4 bg-white border border-zinc-200 p-4 rounded-2xl hover:bg-zinc-50 transition-colors cursor-pointer group shadow-sm"
+              className="flex items-center gap-4 bg-card border border-border p-4 rounded-2xl hover:bg-muted transition-colors cursor-pointer group shadow-sm"
             >
               <div className="w-12 shrink-0 flex justify-center">
                 <RankBadge rank={p.rank} size="sm" />
               </div>
               
-              <Avatar className="w-12 h-12 border border-zinc-200 group-hover:border-zinc-300 transition-colors">
+              <Avatar className="w-12 h-12 border border-border group-hover:border-ring transition-colors">
                 <AvatarImage src={p.avatar} className="object-cover" />
-                <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold">{p.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-muted text-muted-foreground font-bold">{p.name.charAt(0)}</AvatarFallback>
               </Avatar>
               
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-zinc-950 truncate group-hover:text-primary transition-colors">{p.name}</div>
-                <div className="text-xs text-zinc-500 truncate">{p.category} · {p.location}</div>
+                <div className="font-bold text-foreground truncate group-hover:text-primary transition-colors">{p.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{p.category} · {p.location}</div>
               </div>
               
               <div className="flex flex-col items-end shrink-0">
-                <div className="font-bold text-zinc-950 text-sm">{(p.points).toLocaleString()} <span className="text-[10px] text-zinc-500 uppercase font-medium">ELO</span></div>
+                <div className="font-bold text-foreground text-sm">{(p.points).toLocaleString()} <span className="text-[10px] text-muted-foreground uppercase font-medium">ELO</span></div>
                 <TrendArrow trend={p.trend} />
               </div>
             </div>

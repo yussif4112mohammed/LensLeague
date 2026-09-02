@@ -15,6 +15,8 @@ import {
   Inbox,
   LogOut,
   LogIn,
+  Swords,
+  PlusSquare,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -22,13 +24,25 @@ import { cn } from '@/lib/utils';
 // Rail nav from mockup 2a. Settings / Analytics / Inbox intentionally live in the
 // account menu behind the "..." on the user chip rather than the rail, so the rail
 // stays the five destinations the design calls for.
+// Battles are a core LensLeague loop, not a banner. /compete/vote previously had
+// no entry anywhere in the navigation - the route existed and worked, but nothing
+// linked to it, so the product's central loop was unreachable by clicking.
+//
+// `mobile` controls the bottom tab bar. A phone tab bar holds five items before
+// the labels start colliding, so it carries the loop a photographer repeats -
+// look, find, compete, post, review your own work - and Leagues and Saved stay
+// on the desktop rail where there is room for them.
 const NAV_ITEMS = [
-  { to: '/feed', label: 'Feed', id: 'nav-feed', icon: Home },
-  { to: '/discover', label: 'Explore', id: 'nav-explore', icon: Compass },
+  { to: '/feed', label: 'Feed', id: 'nav-feed', icon: Home, mobile: true },
+  { to: '/discover', label: 'Explore', id: 'nav-explore', icon: Compass, mobile: true },
+  { to: '/compete/vote', label: 'Battles', id: 'nav-battles', icon: Swords, mobile: true },
+  { to: '/upload', label: 'Upload', id: 'nav-upload', icon: PlusSquare, mobile: true },
   { to: '/leagues', label: 'Leagues', id: 'nav-leagues', icon: Trophy },
   { to: '/saved', label: 'Saved', id: 'nav-saved', icon: Bookmark },
-  { to: '/profile/me', label: 'My portfolio', id: 'nav-portfolio', icon: CircleUserRound },
+  { to: '/profile/me', label: 'My portfolio', id: 'nav-portfolio', icon: CircleUserRound, mobile: true },
 ];
+
+const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.mobile);
 
 const ACCOUNT_ITEMS = [
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
@@ -91,7 +105,7 @@ function AccountMenu({ open, onClose, onNavigate, onLogout }) {
     <div
       ref={ref}
       role="menu"
-      className="absolute bottom-full left-0 z-50 mb-2 w-full min-w-[184px] overflow-hidden rounded-[10px] border border-white/10 bg-[#17181a] py-1 shadow-xl shadow-black/50"
+      className="absolute bottom-full left-0 z-50 mb-2 w-full min-w-[184px] overflow-hidden rounded-[10px] border border-white/10 bg-card py-1 shadow-xl shadow-black/50"
     >
       {ACCOUNT_ITEMS.map((item) => (
         <button
@@ -200,7 +214,7 @@ export default function PhotographerShell() {
 
           {following.length > 0 && (
             <div className="mt-[26px] hidden flex-col gap-[9px] xl:flex">
-              <span className="px-2 font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.36]">
+              <span className="px-2 font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.36]">
                 FOLLOWING
               </span>
               {following.map((u) => (
@@ -233,7 +247,7 @@ export default function PhotographerShell() {
                   onClick={() => setMenuOpen((v) => !v)}
                   aria-haspopup="menu"
                   aria-expanded={menuOpen}
-                  className="flex w-full items-center gap-[9px] rounded-lg bg-[#141517] transition-colors hover:bg-[#1b1c1f] md:justify-center md:p-1.5 xl:justify-start xl:px-2 xl:py-[9px]"
+                  className="flex w-full items-center gap-[9px] rounded-lg bg-card transition-colors hover:bg-card md:justify-center md:p-1.5 xl:justify-start xl:px-2 xl:py-[9px]"
                 >
                   <Avatar
                     src={currentUser.avatar_url || currentUser.avatar}
@@ -244,7 +258,7 @@ export default function PhotographerShell() {
                     <span className="w-full truncate text-left text-[11.5px] font-semibold leading-none">
                       {currentUser.name || 'LensLeague user'}
                     </span>
-                    <span className="w-full truncate text-left font-mono text-[9.5px] leading-none text-white/[.42]">
+                    <span className="w-full truncate text-left font-mono text-[9.5px] leading-none text-foreground/[.42]">
                       @{currentUser.username || 'you'}
                     </span>
                   </span>
@@ -254,7 +268,7 @@ export default function PhotographerShell() {
             ) : (
               <NavLink
                 to="/login"
-                className="flex w-full items-center gap-[9px] rounded-lg bg-[#141517] px-2 py-[9px] text-[12px] text-white/70 transition-colors hover:text-foreground md:justify-center xl:justify-start"
+                className="flex w-full items-center gap-[9px] rounded-lg bg-card px-2 py-[9px] text-[12px] text-white/70 transition-colors hover:text-foreground md:justify-center xl:justify-start"
               >
                 <LogIn className="h-[15px] w-[15px] flex-none" strokeWidth={1.6} />
                 <span className="hidden xl:inline">Log in</span>
@@ -273,7 +287,7 @@ export default function PhotographerShell() {
         {/* ── Mobile tab bar (turn 1 nav model) ── */}
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[.08] bg-rail/95 backdrop-blur-xl md:hidden supports-[padding-bottom:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)]">
           <div className="flex h-16 items-center justify-around px-2">
-            {NAV_ITEMS.map((item) => (
+            {MOBILE_NAV_ITEMS.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}

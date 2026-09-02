@@ -27,12 +27,13 @@ body {
   overflow-x: hidden;
 }
 
-/* Legacy screens still use a few light Tailwind surface utilities. */
-[data-theme="dark"] .bg-zinc-50 { background-color: var(--bg-canvas); }
-[data-theme="dark"] .bg-zinc-100 { background-color: var(--bg-surface); }
-[data-theme="dark"] .border-zinc-200 { border-color: var(--border-default); }
-[data-theme="dark"] .border-zinc-300 { border-color: var(--border-strong); }
-[data-theme="dark"] .hover\:bg-zinc-50:hover { background-color: var(--bg-surface-hover); }
+/* No literal-palette overrides live here.
+   Pages must use semantic tokens (bg-card, text-foreground, border-border)
+   so a token change propagates by definition rather than by patch.
+   The five rules that used to sit here remapped bg-zinc-50/100 and
+   border-zinc-200/300 under [data-theme="dark"]. They could never cover
+   bg-white/80 (the opacity modifier compiles to a different declaration),
+   which is why the auth pages rendered inconsistently. */
 
 img, video {
   display: block;

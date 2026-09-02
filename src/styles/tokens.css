@@ -23,7 +23,7 @@
   --border-subtle:       rgba(255, 255, 255, 0.07);
   --border-default:      rgba(255, 255, 255, 0.12);
   --border-strong:       rgba(255, 255, 255, 0.20);
-  --border-focus:        rgba(255, 176, 32, 0.8);
+  --border-focus:        rgba(47, 190, 119, 0.8);
 
   /* Typography & Icons */
   --text-primary:        #FFFFFF;
@@ -33,9 +33,9 @@
   --text-inverse:        #08080A;
 
   /* Brand & Technical Accents */
-  --accent-primary:      #FFB020; /* Leica Amber / Competition Gold */
-  --accent-primary-hover:#FFC24D;
-  --accent-primary-glow: rgba(255, 176, 32, 0.25);
+  --accent-primary:      #2FBE77; /* LensLeague green - single source: --brand in index.css */
+  --accent-primary-hover:#7FE0AC;
+  --accent-primary-glow: rgba(47, 190, 119, 0.25);
   --accent-cyan:         #00E5FF; /* Technical / Telemetry Highlight */
   --accent-secondary:    #8B5CF6; /* Violet / Pro Accents */
   --accent-gold:         #FFB020;
@@ -43,8 +43,8 @@
   --accent-bronze:       #D98C5F;
 
   /* Gradients */
-  --accent-gradient:     linear-gradient(135deg, #FFB020 0%, #FF8C00 100%);
-  --accent-glow-gradient:linear-gradient(135deg, rgba(255, 176, 32, 0.2) 0%, rgba(0, 229, 255, 0.15) 100%);
+  --accent-gradient:     linear-gradient(135deg, #2FBE77 0%, #1F9A5E 100%);
+  --accent-glow-gradient:linear-gradient(135deg, rgba(47, 190, 119, 0.2) 0%, rgba(0, 229, 255, 0.15) 100%);
 
   /* Semantic Status */
   --status-success:      #10B981;
@@ -78,7 +78,7 @@
   --shadow-md:           0 8px 16px -4px rgba(0, 0, 0, 0.7);
   --shadow-card:         0 12px 32px -8px rgba(0, 0, 0, 0.85);
   --shadow-modal:        0 25px 50px -12px rgba(0, 0, 0, 0.95);
-  --glow-primary:        0 0 24px rgba(255, 176, 32, 0.35);
+  --glow-primary:        0 0 24px rgba(47, 190, 119, 0.35);
   --glow-cyan:           0 0 24px rgba(0, 229, 255, 0.35);
 }
 

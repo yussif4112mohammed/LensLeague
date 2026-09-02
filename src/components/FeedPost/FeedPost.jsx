@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { Heart, MessageCircle, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SmartImage from '../SmartImage/SmartImage';
+import { IMAGE_SIZES } from '../../utils/imageOptimizer';
 
 /* One-up editorial feed post — mockup 1d.
    Credit above the frame, the frame full-bleed, actions below. One photograph at
    a time: no card chrome competing with the work. */
-export default function FeedPost({ photo, onOpen, onComments }) {
+export default function FeedPost({ photo, onOpen, onComments, priority = false }) {
   const navigate = useNavigate();
   const {
     currentUser,
@@ -45,7 +47,12 @@ export default function FeedPost({ photo, onOpen, onComments }) {
       <div className="flex items-center gap-[9px] px-5 md:px-0">
         <button onClick={() => navigate(`/profile/${photo.ownerId}`)} className="flex-none">
           {photo.ownerAvatar ? (
-            <img src={photo.ownerAvatar} alt="" className="h-[30px] w-[30px] rounded-full object-cover" />
+            <SmartImage
+              src={photo.ownerAvatar}
+              alt=""
+              width={IMAGE_SIZES.avatarSmall}
+              wrapperClassName="h-[30px] w-[30px] rounded-full"
+            />
           ) : (
             <span
               className="flex h-[30px] w-[30px] items-center justify-center rounded-full text-[11px] font-semibold text-white/50"
@@ -64,7 +71,7 @@ export default function FeedPost({ photo, onOpen, onComments }) {
             {photo.ownerName || 'Photographer'}
           </button>
           {meta && (
-            <span className="truncate font-mono text-[10px] leading-none text-white/[.42]">{meta}</span>
+            <span className="truncate font-mono text-[10px] leading-none text-foreground/[.42]">{meta}</span>
           )}
         </div>
 
@@ -85,16 +92,20 @@ export default function FeedPost({ photo, onOpen, onComments }) {
       <button
         onClick={onOpen}
         aria-label={photo.caption || 'Open photo'}
-        className="group block w-full overflow-hidden bg-[#1c1d20] outline-none ring-brand focus-visible:ring-2 md:rounded-xl"
+        className="group block w-full overflow-hidden bg-muted outline-none ring-brand focus-visible:ring-2 md:rounded-xl"
       >
         {photo.isVideo ? (
           <video src={photo.url} controls playsInline className="w-full" />
         ) : (
-          <img
+          <SmartImage
             src={photo.url}
             alt={photo.caption || ''}
-            loading="lazy"
-            className="w-full object-cover transition-transform duration-700 group-hover:scale-[1.01]"
+            width={IMAGE_SIZES.feedPost}
+            /* Reserve the box before the bytes land, so posts below do not get
+               shoved down as each photograph decodes. */
+            aspectRatio={photo.aspectRatio?.replace('/', ' / ') || '3 / 4'}
+            priority={priority}
+            className="transition-transform duration-700 group-hover:scale-[1.01]"
           />
         )}
       </button>
@@ -105,7 +116,7 @@ export default function FeedPost({ photo, onOpen, onComments }) {
           <p className="text-[13.5px] leading-[1.35] text-white/90 text-pretty">{photo.caption}</p>
         )}
 
-        <div className="flex items-center gap-4 text-[11.5px] text-white/[.55]">
+        <div className="flex items-center gap-4 text-[11.5px] text-foreground/[.55]">
           <button
             onClick={() => { setLiked(v => !v); toggleLikePost?.(photo.id); }}
             aria-pressed={liked}

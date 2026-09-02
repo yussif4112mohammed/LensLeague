@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       <div className="absolute inset-0 bg-background z-0 fixed" />
       
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <Link to="/login" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium mb-8 ml-4 sm:ml-0">
+        <Link to="/login" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium mb-8 ml-4 sm:ml-0">
           <ArrowLeft className="w-4 h-4" />
           Back to Login
         </Link>
@@ -49,9 +49,9 @@ export default function ForgotPasswordPage() {
               <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle className="w-8 h-8 text-emerald-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-4">Check your email</h2>
-              <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-                We've sent a password reset link to <strong className="text-white">{email}</strong>.<br />
+              <h2 className="text-2xl font-bold text-foreground mb-4">Check your email</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+                We've sent a password reset link to <strong className="text-foreground">{email}</strong>.<br />
                 Click the link in the email to reset your password.
               </p>
               <Button onClick={() => window.open('https://mail.google.com', '_blank')} className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold">
@@ -60,8 +60,8 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-bold tracking-tight text-white mb-2">Reset your password</h2>
-              <p className="text-sm text-zinc-400 mb-8">Enter your email and we'll send you a link to reset your password.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">Reset your password</h2>
+              <p className="text-sm text-muted-foreground mb-8">Enter your email and we'll send you a link to reset your password.</p>
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg mb-6">
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="reset-email" className="block text-sm font-medium text-zinc-300 mb-1.5">Email address</label>
+                  <label htmlFor="reset-email" className="block text-sm font-medium text-foreground mb-1.5">Email address</label>
                   <Input
                     id="reset-email" type="email"
                     value={email} onChange={e => setEmail(e.target.value)}
@@ -82,14 +82,14 @@ export default function ForgotPasswordPage() {
                 </div>
                 
                 <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl shadow-[0_0_15px_rgba(204,208,207,0.15)] transition-transform duration-200 ease-out active:scale-[0.96]" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-black" />}
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-foreground" />}
                   {loading ? 'Sending...' : 'Send Reset Link'}
                 </Button>
               </form>
 
-              <p className="mt-8 text-center text-sm text-zinc-400">
+              <p className="mt-8 text-center text-sm text-muted-foreground">
                 Remember your password?{' '}
-                <Link to="/login" className="font-semibold text-white hover:underline transition-all">Log in</Link>
+                <Link to="/login" className="font-semibold text-foreground hover:underline transition-all">Log in</Link>
               </p>
             </>
           )}

@@ -19,7 +19,7 @@ const TIERS = [
 
 function SectionLabel({ children, className }) {
   return (
-    <span className={cn('font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]', className)}>
+    <span className={cn('font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]', className)}>
       {children}
     </span>
   );
@@ -99,7 +99,7 @@ export default function LeaguesPage() {
       </header>
 
       {!schemaReady && (
-        <div className="mt-6 rounded-xl border border-white/[.1] bg-[#17181a] p-5">
+        <div className="mt-6 rounded-xl border border-white/[.1] bg-card p-5">
           <p className="text-[14px] font-semibold">Leagues aren’t switched on yet</p>
           <p className="mt-1.5 max-w-[520px] text-[13px] leading-relaxed text-white/60">
             Run <code className="rounded bg-white/[.07] px-1.5 py-0.5 font-mono text-[12px]">supabase/migration_v12_recognition_tiers.sql</code> in
@@ -151,14 +151,14 @@ export default function LeaguesPage() {
 
           <div className="mt-2.5 grid gap-1.5 md:grid-cols-2">
             {otherRooms.map(room => (
-              <div key={room.id} className="flex items-center gap-[11px] rounded-[10px] bg-[#17181a] p-2.5">
+              <div key={room.id} className="flex items-center gap-[11px] rounded-[10px] bg-card p-2.5">
                 <span
                   className="h-10 w-10 flex-none rounded-[7px]"
                   style={{ backgroundImage: 'repeating-linear-gradient(135deg,#242529 0 6px,#1c1d21 6px 12px)' }}
                 />
                 <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
                   <span className="truncate text-[12.5px] font-semibold leading-none">{room.name}</span>
-                  <span className="truncate font-mono text-[10px] leading-none text-white/[.42]">
+                  <span className="truncate font-mono text-[10px] leading-none text-foreground/[.42]">
                     {roomStatusLine(room)}
                   </span>
                 </div>
@@ -195,12 +195,12 @@ export default function LeaguesPage() {
                     'flex flex-col gap-[5px] rounded-[10px] p-2.5',
                     isWinner
                       ? 'border border-brand/30 bg-brand/[.12]'
-                      : 'bg-[#17181a]'
+                      : 'bg-card'
                   )}
                 >
                   <span className={cn(
                     'font-mono text-[10px] font-semibold',
-                    isWinner ? 'text-brand-tint' : 'text-white/[.55]'
+                    isWinner ? 'text-brand-tint' : 'text-foreground/[.55]'
                   )}>
                     {tier.label}
                   </span>

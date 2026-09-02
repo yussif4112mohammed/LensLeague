@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
-import FeedbackButton from './components/FeedbackButton/FeedbackButton';
 
 // Layouts
 import PhotographerShell from './layouts/PhotographerShell/PhotographerShell';
@@ -33,6 +32,9 @@ import InboxPage from './pages/Inbox/InboxPage';
 // Pages — Admin
 import AdminPage from './pages/Admin/AdminPage';
 
+// Pages — Legal (public, real routes rather than modal placeholders)
+import { TermsPage, PrivacyPage, GuidelinesPage } from './pages/Legal/LegalPages';
+
 const router = createBrowserRouter([
   // ────── Public routes ──────
   { path: '/', element: <LandingPage /> },
@@ -40,6 +42,9 @@ const router = createBrowserRouter([
   { path: '/signup', element: <SignUpPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/admin', element: <AdminPage /> },
+  { path: '/terms', element: <TermsPage /> },
+  { path: '/privacy', element: <PrivacyPage /> },
+  { path: '/guidelines', element: <GuidelinesPage /> },
 
   // ────── Photographer SPA (Protected) ──────
   {
@@ -98,7 +103,6 @@ export default function App() {
     <div className="w-full min-h-screen">
       <ErrorBoundary>
         <RouterProvider router={router} />
-        <FeedbackButton />
       </ErrorBoundary>
     </div>
   );

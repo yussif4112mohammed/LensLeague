@@ -30,7 +30,7 @@ function spanFor(i) {
 
 function SectionLabel({ children }) {
   return (
-    <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-white/[.42]">
+    <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]">
       {children}
     </span>
   );
@@ -127,14 +127,14 @@ export default function DiscoverPage() {
       {/* ── Top bar ── */}
       {/* 1c puts the region rail on top on mobile; 2a keeps it inline on desktop. */}
       <header className="flex flex-none flex-col gap-2.5 border-b border-white/[.08] px-4 py-3 sm:h-[62px] sm:flex-row sm:items-center sm:gap-4 sm:py-0 md:gap-[18px] md:px-[26px]">
-        <label className="relative flex h-9 w-full max-w-[420px] flex-1 items-center gap-[9px] rounded-[9px] border border-white/[.09] bg-[#17181a] px-3">
-          <Search className="h-4 w-4 flex-none text-white/[.38]" strokeWidth={1.7} />
+        <label className="relative flex h-9 w-full max-w-[420px] flex-1 items-center gap-[9px] rounded-[9px] border border-white/[.09] bg-card px-3">
+          <Search className="h-4 w-4 flex-none text-foreground/[.38]" strokeWidth={1.7} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search photographers, tags, categories"
             aria-label="Search"
-            className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-white/[.38]"
+            className="w-full bg-transparent text-[12.5px] text-foreground outline-none placeholder:text-foreground/[.38]"
           />
         </label>
 
@@ -217,7 +217,7 @@ export default function DiscoverPage() {
                   key={photo.id}
                   onClick={() => setOpenIndex(i)}
                   className={cn(
-                    'group relative overflow-hidden rounded-lg bg-[#1c1d20] outline-none ring-brand transition-transform focus-visible:ring-2',
+                    'group relative overflow-hidden rounded-lg bg-muted outline-none ring-brand transition-transform focus-visible:ring-2',
                     spanFor(i)
                   )}
                   aria-label={photo.caption || 'Open photo'}
@@ -261,7 +261,7 @@ export default function DiscoverPage() {
                     >
                       {u.name || u.username}
                     </button>
-                    <span className="truncate font-mono text-[10px] leading-none text-white/[.42]">
+                    <span className="truncate font-mono text-[10px] leading-none text-foreground/[.42]">
                       {lower((u.service_categories || [])[0] || 'photography')} · {lower(u.location || 'earth')}
                     </span>
                   </div>
@@ -278,7 +278,7 @@ export default function DiscoverPage() {
 
           <div className="flex flex-col gap-2.5">
             <SectionLabel>CATEGORIES</SectionLabel>
-            <div className="flex flex-wrap gap-1.5 text-[11.5px] text-white/[.72]">
+            <div className="flex flex-wrap gap-1.5 text-[11.5px] text-foreground/[.72]">
               {CATEGORIES.map((c) => (
                 <button
                   key={c}

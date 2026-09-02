@@ -22,8 +22,6 @@ const TOP_PHOTOGRAPHERS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const [userCount, setUserCount] = useState(0);
-  const [email, setEmail] = useState('');
-  const [waitlistStatus, setWaitlistStatus] = useState('idle');
 
   useEffect(() => {
     const fetchUserCount = async () => {
@@ -36,19 +34,6 @@ export default function LandingPage() {
     };
     fetchUserCount();
   }, []);
-
-  const handleWaitlistJoin = async (e) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) return;
-    setWaitlistStatus('submitting');
-    try {
-      await supabase.from('waitlist').insert({ email });
-      setWaitlistStatus('success');
-      setEmail('');
-    } catch (err) {
-      setWaitlistStatus('error');
-    }
-  };
 
   return (
     <div className="w-full min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground">
@@ -95,7 +80,7 @@ export default function LandingPage() {
         <div className="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col items-start animate-entrance" style={{ animationDelay: '0.1s' }}>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-foreground text-xs font-mono font-medium tracking-wide uppercase mb-8 border border-border">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-card animate-pulse" />
               The Premier League for Photography
             </div>
 
@@ -216,26 +201,26 @@ export default function LandingPage() {
       </section>
 
       {/* New Dribbble-style Footer */}
-      <footer className="bg-zinc-950 py-16 px-4 sm:px-6 relative z-10 border-t border-zinc-900">
+      <footer className="bg-background py-16 px-4 sm:px-6 relative z-10 border-t border-border">
         <div className="max-w-6xl mx-auto">
           
           {/* CTA Card */}
-          <div className="bg-zinc-900 rounded-[2.5rem] border border-zinc-800/50 p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12 mb-20 overflow-hidden relative shadow-2xl">
+          <div className="bg-card rounded-[2.5rem] border border-border/50 p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12 mb-20 overflow-hidden relative shadow-2xl">
             {/* Background concentric circles for effect */}
             <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none hidden md:block">
-               <div className="w-[600px] h-[600px] border border-white rounded-full flex items-center justify-center">
-                  <div className="w-[400px] h-[400px] border border-white rounded-full flex items-center justify-center">
-                    <div className="w-[200px] h-[200px] border border-white rounded-full"></div>
+               <div className="w-[600px] h-[600px] border border-foreground rounded-full flex items-center justify-center">
+                  <div className="w-[400px] h-[400px] border border-foreground rounded-full flex items-center justify-center">
+                    <div className="w-[200px] h-[200px] border border-foreground rounded-full"></div>
                   </div>
                </div>
             </div>
 
             <div className="md:w-1/2 relative z-10">
-              <div className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-4">Start your journey</div>
-              <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
+              <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">Start your journey</div>
+              <h2 className="text-3xl md:text-5xl font-black text-foreground mb-6 leading-tight">
                 Join the LensLeague Arena
               </h2>
-              <p className="text-zinc-400 text-lg mb-8 max-w-md">
+              <p className="text-muted-foreground text-lg mb-8 max-w-md">
                 Battle head-to-head in photography challenges, climb the global rankings, and get discovered by elite clients.
               </p>
               <Button onClick={() => navigate('/signup')} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-base font-bold group">
@@ -246,19 +231,19 @@ export default function LandingPage() {
 
             <div className="md:w-1/2 h-[300px] relative hidden md:block">
                {/* Abstract Avatars on concentric circles */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-zinc-700/30 rounded-full flex items-center justify-center">
-                 <div className="w-[250px] h-[250px] border border-zinc-700/30 rounded-full flex items-center justify-center">
-                    <div className="w-[100px] h-[100px] border border-zinc-700/30 rounded-full flex items-center justify-center bg-zinc-950 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-border/30 rounded-full flex items-center justify-center">
+                 <div className="w-[250px] h-[250px] border border-border/30 rounded-full flex items-center justify-center">
+                    <div className="w-[100px] h-[100px] border border-border/30 rounded-full flex items-center justify-center bg-background shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                        <Logo className="w-8 h-8" />
                     </div>
                  </div>
                </div>
                
                {/* Avatars */}
-               <Avatar className="absolute top-[20%] left-[20%] w-12 h-12 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80" /></Avatar>
-               <Avatar className="absolute bottom-[20%] right-[30%] w-10 h-10 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" /></Avatar>
-               <Avatar className="absolute top-[40%] right-[10%] w-14 h-14 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&q=80" /></Avatar>
-               <Avatar className="absolute bottom-[30%] left-[15%] w-10 h-10 border-2 border-zinc-900 shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute top-[20%] left-[20%] w-12 h-12 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute bottom-[20%] right-[30%] w-10 h-10 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute top-[40%] right-[10%] w-14 h-14 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&q=80" /></Avatar>
+               <Avatar className="absolute bottom-[30%] left-[15%] w-10 h-10 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&q=80" /></Avatar>
             </div>
           </div>
 
@@ -268,61 +253,49 @@ export default function LandingPage() {
               <div className="flex items-center gap-2 mb-6">
                  <Logo withText={true} className="w-8 h-8" />
               </div>
-              <p className="text-zinc-500 text-sm max-w-xs leading-relaxed">
+              <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
                 The premier global arena for visual creatives. Compete, rank up, and build your legacy.
               </p>
             </div>
 
             <div className="md:col-span-2">
-               <h4 className="text-white font-bold mb-6 text-sm">Platform</h4>
-               <ul className="space-y-4 text-sm font-medium text-zinc-400">
-                 <li><a href="#" className="hover:text-white transition-colors flex items-center gap-1 group">Photographers <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
-                 <li><a href="#" className="hover:text-white transition-colors flex items-center gap-1 group">Clients <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
-                 <li><a href="#" className="hover:text-white transition-colors flex items-center gap-1 group">Leaderboard <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+               <h4 className="text-foreground font-bold mb-6 text-sm">Platform</h4>
+               <ul className="space-y-4 text-sm font-medium text-muted-foreground">
+                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 group">Photographers <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 group">Clients <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 group">Leaderboard <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
                </ul>
             </div>
 
             <div className="md:col-span-2">
-               <h4 className="text-white font-bold mb-6 text-sm">Socials</h4>
-               <ul className="space-y-4 text-sm font-medium text-zinc-400">
-                 <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between group">Instagram <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-white transition-colors" /></a></li>
-                 <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between group">Twitter/X <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-white transition-colors" /></a></li>
-                 <li><a href="#" className="hover:text-white transition-colors flex items-center justify-between group">YouTube <ArrowUpRight className="w-3.5 h-3.5 text-zinc-600 group-hover:text-white transition-colors" /></a></li>
+               <h4 className="text-foreground font-bold mb-6 text-sm">Socials</h4>
+               <ul className="space-y-4 text-sm font-medium text-muted-foreground">
+                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center justify-between group">Instagram <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
+                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center justify-between group">Twitter/X <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
+                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center justify-between group">YouTube <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
                </ul>
             </div>
 
             <div className="md:col-span-4">
-               <h4 className="text-white font-bold mb-6 text-sm">Newsletter</h4>
-               <p className="text-zinc-500 text-sm mb-4 leading-relaxed">
-                 Receive product updates, exclusive photography tips, and early access to challenges.
+               <h4 className="text-foreground font-bold mb-6 text-sm">Get started</h4>
+               <p className="text-muted-foreground text-sm mb-5 leading-relaxed">
+                 Build your visual identity, enter battles automatically, and get discovered by clients.
                </p>
-               <form onSubmit={handleWaitlistJoin} className="relative">
-                 <input 
-                   type="email" 
-                   placeholder="Enter your email..." 
-                   className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-3.5 pl-5 pr-14 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 disabled:opacity-50" 
-                   value={email}
-                   onChange={(e) => setEmail(e.target.value)}
-                   disabled={waitlistStatus === 'submitting' || waitlistStatus === 'success'}
-                 />
-                 <button 
-                   type="submit" 
-                   disabled={waitlistStatus === 'submitting' || waitlistStatus === 'success'}
-                   className="absolute right-1.5 top-1.5 bottom-1.5 w-10 rounded-full bg-white flex items-center justify-center hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                 >
-                   {waitlistStatus === 'success' ? <span className="text-black text-xs font-bold">✓</span> : <ArrowRight className="w-4 h-4 text-black" />}
-                 </button>
-               </form>
-               {waitlistStatus === 'success' && <p className="text-xs text-green-500 mt-2">You've been added to the waitlist!</p>}
-               {waitlistStatus === 'error' && <p className="text-xs text-red-500 mt-2">Something went wrong. Please try again.</p>}
+               <button
+                 onClick={() => navigate('/signup')}
+                 className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+               >
+                 Create your account
+                 <ArrowRight className="w-4 h-4" />
+               </button>
             </div>
           </div>
 
           {/* Bottom Row */}
-          <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-zinc-900/50 px-4 text-xs font-medium text-zinc-500 gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-border/50 px-4 text-xs font-medium text-muted-foreground gap-4">
              <div className="flex flex-col gap-1">
                <span>© {new Date().getFullYear()} LensLeague. All rights reserved. Engineered for visual creators worldwide.</span>
-               <span className="text-zinc-400 font-semibold tracking-wide">A Noble Stature Studios company</span>
+               <span className="text-muted-foreground font-semibold tracking-wide">A Noble Stature Studios company</span>
              </div>
              <div className="flex items-center gap-6">
                 <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> All systems operational</span>

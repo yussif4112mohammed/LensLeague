@@ -1,0 +1,15 @@
+# Normalise line endings so diffs show real changes, not CRLF churn.
+# Before this, `git status` reported 38 modified files with 17,537 insertions
+# and 17,537 identical deletions — pure carriage-return noise that made it
+# impossible to review an actual diff.
+* text=auto eol=lf
+
+# Binary assets must never be touched.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.pdf  binary

@@ -7,10 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Star, MapPin, MessageSquare, Verified, Users } from 'lucide-react';
 
-const CATEGORIES = ['All', 'Portrait', 'Wedding', 'Commercial', 'Street', 'Nature'];
 const SORT_OPTS = ['Top Rated', 'Most Booked', 'Nearest'];
 
 export default function ClientSearch() {
+  // Categories come from the database (one platform-controlled list) rather
+  // than a hardcoded array. There used to be four such arrays across the app,
+  // all disagreeing - a photo uploaded as one category was unfilterable in
+  // another screen, and one list's "Commercial" existed nowhere else at all.
+  const { categories } = useApp();
+  const CATEGORIES = ['All', ...categories];
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [minRating, setMinRating] = useState(0);

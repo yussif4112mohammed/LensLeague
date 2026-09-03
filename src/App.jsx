@@ -15,6 +15,7 @@ import DiscoverPage from './pages/Discover/DiscoverPage';
 import VotePage from './pages/Vote/VotePage';
 import ChallengesPage from './pages/Challenges/ChallengesPage';
 import LeaguesPage from './pages/Leagues/LeaguesPage';
+import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 import UploadPage from './pages/Upload/UploadPage';
@@ -60,7 +61,8 @@ const router = createBrowserRouter([
       // Leagues — category rooms with four-tier recognition (replaces the
       // ranked leaderboard, per the product spec's "no public display of losses")
       { path: '/leagues', element: <LeaguesPage /> },
-      { path: '/leaderboard', element: <Navigate to="/leagues" replace /> },
+      // Was a redirect to /leagues, which is why nobody ever saw this page.
+      { path: '/leaderboard', element: <LeaderboardPage /> },
       // Profile (own or others)
       { path: '/profile/:id', element: <ProfilePage /> },
       { path: '/profile', element: <Navigate to="/profile/me" replace /> },

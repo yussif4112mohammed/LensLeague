@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { useApp } from '../../context/AppContext';
+import { useApp, PROFILE_COLUMNS } from '../../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Logo from '@/components/Logo';
@@ -80,7 +80,7 @@ export function LoginPage() {
               .from('profiles')
               // Not '*': profiles.email/phone are not readable by the
               // anon and authenticated roles (migration v11).
-              .select('id, username, name, display_name, bio, location, avatar, avatar_url, role, account_type, verified, banned, points, wins, global_rank, created_at')
+              .select(PROFILE_COLUMNS)
               .eq('id', data.user.id)
               .single();
             profile = newProfile;
@@ -219,7 +219,11 @@ export function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [showVerifyNotice, setShowVerifyNotice] = useState(false);
 
-  const CATEGORIES = ['Portrait', 'Landscape', 'Wedding', 'Street', 'Product', 'Nature', 'Editorial', 'Architecture'];
+  // Categories come from the database (one platform-controlled list) rather
+  // than a hardcoded array. There used to be four such arrays across the app,
+  // all disagreeing - a photo uploaded as one category was unfilterable in
+  // another screen, and one list's "Commercial" existed nowhere else at all.
+  const { categories: CATEGORIES } = useApp();
 
   const toggleCategory = (c) => {
     setCategories(prev => prev.includes(c) ? prev.filter(x => x !== c) : prev.length < 3 ? [...prev, c] : prev);

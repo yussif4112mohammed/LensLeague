@@ -12,10 +12,6 @@ import { cn } from '@/lib/utils';
 
 const REGIONS = ['Ghana', 'Nigeria', 'Kenya', 'Global'];
 
-const CATEGORIES = [
-  'Street', 'Portrait', 'Landscape', 'Wildlife', 'Architecture', 'Documentary',
-  'Sports', 'Event', 'Fashion', 'Food', 'Travel', 'Macro', 'B&W',
-];
 
 const SORTS = ['Trending', 'Recent', 'Featured'];
 
@@ -58,6 +54,11 @@ function HatchAvatar({ src, name, size }) {
 }
 
 export default function DiscoverPage() {
+  // Categories come from the database (one platform-controlled list) rather
+  // than a hardcoded array. There used to be four such arrays across the app,
+  // all disagreeing - a photo uploaded as one category was unfilterable in
+  // another screen, and one list's "Commercial" existed nowhere else at all.
+  const { categories: CATEGORIES } = useApp();
   const navigate = useNavigate();
   const { photos, users, currentUser, follows, followUser, challenges } = useApp();
 

@@ -47,6 +47,8 @@ export default {
           tint: "hsl(var(--brand-tint))",
         },
         rail: "hsl(var(--rail))",
+        silver: "hsl(var(--silver))",
+        bronze: "hsl(var(--bronze))",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "sans-serif"],

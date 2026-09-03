@@ -1,198 +1,206 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import RankBadge from '../../components/RankBadge/RankBadge';
+import { supabase } from '../../lib/supabaseClient';
 import { useApp } from '../../context/AppContext';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TrendingUp, TrendingDown, Minus, Crown } from 'lucide-react';
+import { Trophy, Loader2, TrendingUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-function TrendArrow({ trend }) {
-  if (trend === 0) return <div className="flex items-center text-muted-foreground"><Minus className="w-4 h-4" /></div>;
-  if (trend > 0) return <div className="flex items-center text-emerald-500 font-bold"><TrendingUp className="w-4 h-4 mr-1" />{trend}</div>;
-  return <div className="flex items-center text-red-500 font-bold"><TrendingDown className="w-4 h-4 mr-1" />{Math.abs(trend)}</div>;
+/**
+ * The leaderboard.
+ *
+ * REBUILT, not repaired. The previous version:
+ *   - was never routed (/leaderboard redirected to /leagues), so nobody saw it
+ *   - re-sorted by points in the browser, with a comment admitting the database
+ *     rank "may lag behind" - a second ranking system that could disagree with
+ *     the first
+ *   - labelled the column "ELO", though the points come from a flat award and
+ *     never touched an Elo calculation
+ *
+ * Ranking is now defined once, in get_leaderboard() (migration v16), and this
+ * page only displays what it returns. "This month" is recomputed from the
+ * battles themselves using the same point values the engine awards, so the two
+ * scopes cannot drift apart.
+ */
+
+const SCOPES = [
+  { id: 'month',    label: 'This month', hint: 'Points earned since the 1st' },
+  { id: 'all_time', label: 'All time',   hint: 'Every point ever awarded' },
+];
+
+function Medal({ rank }) {
+  // Only the top three get a colour. Below that, a plain number reads better
+  // than a wall of decoration.
+  const tone =
+    rank === 1 ? 'bg-brand text-brand-foreground'
+    : rank === 2 ? 'bg-silver/25 text-silver'
+    : rank === 3 ? 'bg-bronze/25 text-bronze'
+    : null;
+
+  if (!tone) {
+    return (
+      <span className="w-8 text-center font-mono text-[13px] tabular-nums text-muted-foreground">
+        {rank}
+      </span>
+    );
+  }
+  return (
+    <span className={cn(
+      'flex h-8 w-8 flex-none items-center justify-center rounded-full font-mono text-[13px] font-bold tabular-nums',
+      tone
+    )}>
+      {rank}
+    </span>
+  );
+}
+
+function Row({ row, isMe, onOpen }) {
+  return (
+    <button
+      onClick={onOpen}
+      className={cn(
+        'flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/40 sm:px-5',
+        isMe && 'bg-brand/[.07]'
+      )}
+    >
+      <Medal rank={row.rank} />
+
+      {row.avatar_url ? (
+        <img src={row.avatar_url} alt="" className="h-9 w-9 flex-none rounded-full object-cover" />
+      ) : (
+        <span
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[12px] font-semibold text-muted-foreground"
+          style={{ backgroundImage: 'repeating-linear-gradient(135deg,#232427 0 6px,#1b1c1f 6px 12px)' }}
+        >
+          {(row.name || '?').trim().charAt(0).toUpperCase()}
+        </span>
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-[14px] font-semibold text-foreground">
+          {row.name || 'Photographer'}
+          {isMe && <span className="ml-2 text-[11px] font-normal text-brand">you</span>}
+        </span>
+        <span className="truncate font-mono text-[11px] text-muted-foreground">
+          {row.battles_played} {row.battles_played === 1 ? 'battle' : 'battles'}
+          {row.wins > 0 && ` · ${row.wins} won`}
+        </span>
+      </div>
+
+      <span className="flex-none font-mono text-[15px] font-semibold tabular-nums text-foreground">
+        {row.points.toLocaleString()}
+      </span>
+    </button>
+  );
 }
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
-  const { users, currentUser } = useApp();
-  const [scope, setScope] = useState('global');
-  const [period, setPeriod] = useState('all');
-  
-  // Sort by points descending — this is the live source of truth
-  // global_rank may lag behind in DB so we recompute locally
-  const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
-  const entries = sortedUsers.slice(0, 50).map((u, i) => ({
-    id: u.id,
-    rank: i + 1,
-    name: u.name || 'User',
-    avatar: u.avatar_url || u.avatar,
-    points: u.points || 0,
-    trend: i % 3 === 0 ? +2 : (i % 5 === 0 ? -1 : 0),
-    category: (u.categories && u.categories[0]) || (u.service_categories && u.service_categories[0]) || 'Photography',
-    location: u.location || 'Global'
-  }));
+  const { currentUser } = useApp();
 
-  const myRank = { 
-    global: sortedUsers.findIndex(u => u.id === currentUser?.id) + 1 || currentUser?.global_rank || 99, 
-    weeklyChange: 'Top 5%', 
-    trend: +4,
-    points: currentUser?.points || 0
-  };
+  const [scope, setScope]     = useState('month');
+  const [rows, setRows]       = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
+
+  const load = useCallback(async (which) => {
+    setLoading(true);
+    setError('');
+    const { data, error: rpcError } = await supabase.rpc('get_leaderboard', {
+      p_scope: which,
+      p_limit: 100,
+    });
+    if (rpcError) {
+      setError(rpcError.message);
+      setRows([]);
+    } else {
+      setRows(data || []);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(scope); }, [scope, load]);
 
   return (
-    <div className="min-h-screen bg-muted pb-24 animate-in fade-in duration-500">
-      
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b border-border px-4 py-6 md:px-8">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <h1 className="text-3xl font-black tracking-tight text-foreground flex items-center gap-3">
-            <Crown className="w-8 h-8 text-foreground" />
-            Leaderboard
-          </h1>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Tabs value={scope} onValueChange={setScope} className="w-full sm:w-auto">
-              <TabsList className="bg-card border border-border shadow-sm">
-                <TabsTrigger value="global" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Global</TabsTrigger>
-                <TabsTrigger value="country" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Country</TabsTrigger>
-                <TabsTrigger value="category" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Category</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
-              <TabsList className="bg-card border border-border shadow-sm">
-                <TabsTrigger value="all" className="data-[active]:bg-background data-[active]:text-foreground text-muted-foreground font-bold">All-Time</TabsTrigger>
-                <TabsTrigger value="month" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Month</TabsTrigger>
-                <TabsTrigger value="week" className="data-[active]:bg-primary data-[active]:text-primary-foreground text-muted-foreground font-bold">Week</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
+    <div className="mx-auto w-full max-w-[720px] px-4 pb-24 pt-6 sm:px-6">
+
+      <header className="mb-5">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Leaderboard</h1>
+        <p className="mt-1 text-[13.5px] text-muted-foreground">
+          Points come from battles — 3 for entering, 10 more for winning.
+        </p>
+      </header>
+
+      {/* Scope */}
+      <div className="mb-4 flex gap-1 rounded-xl border border-border bg-card p-1">
+        {SCOPES.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setScope(s.id)}
+            title={s.hint}
+            className={cn(
+              'flex-1 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors',
+              scope === s.id
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
-        
-        {/* My Rank Card */}
-        <div className="bg-gradient-to-r from-white to-zinc-50 border border-border rounded-2xl p-5 mb-8 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-4">
-            <RankBadge rank={myRank.global} size="lg" />
-            <div>
-              <div className="text-lg md:text-xl font-bold text-foreground">{myRank.global > 0 ? `You're #${myRank.global} globally` : 'Not yet ranked'}</div>
-              <div className="text-sm font-medium text-muted-foreground">Compete in battles to earn ELO points</div>
-            </div>
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-[13px]">Loading standings…</span>
           </div>
-          <div className="flex flex-col items-end">
-            <div className="text-2xl font-black text-foreground">{myRank.points.toLocaleString()} <span className="text-sm font-medium text-muted-foreground uppercase">ELO</span></div>
-            <TrendArrow trend={myRank.trend} />
+        ) : error ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-[13.5px] text-muted-foreground">
+              The leaderboard could not load. {error}
+            </p>
           </div>
-        </div>
-
-        {/* Algorithm info */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-10 flex items-start gap-3">
-          <span className="text-xl">⚡</span>
-          <div>
-            <div className="text-sm font-bold text-yellow-900 mb-0.5">How ranking works</div>
-            <div className="text-xs text-yellow-800 leading-relaxed">Every vote in a battle changes both photographers' ELO scores. Winners gain points, losers lose points. The more you compete and win, the higher your rank climbs.</div>
-          </div>
-        </div>
-
-        {/* Podium (Top 3) */}
-        <div className="flex items-end justify-center gap-2 md:gap-6 mb-16 px-2">
-          
-          {/* Silver (#2) */}
-          <div 
-            className="flex flex-col items-center cursor-pointer group w-1/3 max-w-[160px]"
-            onClick={() => navigate(`/profile/${entries[1]?.id}`)}
-          >
-            <div className="relative mb-4">
-              <Avatar className="w-16 h-16 md:w-24 md:h-24 border-4 border-border shadow-[0_0_20px_rgba(0,0,0,0.05)] group-hover:scale-105 transition-transform">
-                <AvatarImage src={entries[1]?.avatar} className="object-cover" />
-                <AvatarFallback className="bg-muted text-muted-foreground font-bold text-xl">{entries[1]?.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
-                <RankBadge rank={2} size="md" />
-              </div>
-            </div>
-            <div className="text-center font-bold text-foreground truncate w-full px-2 mb-1">{entries[1]?.name?.split(' ')[0]}</div>
-            <div className="text-xs font-bold text-muted-foreground mb-4">{(entries[1]?.points||0).toLocaleString()} ELO</div>
-            <div className="w-full h-32 md:h-40 bg-gradient-to-t from-zinc-300/20 to-zinc-300/5 rounded-t-xl border-t border-border/30 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-muted" />
-            </div>
-          </div>
-
-          {/* Gold (#1) */}
-          <div 
-            className="flex flex-col items-center cursor-pointer group w-1/3 max-w-[180px] -mt-8 relative z-10"
-            onClick={() => navigate(`/profile/${entries[0]?.id}`)}
-          >
-            <div className="relative mb-4">
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-4xl animate-bounce">👑</div>
-              <Avatar className="w-20 h-20 md:w-32 md:h-32 border-4 border-yellow-400 shadow-[0_0_40px_rgba(250,204,21,0.2)] group-hover:scale-105 transition-transform">
-                <AvatarImage src={entries[0]?.avatar} className="object-cover" />
-                <AvatarFallback className="bg-muted text-muted-foreground font-bold text-2xl">{entries[0]?.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
-                <RankBadge rank={1} size="lg" />
-              </div>
-            </div>
-            <div className="text-center font-black text-foreground text-lg truncate w-full px-2 mb-1">{entries[0]?.name?.split(' ')[0]}</div>
-            <div className="text-xs font-black text-foreground mb-4">{(entries[0]?.points||0).toLocaleString()} ELO</div>
-            <div className="w-full h-40 md:h-52 bg-gradient-to-t from-gold/20 to-gold/5 rounded-t-xl border-t-2 border-white/40 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-card shadow-[0_0_10px_rgba(255,255,255,1)]" />
-            </div>
-          </div>
-
-          {/* Bronze (#3) */}
-          <div 
-            className="flex flex-col items-center cursor-pointer group w-1/3 max-w-[160px]"
-            onClick={() => navigate(`/profile/${entries[2]?.id}`)}
-          >
-            <div className="relative mb-4">
-              <Avatar className="w-16 h-16 md:w-24 md:h-24 border-4 border-amber-700 shadow-[0_0_20px_rgba(180,83,9,0.1)] group-hover:scale-105 transition-transform">
-                <AvatarImage src={entries[2]?.avatar} className="object-cover" />
-                <AvatarFallback className="bg-muted text-muted-foreground font-bold text-xl">{entries[2]?.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
-                <RankBadge rank={3} size="md" />
-              </div>
-            </div>
-            <div className="text-center font-bold text-foreground truncate w-full px-2 mb-1">{entries[2]?.name?.split(' ')[0]}</div>
-            <div className="text-xs font-medium text-muted-foreground mb-4">{(entries[2]?.points||0).toLocaleString()} ELO</div>
-            <div className="w-full h-24 md:h-32 bg-gradient-to-t from-amber-700/20 to-amber-700/5 rounded-t-xl border-t border-amber-700/30 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-amber-700" />
-            </div>
-          </div>
-
-        </div>
-
-        {/* List (Rank 4+) */}
-        <div className="flex flex-col gap-2">
-          {entries.slice(3).map((p) => (
-            <div
-              key={p.id}
-              onClick={() => navigate(`/profile/${p.id}`)}
-              className="flex items-center gap-4 bg-card border border-border p-4 rounded-2xl hover:bg-muted transition-colors cursor-pointer group shadow-sm"
+        ) : rows.length === 0 ? (
+          /* An honest empty state. No invented names, no placeholder ranks. */
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+            <TrendingUp className="h-8 w-8 text-muted-foreground/50" strokeWidth={1.5} />
+            <p className="text-[14px] font-semibold text-foreground">
+              {scope === 'month' ? 'No battles have finished this month yet' : 'No points awarded yet'}
+            </p>
+            <p className="max-w-[42ch] text-[13px] leading-relaxed text-muted-foreground">
+              Upload a photograph and it enters a battle automatically. Once that
+              battle closes, points appear here.
+            </p>
+            <button
+              onClick={() => navigate('/upload')}
+              className="mt-1 rounded-full bg-primary px-5 py-2.5 text-[13px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              <div className="w-12 shrink-0 flex justify-center">
-                <RankBadge rank={p.rank} size="sm" />
-              </div>
-              
-              <Avatar className="w-12 h-12 border border-border group-hover:border-ring transition-colors">
-                <AvatarImage src={p.avatar} className="object-cover" />
-                <AvatarFallback className="bg-muted text-muted-foreground font-bold">{p.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-foreground truncate group-hover:text-primary transition-colors">{p.name}</div>
-                <div className="text-xs text-muted-foreground truncate">{p.category} · {p.location}</div>
-              </div>
-              
-              <div className="flex flex-col items-end shrink-0">
-                <div className="font-bold text-foreground text-sm">{(p.points).toLocaleString()} <span className="text-[10px] text-muted-foreground uppercase font-medium">ELO</span></div>
-                <TrendArrow trend={p.trend} />
-              </div>
-            </div>
-          ))}
-        </div>
+              Upload a photograph
+            </button>
+          </div>
+        ) : (
+          rows.map((row) => (
+            <Row
+              key={row.user_id}
+              row={row}
+              isMe={row.user_id === currentUser?.id}
+              onOpen={() => navigate(`/profile/${row.user_id}`)}
+            />
+          ))
+        )}
       </div>
+
+      {!loading && rows.length > 0 && (
+        <p className="mt-3 flex items-center gap-1.5 px-1 font-mono text-[11px] text-muted-foreground">
+          <Trophy className="h-3 w-3" />
+          {scope === 'month'
+            ? 'Recomputed from battles finished this month'
+            : 'Running total since launch'}
+          {' · '}
+          equal points share a position
+        </p>
+      )}
     </div>
   );
 }

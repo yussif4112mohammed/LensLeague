@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { calculateElo } from '../lib/elo';
 import { supabase } from '../lib/supabaseClient';
+import { FALLBACK_CATEGORIES, validatePersonalStyle, isKnownCategory } from '../lib/photography';
 
 const AppContext = createContext(null);
 
@@ -14,7 +14,7 @@ const AppContext = createContext(null);
 // `cover_url`; there was never a `cover`. The other six names this list carried
 // (account_type, rating, review_count, specialties, profile_completed) are added
 // by migration_v14, so this list and the database now agree.
-const PROFILE_COLUMNS = [
+export const PROFILE_COLUMNS = [
   'id', 'username', 'name', 'display_name', 'bio', 'location',
   'avatar', 'avatar_url', 'cover_url', 'website',
   'role', 'account_type', 'verified', 'banned',
@@ -36,6 +36,11 @@ export function AppProvider({ children }) {
 
   // Photos list state
   const [photos, setPhotos] = useState([]);
+  // The platform's photography categories. One source of truth, read from the
+  // `categories` table - which has existed and been seeded since migration v2
+  // but was queried by nothing, while four different hardcoded lists disagreed
+  // with each other across the UI.
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
 
   // Bookings list state
   const [bookings, setBookings] = useState([]);
@@ -557,6 +562,17 @@ export function AppProvider({ children }) {
         setSavedItemIds([]);
       }
 
+      // 4b. Photography categories - platform-controlled, closed set.
+      const { data: categoryRows, error: categoryError } = await supabase
+        .from('categories')
+        .select('name')
+        .order('name');
+      if (!categoryError && categoryRows?.length) {
+        setCategories(categoryRows.map(c => c.name));
+      }
+      // On error we keep FALLBACK_CATEGORIES, which mirrors the seeded rows, so
+      // the pickers still work rather than rendering empty.
+
       // 5. Comments - Limit to recent 500 across app
       const { data: commentsData } = await supabase
         .from('comments')
@@ -761,6 +777,90 @@ export function AppProvider({ children }) {
       console.warn('Thread/message creation error:', err.message);
     }
     return { success: true, booking: createdBooking };
+  };
+
+  /**
+   * INQUIRE — a client contacting a photographer about working together.
+   *
+   * The spec was explicit: no fixed price on the profile, and no contact form
+   * that sends nowhere. So this does not create a parallel "inquiries" concept
+   * with its own table. An inquiry IS a message, in the platform's real
+   * messaging system, in a real thread the photographer opens in their inbox.
+   * That is the whole point - one conversation, not a form submission that
+   * disappears into a mailbox nobody reads.
+   *
+   * get_or_create_thread is reused deliberately: inquiring twice continues the
+   * existing conversation rather than fragmenting it into duplicate threads.
+   *
+   * @param photographerId who is being contacted
+   * @param body           what the client wrote
+   * @param context        optional { itemId, itemCaption } when the inquiry
+   *                       started from a specific photograph, so the
+   *                       photographer knows which work prompted it
+   */
+  const sendInquiry = async (photographerId, body, context = {}) => {
+    const clientId = currentUser?.id;
+    if (!clientId) return { success: false, error: 'Sign in to contact a photographer.' };
+    if (!photographerId) return { success: false, error: 'Unknown photographer.' };
+    if (clientId === photographerId) {
+      return { success: false, error: 'You cannot inquire with yourself.' };
+    }
+
+    const text = (body || '').trim();
+    if (text.length < 10) {
+      return { success: false, error: 'Tell them a little about the work — at least a sentence.' };
+    }
+    if (text.length > 2000) {
+      return { success: false, error: 'Keep it under 2000 characters.' };
+    }
+
+    const { data: threadId, error: threadError } = await supabase.rpc('get_or_create_thread', {
+      user_a: clientId,
+      user_b: photographerId,
+    });
+    if (threadError) return { success: false, error: threadError.message };
+    if (!threadId)   return { success: false, error: 'Could not open a conversation.' };
+
+    // Reference the photograph that prompted the inquiry, when there was one.
+    const opener = context.itemCaption
+      ? `${text}\n\n— about your photograph "${context.itemCaption}"`
+      : text;
+
+    const { data: message, error: messageError } = await supabase
+      .from('messages')
+      .insert({ thread_id: threadId, sender_id: clientId, body: opener })
+      .select('id, thread_id, sender_id, body, created_at')
+      .single();
+
+    if (messageError) return { success: false, error: messageError.message };
+
+    // Reflect it locally so the inbox shows the conversation immediately.
+    setThreads(prev => {
+      const existing = prev.find(t => t.id === threadId);
+      const entry = {
+        id: message.id,
+        senderId: clientId,
+        body: opener,
+        created_at: message.created_at,
+      };
+      if (existing) {
+        return prev.map(t => t.id === threadId
+          ? { ...t, messages: [...(t.messages || []), entry] }
+          : t);
+      }
+      const photographer = (users || []).find(u => u.id === photographerId);
+      return [{
+        id: threadId,
+        photographerId,
+        clientId,
+        photographerName: photographer?.name || 'Photographer',
+        clientName: currentUser?.name || 'You',
+        photographerAvatar: photographer?.avatar_url || photographer?.avatar || null,
+        messages: [entry],
+      }, ...prev];
+    });
+
+    return { success: true, threadId, message };
   };
 
   const acceptBooking = async (bookingId) => {
@@ -980,115 +1080,60 @@ export function AppProvider({ children }) {
     return { success: true };
   };
 
+  /**
+   * Vote in a battle.
+   *
+   * The database is the only thing that decides anything here. It enforces one
+   * vote per person, blocks voting on your own work, applies a daily cap, and
+   * awards points when the battle closes (migration v15).
+   *
+   * WHAT WAS REMOVED: a ~90-line fallback that ran a full Elo calculation in
+   * the browser when the RPC failed, adjusted every affected user's points, and
+   * re-sorted global_rank locally. None of it was ever written to the database
+   * - its own comment admitted "No database writes on this path". The effect
+   * was that a user watched their rank climb through a session and reset on
+   * refresh, and the "⚡ 1200 · +18" ratings on battle cards were fiction. There
+   * is one points system now, and it lives on the server.
+   */
   const castBattleVote = async (battleId, side) => {
-    // 1. Find the battle
     const battle = battles.find(b => b.id === battleId);
-    if (!battle) return null;
+    if (!battle) return { success: false, error: 'That battle is no longer available.' };
+    if (!currentUser?.id) return { success: false, error: 'Sign in to vote.' };
 
-    // The production competition engine enforces one vote, prevents voting on
-    // your own work, and awards the win server-side when a battle closes.
     const selectedPhotoId = side === 'a' ? battle.photoA.id : battle.photoB.id;
-    const { data: persistedVote, error: persistedVoteError } = await supabase.rpc('cast_photo_battle_vote', {
+
+    const { data, error } = await supabase.rpc('cast_photo_battle_vote', {
       p_battle_id: battleId,
-      p_selected_photo_id: selectedPhotoId
+      p_selected_photo_id: selectedPhotoId,
     });
-    if (!persistedVoteError && persistedVote?.[0]) {
-      const result = persistedVote[0];
-      setBattles(previous => previous.map(item => item.id === battleId ? {
-        ...item,
-        totalVotes: result.votes_a + result.votes_b,
-        status: result.status,
-        photoA: { ...item.photoA, votes: result.votes_a },
-        photoB: { ...item.photoB, votes: result.votes_b }
-      } : item));
-      if (result.status === 'finalized' && result.winner_id) {
-        const winnerOwnerId = result.winner_id === battle.photoA.id ? battle.photoA.ownerId : battle.photoB.ownerId;
-        setUsers(previous => previous.map(user => user.id === winnerOwnerId ? { ...user, wins: (user.wins || 0) + 1, points: (user.points || 0) + 10 } : user));
-        setCurrentUser(previous => previous?.id === winnerOwnerId ? { ...previous, wins: (previous.wins || 0) + 1, points: (previous.points || 0) + 10 } : previous);
-      }
-      return {
-        changeA: side === 'a' ? '+1 vote' : '—', changeB: side === 'b' ? '+1 vote' : '—',
-        newRatingA: battle.photoA.rating || 1200, newRatingB: battle.photoB.rating || 1200
-      };
+
+    if (error) {
+      // The database raises readable messages for the cases a voter can
+      // actually hit: already voted, own battle, closed, daily cap.
+      return { success: false, error: error.message };
     }
 
-    // 2. Fetch current ratings (default to 1200)
-    const ratingA = battle.photoA.rating || 1200;
-    const ratingB = battle.photoB.rating || 1200;
+    const result = data?.[0];
+    if (!result) return { success: false, error: 'Vote was not recorded.' };
 
-    // 3. Compute new Elo scores
-    const outcomeA = side === 'a' ? 1 : 0;
-    const eloResults = calculateElo(ratingA, ratingB, outcomeA);
-
-    // 4. Update local battles state array
-    setBattles(prev => prev.map(b => {
-      if (b.id === battleId) {
-        return {
-          ...b,
-          photoA: {
-            ...b.photoA,
-            rating: eloResults.newRatingA,
-            votes: side === 'a' ? b.photoA.votes + 1 : b.photoA.votes
-          },
-          photoB: {
-            ...b.photoB,
-            rating: eloResults.newRatingB,
-            votes: side === 'b' ? b.photoB.votes + 1 : b.photoB.votes
-          },
-          totalVotes: b.totalVotes + 1
-        };
-      }
-      return b;
-    }));
-
-    // 5. Update creator points dynamically on the leaderboard
-    const changeA = eloResults.rawChangeA;
-    const changeB = eloResults.rawChangeB;
-
-    // Update local users state with new points
-    const updatedUsers = setUsers(prevUsers => {
-      const next = prevUsers.map(u => {
-        if (u.id === battle.photoA.ownerId || u.id === battle.photoA.photographerId) {
-          return { ...u, points: Math.max(0, (u.points || 0) + changeA) };
-        }
-        if (u.id === battle.photoB.ownerId || u.id === battle.photoB.photographerId) {
-          return { ...u, points: Math.max(0, (u.points || 0) + changeB) };
-        }
-        return u;
-      });
-      // Recompute global_rank based on points (descending)
-      const sorted = [...next].sort((a, b) => (b.points || 0) - (a.points || 0));
-      const rankMap = {};
-      sorted.forEach((u, idx) => { rankMap[u.id] = idx + 1; });
-      return next.map(u => ({ ...u, global_rank: rankMap[u.id] || u.global_rank }));
-    });
-
-    // Also update currentUser if they are one of the contestants
-    setCurrentUser(prev => {
-      if (!prev) return prev;
-      if (prev.id === battle.photoA.ownerId || prev.id === battle.photoA.photographerId) {
-        return { ...prev, points: Math.max(0, (prev.points || 0) + changeA) };
-      }
-      if (prev.id === battle.photoB.ownerId || prev.id === battle.photoB.photographerId) {
-        return { ...prev, points: Math.max(0, (prev.points || 0) + changeB) };
-      }
-      return prev;
-    });
-
-    // 6. No database writes on this path.
-    // Scores, points and global_rank are awarded by cast_photo_battle_vote()
-    // in the database. Writing them from the browser meant any signed-in user
-    // could set their own points and rank; migration v11 reverts such writes,
-    // so attempting them here would only produce failed requests. The state
-    // updates above keep the offline/mock experience responsive.
+    setBattles(prev => prev.map(item => item.id === battleId ? {
+      ...item,
+      totalVotes: result.votes_a + result.votes_b,
+      status: result.status,
+      photoA: { ...item.photoA, votes: result.votes_a },
+      photoB: { ...item.photoB, votes: result.votes_b },
+      winnerId: result.winner_id || null,
+    } : item));
 
     return {
-      changeA: eloResults.changeA,
-      changeB: eloResults.changeB,
-      newRatingA: eloResults.newRatingA,
-      newRatingB: eloResults.newRatingB
+      success: true,
+      status: result.status,
+      winnerId: result.winner_id || null,
+      votesA: result.votes_a,
+      votesB: result.votes_b,
     };
   };
+
 
   const resolveDispute = async (disputeId, resolution) => {
     const { error } = await supabase.rpc('admin_resolve_dispute', {
@@ -1288,6 +1333,17 @@ export function AppProvider({ children }) {
   }, [currentUser?.id]);
 
   const uploadPhoto = async ({ file, url, caption, category, customStyle, gear, location, exifData, destination = 'feed', alt_text = '' }) => {
+    // Validate at the choke point, not in the form. Every upload path goes
+    // through here, so a request edited in the browser cannot introduce a
+    // category the platform does not define, or a style carrying markup.
+    if (category && !isKnownCategory(category, categories)) {
+      return { success: false, error: `"${category}" is not a photography category.` };
+    }
+    const styleCheck = validatePersonalStyle(customStyle);
+    if (!styleCheck.ok) {
+      return { success: false, error: styleCheck.error };
+    }
+    customStyle = styleCheck.value || null;
     const userId = currentUser?.id;
     if (!userId) return { success: false, error: 'Sign in to upload.' };
     const userName = currentUser?.display_name || currentUser?.name || 'Photographer';
@@ -1410,7 +1466,7 @@ export function AppProvider({ children }) {
         category,
         destination,
         alt_text
-        // customStyle column may not exist in DB yet, gracefully skipping it for Supabase to avoid errors, 
+        // custom_style exists on portfolio_items (migration v10) and is written above. 
         // or we could add it if we know the schema. It's stored in React state above.
       });
 
@@ -1589,6 +1645,8 @@ export function AppProvider({ children }) {
       currentUser,
       authLoading,
       photos,
+      categories,
+      sendInquiry,
       setPhotos,
       bookings,
       threads,

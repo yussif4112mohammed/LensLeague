@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { useApp } from '../../context/AppContext';
+import { useApp, PROFILE_COLUMNS } from '../../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -170,9 +170,15 @@ function EmptyState({ icon: Icon, title, desc, action }) {
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addBookingRequest, users, updateProfile, follows, followUser, unfollowUser, currentUser, photos } = useApp();
+  const { addBookingRequest, users, updateProfile, follows, followUser, unfollowUser, currentUser, photos, sendInquiry } = useApp();
   
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  // Inquiry: the client's first message to a photographer. Deliberately a
+  // message in the real messaging system, not a separate "contact" concept.
+  const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [inquiryText, setInquiryText] = useState('');
+  const [inquiryError, setInquiryError] = useState('');
+  const [inquirySending, setInquirySending] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -204,7 +210,7 @@ export default function ProfilePage() {
         .from('profiles')
         // Not select('*'): profiles.email/phone are no longer readable by
         // the anon and authenticated roles (migration v11).
-        .select('id, username, name, display_name, bio, location, avatar, avatar_url, cover, cover_url, website, role, account_type, verified, banned, points, wins, global_rank, rating, review_count, followers_count, following_count, posts_count, competitions_won, camera_gear, photography_style, specialties, service_categories, starting_rate, availability_status, packages, created_at')
+        .select(PROFILE_COLUMNS)
         .eq('id', id)
         .single();
       if (data) setFetchedUser(data);
@@ -212,6 +218,60 @@ export default function ProfilePage() {
     };
     fetchProfile();
   }, [id, currentUser, users]);
+
+  // ── THE GALLERY QUERY ─────────────────────────────────────────────────────
+  //
+  // Scoped to one photographer, so it is unaffected by the platform-wide 100-row
+  // cap that made a gallery go empty once the app held more than 100 photographs.
+  //
+  // ALBUM-READY BY CONSTRUCTION. The spec asked for albums to be introducible
+  // later without a rewrite, and NOT to be built now. So:
+  //   - portfolio_items already carries album_id, and every upload lands in a
+  //     "Portfolio" album, so the relationship exists in the data today
+  //   - this selects album_id and the album's title alongside each photograph
+  //   - the rows are grouped through one function, groupIntoAlbums() below
+  // Adding albums later means rendering that grouping with more than one bucket.
+  // No query changes, no schema changes, no migration.
+  useEffect(() => {
+    const target = (currentUser && (id === currentUser.id || id === 'me'))
+      ? currentUser?.id
+      : id;
+    if (!target || target === 'me') return;
+
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('portfolio_items')
+        .select('id, media_url, caption, categories, custom_style, alt_text, location, like_count, comment_count, created_at, album_id, albums(title, privacy_level)')
+        .eq('photographer_id', target)
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (cancelled) return;
+      if (error) {
+        // Leave galleryPhotos null so the page falls back to whatever the
+        // context already holds, rather than showing an empty gallery.
+        console.warn('gallery query failed:', error.message);
+        return;
+      }
+      setGalleryPhotos((data || []).map(row => ({
+        id: row.id,
+        url: row.media_url,
+        caption: row.caption,
+        category: row.categories?.[0] || null,
+        customStyle: row.custom_style || null,
+        alt: row.alt_text || null,
+        location: row.location || null,
+        likes: row.like_count || 0,
+        comments: row.comment_count || 0,
+        created_at: row.created_at,
+        ownerId: target,
+        albumId: row.album_id,
+        albumTitle: row.albums?.title || 'Portfolio',
+      })));
+    })();
+    return () => { cancelled = true; };
+  }, [id, currentUser]);
 
   let photographer = (currentUser && (id === currentUser.id || id === 'me')) ? currentUser : users.find(p => p.id === id);
   if (!photographer) photographer = fetchedUser;
@@ -305,7 +365,15 @@ export default function ProfilePage() {
     );
   }
 
-  const userPhotos = photos.filter(p => p.ownerId === photographer.id);
+  // Gallery photographs come from a query scoped to THIS photographer.
+  //
+  // They used to be filtered out of the global `photos` array, which AppContext
+  // caps at 100 rows across the entire platform. Once the 101st photograph
+  // existed anywhere, a photographer could open their own profile and find their
+  // gallery empty. Fetched per profile below; the context array is only the
+  // initial paint while that query runs.
+  const [galleryPhotos, setGalleryPhotos] = useState(null);
+  const userPhotos = galleryPhotos ?? photos.filter(p => p.ownerId === photographer.id);
 
   // Recognition rail. Four tiers, no losses shown, no ranked position — per the
   // product spec. Built only from data we actually hold, so an empty record
@@ -322,11 +390,16 @@ export default function ProfilePage() {
       : []),
   ];
 
+  // Only website. email and phone are REVOKED from the public roles at the
+  // database level (migration v11) - they are not merely hidden in the UI, they
+  // cannot be selected at all, so those rows could never render. `instagram` is
+  // not a column on profiles either. Contact happens through Inquire, which is
+  // the point: a conversation in the app, not an address to harvest.
   const contactRows = [
-    photographer.email_visible && photographer.email ? { label: photographer.email, href: `mailto:${photographer.email}` } : null,
-    photographer.phone_visible && photographer.phone ? { label: photographer.phone, href: `tel:${photographer.phone}` } : null,
-    photographer.website ? { label: String(photographer.website).replace(/^https?:\/\//, ''), href: photographer.website.startsWith('http') ? photographer.website : `https://${photographer.website}` } : null,
-    photographer.instagram ? { label: `@${String(photographer.instagram).replace(/^@/, '')}`, href: `https://instagram.com/${String(photographer.instagram).replace(/^@/, '')}` } : null,
+    photographer.website
+      ? { label: String(photographer.website).replace(/^https?:\/\//, ''),
+          href: photographer.website.startsWith('http') ? photographer.website : `https://${photographer.website}` }
+      : null,
   ].filter(Boolean);
 
   // Journey view (1b): newest work leads, the rest grouped by year.
@@ -336,7 +409,25 @@ export default function ProfilePage() {
     return acc;
   }, {});
   const journeyYears = Object.keys(photosByYear).sort((a, b) => String(b).localeCompare(String(a)));
-  const userReviews = photographer.reviews || [];
+  // There is no `reviews` table and no `profiles.reviews` column, so this was
+  // always []. The tab has been removed rather than left as a permanently empty
+  // section implying reviews exist somewhere.
+
+  const handleInquirySubmit = async (e) => {
+    e.preventDefault();
+    setInquirySending(true);
+    setInquiryError('');
+    const result = await sendInquiry(photographer.id, inquiryText);
+    setInquirySending(false);
+    if (!result.success) {
+      setInquiryError(result.error);
+      return;
+    }
+    // Land them in the conversation, not on a "thanks, we'll be in touch" screen.
+    setInquiryOpen(false);
+    setInquiryText('');
+    navigate('/inbox');
+  };
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -558,12 +649,55 @@ export default function ProfilePage() {
                     )}
                   </DialogContent>
                 </Dialog>
-                <button
-                  onClick={() => navigate(`/inbox?chat=${photographer.id}`)}
-                  className="hidden h-[38px] items-center rounded-[9px] border border-white/20 px-5 text-[13px] font-semibold text-white/90 transition-colors hover:bg-white/[.06] sm:flex"
-                >
-                  Message
-                </button>
+                {/* Inquire, not a price. The spec was explicit: no fixed rate on
+                    the profile, and no contact form that sends nowhere. This
+                    opens a real thread in the real messaging system. */}
+                <Dialog open={inquiryOpen} onOpenChange={setInquiryOpen}>
+                  <DialogTrigger asChild>
+                    <button
+                      id="profile-inquire"
+                      className="flex h-[38px] items-center rounded-[9px] bg-primary px-5 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      Inquire
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="border-border bg-card sm:max-w-[460px]">
+                    <DialogHeader>
+                      <DialogTitle>Contact {photographer.name?.split(' ')[0] || 'this photographer'}</DialogTitle>
+                      <DialogDescription className="text-muted-foreground">
+                        Tell them what you have in mind — the kind of shoot, roughly when,
+                        and anything that matters to you. This starts a real conversation
+                        in your inbox.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleInquirySubmit} className="space-y-3">
+                      <Textarea
+                        value={inquiryText}
+                        onChange={(e) => { setInquiryText(e.target.value); setInquiryError(''); }}
+                        placeholder="I'm looking for a photographer for..."
+                        rows={5}
+                        maxLength={2000}
+                        required
+                        className="border-border bg-background"
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-muted-foreground">
+                          {inquiryText.trim().length}/2000
+                        </span>
+                        {inquiryError && (
+                          <span className="text-[12px] text-red-400">{inquiryError}</span>
+                        )}
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={inquirySending}
+                        className="w-full rounded-full font-bold"
+                      >
+                        {inquirySending ? 'Sending…' : 'Send message'}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </>
             )}
           </div>
@@ -628,10 +762,9 @@ export default function ProfilePage() {
           <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-b border-white/[.09]">
             <TabsList variant="line" className="h-auto justify-start gap-6 rounded-none bg-transparent p-0">
               {[
-                { value: 'gallery', label: 'Portfolio', count: userPhotos.length },
+                { value: 'gallery', label: 'Gallery', count: userPhotos.length },
                 { value: 'timeline', label: 'Journey' },
                 { value: 'achievements', label: 'Recognition', count: recognition.length || undefined },
-                { value: 'reviews', label: 'Reviews', count: userReviews.length || undefined },
               ].map(tab => (
                 <TabsTrigger
                   key={tab.value}
@@ -831,37 +964,6 @@ export default function ProfilePage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="reviews" className="animate-in fade-in duration-300">
-            {userReviews.length > 0 ? (
-              <div className="space-y-4 max-w-3xl">
-                {userReviews.map(rev => (
-                  <Card key={rev.id} className="bg-card/40 border-border transition-all duration-300 hover:-translate-y-1 hover:bg-card">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 border border-border">
-                            <AvatarImage src={rev.reviewerAvatar || `https://ui-avatars.com/api/?name=${rev.reviewer}`} />
-                          </Avatar>
-                          <div>
-                            <div className="font-bold text-sm">{rev.reviewer}</div>
-                            <div className="text-xs text-muted-foreground">{rev.type || 'Booking'} · {rev.date || 'Recently'}</div>
-                          </div>
-                        </div>
-                        <div className="text-foreground text-sm font-black tracking-widest">{'★'.repeat(rev.rating || 5)}</div>
-                      </div>
-                      <p className="text-sm leading-relaxed text-muted-foreground">"{rev.body}"</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <EmptyState 
-                icon={MessageSquare}
-                title="No Reviews Yet"
-                desc={isOwnProfile ? "Complete bookings through LensLeague to start earning verified client reviews." : "This creator hasn't received any verified reviews yet."}
-              />
-            )}
-          </TabsContent>
         </Tabs>
 
         </div>

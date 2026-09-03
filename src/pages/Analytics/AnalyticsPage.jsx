@@ -1,427 +1,252 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 import { useApp } from '../../context/AppContext';
-import { cn } from '@/lib/utils';
+import { describeStyle } from '../../lib/photography';
 import {
-  TrendingUp,
-  Eye,
-  Heart,
-  Users,
-  Award,
-  BarChart3,
-  ArrowUpRight,
-  ChevronRight,
-  X,
-  Camera,
-  Trophy,
-  Star,
-  Crown,
-  Share
+  Loader2, Trophy, Camera, Heart, MessageCircle, Swords, Minus, ArrowUpRight,
 } from 'lucide-react';
-import Logo from '@/components/Logo';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
-const PERIOD_OPTS = [
-  { label: '7D', value: '7d' },
-  { label: '30D', value: '30d' },
-  { label: 'All Time', value: 'all' },
-];
+/**
+ * Your month.
+ *
+ * REPLACES a page where every headline figure was a string literal:
+ *   '14,820' profile views · '3,241' votes · '87' wins · '4.97 ★' rating
+ *   plus a "12-day upload streak" and an audience split of US 28% / UK 18%.
+ * The 7D / 30D / All-Time tabs set a useState that nothing read, so the numbers
+ * never moved. It was labelled "Your Analytics" and a photographer had no way
+ * to tell any of it was invented.
+ *
+ * Everything below is counted by get_my_wrap() (migration v17).
+ *
+ * DELIBERATELY MISSING: profile views, audience by country, and a star rating.
+ * Nothing records views or viewer location, and there is no reviews table, so
+ * there is no honest number to show. An empty space beats a confident lie.
+ */
 
-const STATS = [
-  { label: 'Profile Views', value: '14,820', delta: '+18%', sparkline: [30, 45, 38, 60, 72, 55, 80], icon: Eye },
-  { label: 'Votes Received', value: '3,241', delta: '+24%', sparkline: [20, 35, 42, 38, 55, 70, 65], icon: Heart },
-  { label: 'Competition Wins', value: '87', delta: '+3 this month', sparkline: [2, 3, 1, 4, 2, 3, 5], icon: Trophy },
-  { label: 'Follower Growth', value: '+842', delta: '+12% this week', sparkline: [60, 80, 100, 120, 90, 110, 150], icon: Users },
-  { label: 'Booking Requests', value: '34', delta: '+8 this month', sparkline: [4, 6, 3, 8, 5, 7, 6], icon: ArrowUpRight },
-  { label: 'Avg. Rating', value: '4.97 ★', delta: 'Stable', sparkline: [4.8, 4.9, 4.85, 4.95, 4.9, 4.97, 4.97], icon: Star },
-];
+function monthLabel(d) {
+  return new Date(d).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
 
-function MiniSparkline({ data }) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const range = max - min || 1;
-  const w = 80, h = 32;
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(' ');
+/** A counted figure. `hint` explains where it comes from, so nothing is mysterious. */
+function Stat({ icon: Icon, label, value, hint, accent }) {
+  const empty = value === null || value === undefined;
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
-      <polyline 
-        points={points} 
-        fill="none" 
-        stroke="url(#gradient)" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-        className="drop-shadow-[0_2px_4px_rgba(255,255,255,0.2)]"
-      />
-      <defs>
-        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#71717a" />
-          <stop offset="100%" stopColor="#ffffff" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-4">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" strokeWidth={1.8} />
+        <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
+      </div>
+      <span className={cn(
+        'font-mono text-2xl font-bold tabular-nums',
+        empty ? 'text-muted-foreground/40' : accent ? 'text-brand' : 'text-foreground'
+      )}>
+        {empty ? '—' : value}
+      </span>
+      {hint && <span className="text-[11px] leading-snug text-muted-foreground">{hint}</span>}
+    </div>
   );
 }
 
 export default function AnalyticsPage() {
-  const { currentUser, photos } = useApp();
-  const ME = currentUser || { name: 'You', avatar: 'https://ui-avatars.com/api/?name=You', globalRank: 42 };
-  
-  const TOP_PHOTOS = photos.slice(0, 5).map((p, i) => ({
-    id: p.id, url: p.url,
-    votes: p.likes || [4780, 3420, 3120, 2810, 2340][i] || 100,
-    category: p.category,
-  }));
+  const navigate = useNavigate();
+  const { currentUser } = useApp();
 
-  const [period, setPeriod] = useState('30d');
-  const [showWrapped, setShowWrapped] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [scorecardShared, setScorecardShared] = useState(false);
+  const [wrap, setWrap]       = useState(null);
+  const [platform, setPlatform] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
 
-  useEffect(() => {
-    if (!showWrapped) return;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
 
-    if (currentSlide < 4) {
-      const timer = setTimeout(() => {
-        setCurrentSlide(prev => prev + 1);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [showWrapped, currentSlide]);
+    const [wrapRes, statsRes, histRes] = await Promise.all([
+      supabase.rpc('get_my_wrap'),
+      supabase.rpc('get_month_stats'),
+      supabase.rpc('get_my_battle_history', { p_limit: 10 }),
+    ]);
 
-  const handleOpenWrapped = () => {
-    setCurrentSlide(0);
-    setScorecardShared(false);
-    setShowWrapped(true);
-  };
+    if (wrapRes.error) setError(wrapRes.error.message);
+    else setWrap(wrapRes.data?.[0] || null);
 
-  const handleCloseWrapped = () => {
-    setShowWrapped(false);
-    setCurrentSlide(0);
-  };
+    if (!statsRes.error) setPlatform(statsRes.data?.[0] || null);
+    if (!histRes.error)  setHistory(histRes.data || []);
 
-  const handleNextSlide = () => {
-    if (currentSlide < 4) setCurrentSlide(prev => prev + 1);
-  };
+    setLoading(false);
+  }, []);
 
-  const handlePrevSlide = () => {
-    if (currentSlide > 0) setCurrentSlide(prev => prev - 1);
-  };
+  useEffect(() => { if (currentUser?.id) load(); else setLoading(false); }, [currentUser?.id, load]);
 
-  const handleShareScorecard = () => {
-    setScorecardShared(true);
-    setTimeout(() => setScorecardShared(false), 2500);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-[13px]">Counting your month…</span>
+      </div>
+    );
+  }
+
+  if (!currentUser?.id) {
+    return (
+      <div className="mx-auto max-w-[560px] px-5 py-24 text-center">
+        <p className="text-[14px] text-muted-foreground">Sign in to see your month.</p>
+      </div>
+    );
+  }
+
+  const nothingYet =
+    wrap && wrap.photos_uploaded === 0 && wrap.battles_entered === 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20 animate-in fade-in duration-500">
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-10">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-muted-foreground" />
-              Your Analytics
-            </h1>
-            <p className="text-muted-foreground text-lg">Track your growth and performance.</p>
-          </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <Button 
-              onClick={handleOpenWrapped} 
-              id="wrapped-btn"
-              className="bg-gradient-to-r from-muted to-card border border-border hover:border-ring text-foreground h-14 px-6 rounded-2xl shadow-lg relative overflow-hidden group transition-all duration-300 w-full md:w-auto flex items-center gap-4"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              <div className="bg-white/10 p-2 rounded-xl">
-                <BarChart3 className="w-5 h-5 text-foreground" />
-              </div>
-              <div className="text-left flex-1">
-                <div className="font-bold text-sm leading-tight">July Wrapped</div>
-                <div className="text-xs text-muted-foreground">Tap to view</div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            </Button>
-          </div>
+    <div className="mx-auto w-full max-w-[820px] px-4 pb-24 pt-6 sm:px-6">
+
+      <header className="mb-6">
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand">
+          {wrap ? monthLabel(wrap.month_start) : monthLabel(new Date())}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Your month</h1>
+        <p className="mt-1 max-w-[58ch] text-[13.5px] leading-relaxed text-muted-foreground">
+          Counted from your uploads and finished battles. Nothing here is estimated.
+        </p>
+      </header>
+
+      {error && (
+        <div className="mb-5 rounded-xl border border-border bg-card p-4">
+          <p className="text-[13px] text-muted-foreground">Could not load your month. {error}</p>
         </div>
+      )}
 
-        {/* Period Tabs */}
-        <Tabs value={period} onValueChange={setPeriod} className="w-full md:w-auto">
-          <TabsList className="bg-card/50 border border-border/50 rounded-xl p-1 h-12">
-            {PERIOD_OPTS.map(opt => (
-              <TabsTrigger 
-                key={opt.value} 
-                value={opt.value}
-                className="rounded-lg px-6 data-[active]:bg-primary data-[active]:text-primary-foreground font-medium transition-all h-full"
-              >
-                {opt.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {STATS.map(s => {
-            const Icon = s.icon;
-            const isPositive = s.delta.startsWith('+');
-            return (
-              <Card key={s.label} className="bg-card/50 border-border/50 rounded-2xl hover:bg-card/80 transition-colors">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    {s.label}
-                  </CardTitle>
-                  <MiniSparkline data={s.sparkline} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-foreground tracking-tight">{s.value}</div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className={cn(
-                      "bg-transparent rounded-lg font-medium border-0 px-0",
-                      isPositive ? "text-emerald-400" : "text-muted-foreground"
-                    )}>
-                      {isPositive && <TrendingUp className="w-3 h-3 mr-1" />}
-                      {s.delta}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Top Performing Work */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Award className="w-5 h-5 text-muted-foreground" />
-              Top Performing Work
-            </h2>
-            <Card className="bg-card/50 border-border/50 rounded-2xl overflow-hidden">
-              <div className="divide-y divide-border/50">
-                {TOP_PHOTOS.map((p, i) => (
-                  <div key={p.id} className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors group">
-                    <div className="w-8 text-center font-bold text-muted-foreground">#{i + 1}</div>
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0 relative">
-                      <img src={p.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-xl" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-foreground truncate">{p.category}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
-                        <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/20" />
-                        {p.votes.toLocaleString()} votes
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="hidden sm:flex bg-card border-border text-foreground hover:bg-muted hover:text-foreground rounded-lg">
-                      + Portfolio
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-
-          {/* Audience */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Users className="w-5 h-5 text-muted-foreground" />
-              Audience
-            </h2>
-            <Card className="bg-card/50 border-border/50 rounded-2xl p-6">
-              <div className="space-y-6">
-                {[
-                  { country: 'United States', pct: 28, flag: '🇺🇸' },
-                  { country: 'United Kingdom', pct: 18, flag: '🇬🇧' },
-                  { country: 'Japan', pct: 15, flag: '🇯🇵' },
-                  { country: 'Australia', pct: 11, flag: '🇦🇺' },
-                  { country: 'Other', pct: 28, flag: '🌍' },
-                ].map(a => (
-                  <div key={a.country} className="flex items-center gap-3">
-                    <span className="text-xl">{a.flag}</span>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-sm font-medium text-foreground">{a.country}</span>
-                        <span className="text-xs font-bold text-muted-foreground">{a.pct}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-card rounded-full transition-all duration-1000" style={{ width: `${a.pct}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Interactive Story-style Wrapped Modal */}
-      <Dialog open={showWrapped} onOpenChange={setShowWrapped}>
-        <DialogContent className="sm:max-w-[400px] h-[700px] max-h-[90vh] p-0 bg-black border-border rounded-[2rem] overflow-hidden flex flex-col shadow-2xl [&>button]:hidden">
-          
-          {/* Progress Bars */}
-          <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-4 pt-6 bg-gradient-to-b from-black/80 to-transparent">
-            {[0, 1, 2, 3, 4].map(idx => (
-              <div key={idx} className="h-1 flex-1 bg-muted/50 rounded-full overflow-hidden backdrop-blur-sm">
-                <div 
-                  className={cn(
-                    "h-full rounded-full transition-all duration-[4000ms] ease-linear",
-                    idx < currentSlide ? "bg-card w-full" : 
-                    idx === currentSlide ? "bg-card w-full" : "bg-transparent w-0"
-                  )}
-                  style={{
-                    transitionDuration: idx === currentSlide ? '4000ms' : '0ms',
-                    width: idx < currentSlide ? '100%' : idx === currentSlide ? '100%' : '0%'
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-
-          <button 
-            onClick={handleCloseWrapped}
-            className="absolute top-12 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white/70 hover:bg-black/80 hover:text-foreground backdrop-blur-md transition-colors"
+      {nothingYet ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card px-6 py-16 text-center">
+          <Camera className="h-8 w-8 text-muted-foreground/50" strokeWidth={1.5} />
+          <p className="text-[14px] font-semibold text-foreground">Nothing to count yet this month</p>
+          <p className="max-w-[44ch] text-[13px] leading-relaxed text-muted-foreground">
+            Upload a photograph and it enters a battle automatically. Your figures
+            appear here as battles finish.
+          </p>
+          <button
+            onClick={() => navigate('/upload')}
+            className="mt-1 rounded-full bg-primary px-5 py-2.5 text-[13px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            <X className="w-5 h-5" />
+            Upload a photograph
           </button>
-
-          {/* Nav Zones */}
-          <div className="absolute inset-0 z-40 flex">
-            <div className="w-1/3 h-full cursor-pointer" onClick={handlePrevSlide} />
-            <div className="w-2/3 h-full cursor-pointer" onClick={handleNextSlide} />
+        </div>
+      ) : wrap && (
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Stat icon={Camera}  label="Uploaded"  value={wrap.photos_uploaded}
+                  hint="photographs this month" />
+            <Stat icon={Swords}  label="Battles"   value={wrap.battles_entered}
+                  hint="entered and finished" />
+            <Stat icon={Trophy}  label="Won"       value={wrap.battles_won} accent
+                  hint={wrap.battles_tied > 0 ? `${wrap.battles_tied} tied` : 'decided in your favour'} />
+            <Stat icon={ArrowUpRight} label="Points" value={wrap.points_earned?.toLocaleString()} accent
+                  hint="3 per battle, 10 per win" />
+            <Stat icon={Heart}   label="Likes"     value={wrap.likes_received}
+                  hint="on your work this month" />
+            <Stat icon={MessageCircle} label="Comments" value={wrap.comments_received}
+                  hint="left on your work" />
           </div>
 
-          {/* Slides */}
-          <div className="relative flex-1 flex flex-col items-center justify-center text-center p-8 z-30 pointer-events-none">
-            
-            {currentSlide === 0 && (
-              <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700">
-                <div className="w-20 h-20 mx-auto bg-card rounded-3xl flex items-center justify-center rotate-12 shadow-2xl border border-border/50">
-                  <Camera className="w-10 h-10 text-foreground -rotate-12" />
-                </div>
-                <div>
-                  <h2 className="text-4xl font-black text-foreground leading-tight">
-                    Your July<br/>
-                    <span className="bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-transparent">Wrapped</span>
-                  </h2>
-                </div>
-                <p className="text-muted-foreground text-lg">Let's look back at your creative achievements this month on LensLeague.</p>
-              </div>
-            )}
+          {/* Win rate is null, not zero, when nothing has been decided —
+              zero would read as "you lost everything". */}
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Win rate
+              </span>
+              <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-foreground">
+                {wrap.win_rate === null ? '—' : `${wrap.win_rate}%`}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {wrap.battles_entered > 0
+                  ? `${wrap.battles_won} of ${wrap.battles_entered} decided battles`
+                  : 'no battles finished yet'}
+              </p>
+            </div>
 
-            {currentSlide === 1 && (
-              <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700">
-                <div className="w-20 h-20 mx-auto bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20">
-                  <Heart className="w-10 h-10 text-rose-500" />
-                </div>
-                <div>
-                  <div className="text-sm uppercase tracking-widest font-bold text-rose-500/80 mb-2">Total Love</div>
-                  <h2 className="text-6xl font-black text-foreground">3,241</h2>
-                  <h3 className="text-2xl font-bold text-foreground mt-2">Votes Received</h3>
-                </div>
-                <p className="text-muted-foreground">Your photos inspired the global community, racking up thousands of visual reactions!</p>
-              </div>
-            )}
-
-            {currentSlide === 2 && (
-              <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700">
-                <div className="w-20 h-20 mx-auto bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20">
-                  <Trophy className="w-10 h-10 text-amber-500" />
-                </div>
-                <div>
-                  <div className="text-sm uppercase tracking-widest font-bold text-amber-500/80 mb-2">Victory Lap</div>
-                  <h2 className="text-5xl font-black text-foreground">87 Wins</h2>
-                </div>
-                <p className="text-muted-foreground">You dominated head-to-head vote battles with a max 12-day upload streak.</p>
-              </div>
-            )}
-
-            {currentSlide === 3 && (
-              <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700 w-full">
-                <div className="text-sm uppercase tracking-widest font-bold text-muted-foreground mb-2">Your Masterpiece</div>
-                <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl border border-border">
-                  <img src={TOP_PHOTOS[0].url} alt="Masterpiece" className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 text-left">
-                    <p className="text-2xl font-bold text-foreground mb-1">Portrait Session</p>
-                    <div className="flex items-center gap-2 text-rose-400 font-medium">
-                      <Heart className="w-4 h-4 fill-rose-400" />
-                      {TOP_PHOTOS[0].votes.toLocaleString()} votes
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentSlide === 4 && (
-              <div className="w-full space-y-6 animate-in zoom-in-95 fade-in duration-700">
-                <Crown className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-foreground">Your July Scorecard</h2>
-                
-                <div className="bg-card/80 border border-border rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 blur-3xl rounded-full" />
-                  
-                  <div className="flex flex-col items-center gap-4 relative z-10">
-                    <Avatar className="w-20 h-20 border-2 border-border">
-                      <AvatarImage src={ME.avatar} alt={ME.name} />
-                      <AvatarFallback>{ME.name[0]}</AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="text-center">
-                      <div className="text-xl font-bold text-foreground">{ME.name}</div>
-                      <Badge variant="secondary" className="mt-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-0">
-                        Rank #{ME.globalRank || 42} Globally
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 w-full mt-4 pt-4 border-t border-border/50">
-                      <div className="text-center">
-                        <div className="text-2xl font-black text-foreground">3.2k</div>
-                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Votes</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-black text-foreground">87</div>
-                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Wins</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-black text-foreground">4.97</div>
-                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Rating</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 pointer-events-auto relative z-50">
-                  <Button 
-                    onClick={handleShareScorecard} 
-                    className={cn(
-                      "w-full h-14 rounded-xl font-bold text-base transition-all duration-300",
-                      scorecardShared 
-                        ? "bg-emerald-500 hover:bg-emerald-600 text-foreground"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90"
-                    )}
-                  >
-                    {scorecardShared ? (
-                      <>✓ Scorecard Saved!</>
-                    ) : (
-                      <>
-                        <Share className="w-5 h-5 mr-2" />
-                        Download Scorecard
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                What you shot most
+              </span>
+              <p className="mt-1 text-[15px] font-semibold text-foreground">
+                {describeStyle({ category: wrap.top_category, personalStyle: wrap.top_style }) || '—'}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {wrap.top_category ? 'your most-uploaded category this month' : 'nothing uploaded yet'}
+              </p>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+
+          {history.length > 0 && (
+            <section className="mt-7">
+              <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Recent battles
+              </h2>
+              <div className="overflow-hidden rounded-xl border border-border bg-card">
+                {history.map((b) => (
+                  <div key={b.battle_id}
+                       className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0">
+                    <span className={cn(
+                      'flex h-7 w-7 flex-none items-center justify-center rounded-full',
+                      b.i_won ? 'bg-brand/20 text-brand'
+                      : b.outcome === 'tie' ? 'bg-muted text-muted-foreground'
+                      : 'bg-muted/60 text-muted-foreground'
+                    )}>
+                      {b.i_won ? <Trophy className="h-3.5 w-3.5" />
+                               : <Minus className="h-3.5 w-3.5" />}
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-[13.5px] font-medium text-foreground">
+                        {b.i_won ? 'Won' : b.outcome === 'tie' ? 'Tied' : 'Not this time'}
+                        <span className="ml-2 text-[12px] font-normal text-muted-foreground">
+                          {b.category}
+                        </span>
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground">
+                        {b.my_votes}–{b.their_votes} votes ·{' '}
+                        {new Date(b.finalized_at).toLocaleDateString(undefined,
+                          { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 px-1 text-[11px] text-muted-foreground">
+                Your own record. Losses are never shown on your public profile.
+              </p>
+            </section>
+          )}
+        </>
+      )}
+
+      {/* Platform-wide, so a quiet month for you still shows the place is alive. */}
+      {platform && (
+        <section className="mt-8 rounded-xl border border-border bg-card p-5">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">
+            LensLeague this month
+          </h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-foreground">
+            {platform.photographers > 0 ? (
+              <>
+                <strong className="font-mono tabular-nums">{platform.photographers}</strong>
+                {platform.photographers === 1 ? ' photographer' : ' photographers'} uploaded{' '}
+                <strong className="font-mono tabular-nums">{platform.photos_uploaded}</strong>
+                {platform.photos_uploaded === 1 ? ' photograph' : ' photographs'},{' '}
+                <strong className="font-mono tabular-nums">{platform.battles_completed}</strong>
+                {platform.battles_completed === 1 ? ' battle' : ' battles'} finished, and{' '}
+                <strong className="font-mono tabular-nums">{platform.votes_cast}</strong>
+                {platform.votes_cast === 1 ? ' vote was' : ' votes were'} cast.
+              </>
+            ) : (
+              'No uploads yet this month. Be the first.'
+            )}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

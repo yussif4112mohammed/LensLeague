@@ -5,7 +5,10 @@ import { useApp } from '../../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Trophy, Timer, ArrowRight, RefreshCcw } from 'lucide-react';
 
-const TOTAL_DAILY = 20;
+// The ring shows progress toward a session goal. The REAL limit is enforced
+// server-side (battle_settings.daily_vote_cap, migration v15) - a number in the
+// browser caps nothing, and this one previously reset to 0 on "Vote again".
+const SESSION_GOAL = 20;
 
 function formatAspectRatio(ratio) {
   if (!ratio) return null;
@@ -15,14 +18,20 @@ function formatAspectRatio(ratio) {
 
 export default function VotePage() {
   const { battles } = useApp();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [votedCount, setVotedCount]     = useState(0);
-  const [skipped, setSkipped]           = useState([]);
+  // Tracked by battle ID, not by position.
+  //
+  // The old code pushed `currentIndex` - an index into the ALREADY FILTERED
+  // `remaining` array - into a list that was then used to filter the ORIGINAL
+  // `battles` array. Two different index spaces. After the first skip they
+  // diverged, and each subsequent skip silently removed a different battle
+  // than the one on screen.
+  const [seenIds, setSeenIds] = useState([]);
 
-  const remaining = battles.filter((_, i) => !skipped.includes(i));
+  const remaining = battles.filter(b => !seenIds.includes(b.id));
 
   // Victory screen
-  if (currentIndex >= remaining.length) {
+  if (remaining.length === 0) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 animate-in fade-in duration-700">
         <div className="max-w-md w-full text-center">
@@ -35,7 +44,7 @@ export default function VotePage() {
           </p>
           <p className="text-muted-foreground mb-8">Come back tomorrow for fresh matchups.</p>
           <Button
-            onClick={() => { setCurrentIndex(0); setVotedCount(0); setSkipped([]); }}
+            onClick={() => { setVotedCount(0); setSeenIds([]); }}
             className="w-full h-12 bg-primary text-primary-foreground font-bold hover:bg-primary/90 text-lg shadow-[0_0_15px_rgba(255,255,255,0.2)]"
           >
             <RefreshCcw className="w-5 h-5 mr-2" />
@@ -46,16 +55,16 @@ export default function VotePage() {
     );
   }
 
-  const battle = remaining[currentIndex];
+  const battle = remaining[0];
 
   const handleVote = () => {
     setVotedCount(c => c + 1);
-    setTimeout(() => setCurrentIndex(i => i + 1), 900);
+    // Let the card play its result animation, then retire this battle by id.
+    setTimeout(() => setSeenIds(prev => [...prev, battle.id]), 900);
   };
 
   const handleSkip = () => {
-    setSkipped(prev => [...prev, currentIndex]);
-    setCurrentIndex(i => i + 1);
+    setSeenIds(prev => [...prev, battle.id]);
   };
 
   const ratioA = formatAspectRatio(battle.photoA.aspectRatio);
@@ -69,15 +78,15 @@ export default function VotePage() {
         <div>
           <h1 className="text-2xl font-black text-foreground tracking-tight">Vote</h1>
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mt-1">
-            Battle {currentIndex + 1} of {remaining.length}
+            Battle {seenIds.length + 1} of {seenIds.length + remaining.length}
           </p>
         </div>
         <ProgressRing
-          progress={votedCount / TOTAL_DAILY}
+          progress={votedCount / SESSION_GOAL}
           size={60}
           strokeWidth={5}
           label={`${votedCount}`}
-          sublabel={`/ ${TOTAL_DAILY}`}
+          sublabel={`/ ${SESSION_GOAL}`}
         />
       </header>
 
@@ -134,7 +143,7 @@ export default function VotePage() {
       <div className="fixed bottom-0 left-0 right-0 h-1.5 bg-card z-50">
         <div
           className="h-full bg-primary transition-all duration-300 ease-out"
-          style={{ width: `${(currentIndex / remaining.length) * 100}%` }}
+          style={{ width: `${(seenIds.length / Math.max(1, seenIds.length + remaining.length)) * 100}%` }}
         />
       </div>
     </div>

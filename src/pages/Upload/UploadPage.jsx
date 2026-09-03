@@ -7,13 +7,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Upload, ArrowLeft, ArrowRight, Check, Loader2, Camera, MapPin, Image as ImageIcon, Crop, RotateCcw, Sun } from 'lucide-react';
 
-const CATEGORIES = ['Portrait', 'Landscape', 'Wedding', 'Street', 'Product', 'Nature', 'Editorial', 'Architecture', 'Sports', 'Documentary'];
 const DESTINATIONS = [
   { value: 'feed', label: 'Add to Feed', desc: 'Share to your followers\' feed' },
   { value: 'gallery', label: 'Add to Gallery', desc: 'Curate your professional showcase' },
 ];
 
 export default function UploadPage() {
+  // Categories come from the database (one platform-controlled list) rather
+  // than a hardcoded array. There used to be four such arrays across the app,
+  // all disagreeing - a photo uploaded as one category was unfilterable in
+  // another screen, and one list's "Commercial" existed nowhere else at all.
+  const { categories: CATEGORIES } = useApp();
   const navigate = useNavigate();
   const { currentUser, uploadPhoto } = useApp();
   const [step, setStep] = useState(1);

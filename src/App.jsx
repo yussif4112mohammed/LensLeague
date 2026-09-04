@@ -15,7 +15,6 @@ import DiscoverPage from './pages/Discover/DiscoverPage';
 import VotePage from './pages/Vote/VotePage';
 import ChallengesPage from './pages/Challenges/ChallengesPage';
 import LeaguesPage from './pages/Leagues/LeaguesPage';
-import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 import UploadPage from './pages/Upload/UploadPage';
@@ -61,8 +60,14 @@ const router = createBrowserRouter([
       // Leagues — category rooms with four-tier recognition (replaces the
       // ranked leaderboard, per the product spec's "no public display of losses")
       { path: '/leagues', element: <LeaguesPage /> },
-      // Was a redirect to /leagues, which is why nobody ever saw this page.
-      { path: '/leaderboard', element: <LeaderboardPage /> },
+      // Deliberately NOT routed. A global ranked ladder is the wrong shape for
+      // photography: it ranks a wedding photographer against a wildlife one on a
+      // single axis, it cements the same names at the top so newcomers see an
+      // unreachable wall, and it rewards upload frequency over craft. /leagues
+      // does the winnable version. The page component is kept, and reads
+      // get_leaderboard rather than ranking in the browser, so it is ready if
+      // the product decision is ever revisited. See docs/PRODUCT.md.
+      { path: '/leaderboard', element: <Navigate to="/leagues" replace /> },
       // Profile (own or others)
       { path: '/profile/:id', element: <ProfilePage /> },
       { path: '/profile', element: <Navigate to="/profile/me" replace /> },

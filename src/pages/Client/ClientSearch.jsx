@@ -33,26 +33,49 @@ export default function ClientSearch() {
   const safeLower = (str) => (str || '').toLowerCase();
   const searchLower = safeLower(search);
 
-  // Derive search data realistically
-  const mappedUsers = users.map(u => ({ 
-    ...u, 
-    avgRating: u.rating || 5.0, 
+  // These defaults used to decide who a client FOUND, not merely what was
+  // displayed.
+  //
+  // The rating fell back to five stars for anyone unrated, so filtering by
+  // "4+ stars" matched everybody: the control looked like a quality signal and
+  // was a no-op.
+  //
+  // The category fell back to a single hardcoded value, and did so off a field
+  // that does not exist on profiles at all - the real columns are
+  // service_categories and specialties. So every photographer carried the same
+  // one category, and filtering by any other returned nobody.
+  const mappedUsers = users.map(u => ({
+    ...u,
+    // A rating with no reviews behind it is not a rating.
+    avgRating: u.review_count > 0 && u.rating != null ? Number(u.rating) : null,
+    reviewCount: u.review_count || 0,
     // Never default an unranked photographer to 1 - see ClientHome.
     globalRank: u.global_rank ?? null,
-    categories: u.categories || ['Portrait'], 
+    // Their own stated specialisms. Empty means empty.
+    categories: u.service_categories?.length ? u.service_categories
+              : u.specialties?.length      ? u.specialties
+              : [],
     wins: u.wins || 0,
-    location: u.location || 'Global'
+    location: u.location || null,
   }));
 
-  const filtered = mappedUsers.filter(p => p.role === 'photographer' &&
-    (category === 'All' || p.categories.includes(category)) &&
-    p.avgRating >= minRating &&
-    (searchLower === '' || 
-      safeLower(p.name).includes(searchLower) || 
-      safeLower(p.location).includes(searchLower) ||
-      p.categories.some(c => safeLower(c).includes(searchLower))
-    )
-  );
+  const filtered = mappedUsers.filter(p => {
+    if (p.role !== 'photographer') return false;
+    if (p.banned || p.is_deactivated) return false;
+
+    // A category filter must not silently pass photographers who declared none.
+    if (category !== 'All' && !p.categories.includes(category)) return false;
+
+    // A minimum rating excludes the unrated. Asking for four stars and being
+    // shown people nobody has reviewed is the filter lying to you.
+    if (minRating > 0 && (p.avgRating === null || p.avgRating < minRating)) return false;
+
+    if (searchLower === '') return true;
+    return safeLower(p.name).includes(searchLower)
+        || safeLower(p.username).includes(searchLower)
+        || safeLower(p.location).includes(searchLower)
+        || p.categories.some(c => safeLower(c).includes(searchLower));
+  });
 
   return (
     <div className="min-h-screen bg-black text-foreground p-4 md:p-8 animate-in fade-in duration-500">
@@ -185,7 +208,7 @@ export default function ClientSearch() {
                           <div className="w-1 h-1 rounded-full bg-muted" />
                           <div className="flex items-center gap-1 text-foreground">
                             <Star className="w-4 h-4 fill-gold" />
-                            <span className="font-medium">{p.avgRating}</span>
+                            <span className="font-medium">{p.avgRating != null ? p.avgRating.toFixed(1) : 'No reviews yet'}</span>
                             <span className="text-muted-foreground ml-1">({p.wins})</span>
                           </div>
                         </div>

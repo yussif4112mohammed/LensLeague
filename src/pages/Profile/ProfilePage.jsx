@@ -307,7 +307,14 @@ export default function ProfilePage() {
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  // The banner had no input at all: "Change cover" opened this modal, and the
+  // modal had no cover field, so there was no way to set one.
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  // Upload failures used to go to console.warn and nowhere else, so a failed
+  // image looked identical to a successful save that did nothing.
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     if (photographer) {
@@ -319,8 +326,11 @@ export default function ProfilePage() {
         availability_status: photographer.availability_status || '',
         service_categories: (photographer.service_categories || []).join(', ')
       });
-      setAvatarPreview(photographer.avatar);
+      setAvatarPreview(photographer.avatar_url || photographer.avatar);
       setAvatarFile(null);
+      setCoverPreview(photographer.cover_url || photographer.cover || null);
+      setCoverFile(null);
+      setEditError('');
     }
   }, [photographer]);
 
@@ -441,37 +451,53 @@ export default function ProfilePage() {
     }, 2000);
   };
 
+  /**
+   * Upload one image into the caller's own folder in the avatars bucket.
+   *
+   * The bucket's write policy is folder-scoped to auth.uid(), so both the avatar
+   * and the cover live under `${currentUser.id}/` and are covered by the same
+   * rule - no new bucket and no new policy needed.
+   */
+  const uploadProfileImage = async (file, kind) => {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${currentUser.id}/${kind}.${ext}`;
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (error) throw new Error(`${kind === 'avatar' ? 'Profile picture' : 'Banner'} upload failed: ${error.message}`);
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    // Cache-bust, or the browser keeps serving the previous image at this path.
+    return `${data.publicUrl}?t=${Date.now()}`;
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setIsSavingEdit(true);
-    let newAvatarUrl = null;
-    if (avatarFile) {
-      const fileExt = avatarFile.name.split('.').pop();
-      // Use a consistent path per user so upsert works correctly and passes RLS
-      const fileName = `${currentUser.id}/avatar.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, avatarFile, { upsert: true, contentType: avatarFile.type });
-      if (!uploadError) {
-        // Bust the cache by appending a timestamp query param
-        const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-        newAvatarUrl = data.publicUrl + '?t=' + Date.now();
-      } else {
-        console.warn('Avatar upload error:', uploadError.message);
-      }
-    }
-    const updateData = { ...editForm };
-    updateData.service_categories = typeof updateData.service_categories === 'string' && updateData.service_categories.trim()
-      ? updateData.service_categories.split(',').map(s => s.trim()).filter(Boolean)
-      : [];
-    // Sync BOTH avatar fields so shell nav and profile views always stay in sync
-    if (newAvatarUrl) {
-      updateData.avatar = newAvatarUrl;
-      updateData.avatar_url = newAvatarUrl;
-    }
+    setEditError('');
+
     try {
+      const updateData = { ...editForm };
+      updateData.service_categories =
+        typeof updateData.service_categories === 'string' && updateData.service_categories.trim()
+          ? updateData.service_categories.split(',').map(t => t.trim()).filter(Boolean)
+          : [];
+
+      if (avatarFile) {
+        const url = await uploadProfileImage(avatarFile, 'avatar');
+        // Both fields are written so the rail, the feed and the profile cannot
+        // disagree about which avatar is current.
+        updateData.avatar = url;
+        updateData.avatar_url = url;
+      }
+      if (coverFile) {
+        updateData.cover_url = await uploadProfileImage(coverFile, 'cover');
+      }
+
       await updateProfile(photographer.id, updateData);
       setEditModalOpen(false);
+    } catch (err) {
+      // Say what went wrong, in the dialog, instead of closing as if it worked.
+      setEditError(err.message || 'Could not save your changes. Please try again.');
     } finally {
       setIsSavingEdit(false);
     }
@@ -579,6 +605,29 @@ export default function ProfilePage() {
                           }} />
                         </Button>
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-muted-foreground">Banner</label>
+                        <div className="relative h-24 w-full overflow-hidden rounded-lg border border-border bg-card">
+                          {coverPreview ? (
+                            <img src={coverPreview} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                              No banner yet
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            aria-label="Change banner"
+                            className="absolute inset-0 cursor-pointer opacity-0"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); }
+                            }}
+                          />
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-muted-foreground">Name</label>
                         <Input value={editForm.name} onChange={e=>setEditForm({...editForm, name: e.target.value})} className="border-border bg-card" />
@@ -602,6 +651,11 @@ export default function ProfilePage() {
                             <Input placeholder="Wedding, Portrait, Event" value={editForm.service_categories} onChange={e=>setEditForm({...editForm, service_categories: e.target.value})} className="border-border bg-card" />
                           </div>
                         </>
+                      )}
+                      {editError && (
+                        <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                          {editError}
+                        </p>
                       )}
                       <Button type="submit" className="h-11 w-full rounded-full font-bold" disabled={isSavingEdit}>{isSavingEdit ? 'Saving...' : 'Save Changes'}</Button>
                     </form>

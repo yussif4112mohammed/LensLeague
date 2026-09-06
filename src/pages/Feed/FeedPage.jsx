@@ -381,14 +381,18 @@ export default function FeedPage() {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
+              {/* Was a standings panel linking to a leaderboard the product
+                  deliberately does not publish (docs/PRODUCT.md), above a rank
+                  line whose fallback turned "unranked" into "first" - so three
+                  photographers on zero points were each shown as number one. */}
               <div className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
-                Top Standings
+                Photographers
               </div>
               <button 
-                onClick={() => navigate('/leaderboard')}
+                onClick={() => navigate('/discover')}
                 className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
               >
-                Leaderboard
+                Explore
               </button>
             </div>
 
@@ -407,7 +411,11 @@ export default function FeedPage() {
                       </Avatar>
                       <div>
                         <div className="font-extrabold text-sm text-foreground transition-colors">{p.name}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5 font-medium">Rank #{p.globalRank || 1} · {(p.points || 0).toLocaleString()} pts</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 font-medium">
+                          {p.points > 0
+                            ? `${p.points.toLocaleString()} pts`
+                            : (p.location || 'New here')}
+                        </div>
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all" />

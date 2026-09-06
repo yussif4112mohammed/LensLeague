@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import Logo from '@/components/Logo';
+import NotificationsDrawer from '@/components/Notifications/NotificationsDrawer';
 import {
   Home,
   Compass,
@@ -17,6 +18,7 @@ import {
   LogIn,
   Swords,
   PlusSquare,
+  Bell,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -133,7 +135,12 @@ function AccountMenu({ open, onClose, onNavigate, onLogout }) {
 
 export default function PhotographerShell() {
   const navigate = useNavigate();
-  const { currentUser, users, follows, logoutUser } = useApp();
+  const { currentUser, users, follows, logoutUser, unreadNotificationCount } = useApp();
+
+  // Notifications were reachable only from the mobile feed header, which is
+  // md:hidden - so on a desktop there was no way to open them at all. They
+  // belong in the rail, beside the rest of the navigation, on every page.
+  const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Who the signed-in user follows, resolved against the loaded profiles.
@@ -195,6 +202,32 @@ export default function PhotographerShell() {
               </Tooltip>
             ))}
           </nav>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setNotifOpen(true)}
+                aria-label={unreadNotificationCount > 0
+                  ? `Notifications, ${unreadNotificationCount} unread`
+                  : 'Notifications'}
+                className={cn(
+                  'relative flex items-center rounded-lg text-[13px] text-white/60 transition-colors hover:bg-white/[.04] hover:text-foreground',
+                  'md:h-9 md:w-9 md:justify-center xl:h-auto xl:w-auto xl:justify-start xl:gap-[11px] xl:px-2 xl:py-2.5'
+                )}
+              >
+                <Bell className="h-[15px] w-[15px] flex-none" strokeWidth={1.6} />
+                <span className="hidden xl:inline">Notifications</span>
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-primary px-1 font-mono text-[9px] font-bold tabular-nums text-primary-foreground xl:static xl:ml-auto">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={14} className="xl:hidden">
+              Notifications
+            </TooltipContent>
+          </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -276,6 +309,8 @@ export default function PhotographerShell() {
             )}
           </div>
         </aside>
+
+        <NotificationsDrawer isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
 
         {/* ── Main ── */}
         <main className="relative flex min-h-0 flex-1 flex-col">

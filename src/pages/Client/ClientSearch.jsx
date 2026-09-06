@@ -37,7 +37,8 @@ export default function ClientSearch() {
   const mappedUsers = users.map(u => ({ 
     ...u, 
     avgRating: u.rating || 5.0, 
-    globalRank: u.global_rank || 1, 
+    // Never default an unranked photographer to 1 - see ClientHome.
+    globalRank: u.global_rank ?? null,
     categories: u.categories || ['Portrait'], 
     wins: u.wins || 0,
     location: u.location || 'Global'

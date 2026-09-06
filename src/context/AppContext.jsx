@@ -274,8 +274,12 @@ export function AppProvider({ children }) {
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', userId)
-        .select()
+        // Not a bare .select(): that asks PostgREST for every column, and
+        // profiles.email / phone are not readable by the authenticated role
+        // (v11 revoked table-wide SELECT in favour of a column list). The
+        // update would succeed and the returning representation would fail,
+        // which surfaces as "Save Changes does nothing".
+        .select(PROFILE_COLUMNS)
         .single();
         
       if (error) throw error;
@@ -1227,7 +1231,10 @@ export function AppProvider({ children }) {
       .from('profiles')
       .update(normalized)
       .eq('id', userId)
-      .select()
+      // See the note in updateProfileSettings: a bare .select() requests columns
+      // this role cannot read, the request fails, and the optimistic update is
+      // rolled back - so every profile edit silently reverted.
+      .select(PROFILE_COLUMNS)
       .single();
     if (error) {
       setUsers(prev => prev.map(user => user.id === userId ? previousUser : user));

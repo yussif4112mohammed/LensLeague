@@ -15,7 +15,9 @@ export default function ClientHome() {
   
   const featured = users.slice(0, 4).map(u => ({ 
     ...u, 
-    globalRank: u.global_rank || 1, 
+    // Never default an unranked photographer to 1. Ranking is awarded by the
+    // database; absent means unranked, and the UI hides the badge for those.
+    globalRank: u.global_rank ?? null,
     categories: ['Portrait'], 
     startingPrice: '$500', 
     avgRating: '5.0', 
@@ -85,9 +87,14 @@ export default function ClientHome() {
             <Card key={p.id} className="min-w-[240px] bg-card/50 border-border/50 rounded-2xl overflow-hidden cursor-pointer snap-start" onClick={() => navigate(`/profile/${p.id}`)}>
               <div className="h-32 bg-muted relative bg-cover bg-center" style={{ backgroundImage: `url(${p.cover})` }}>
                 <div className="absolute inset-0 bg-gradient-to-t from-card/90 to-transparent"></div>
-                <Badge className="absolute top-2 left-2 bg-black/50 text-foreground backdrop-blur-md border-border">
-                  Rank #{p.globalRank}
-                </Badge>
+                {/* Only badge a rank the photographer actually holds. This
+                    printed "Rank #" followed by nothing for everyone unranked,
+                    which is every photographer until battles start resolving. */}
+                {p.globalRank ? (
+                  <Badge className="absolute top-2 left-2 bg-black/50 text-foreground backdrop-blur-md border-border">
+                    Rank #{p.globalRank}
+                  </Badge>
+                ) : null}
               </div>
               <CardContent className="p-4 relative">
                 <Avatar className="h-16 w-16 border-4 border-border absolute -top-10 right-4">

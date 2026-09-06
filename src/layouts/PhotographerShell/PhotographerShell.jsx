@@ -245,16 +245,21 @@ export default function PhotographerShell() {
             </TooltipContent>
           </Tooltip>
 
+          {/* min-h-0 + overflow-y-auto matter more than they look. The rail is a
+              flex column inside an overflow-hidden screen, so an unbounded list
+              here grows until it pushes the account chip - and with it Settings,
+              Analytics and Inbox - below the fold, with no way to scroll to
+              them. Follow a handful of people and the settings button vanishes. */}
           {following.length > 0 && (
-            <div className="mt-[26px] hidden flex-col gap-[9px] xl:flex">
-              <span className="px-2 font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.36]">
+            <div className="mt-[26px] hidden min-h-0 flex-1 flex-col gap-[9px] overflow-y-auto xl:flex">
+              <span className="shrink-0 px-2 font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.36]">
                 FOLLOWING
               </span>
               {following.map((u) => (
                 <NavLink
                   key={u.id}
                   to={`/profile/${u.id}`}
-                  className="flex items-center gap-[9px] rounded-md px-2 py-1 text-[12px] text-white/70 transition-colors hover:text-foreground"
+                  className="flex shrink-0 items-center gap-[9px] rounded-md px-2 py-1 text-[12px] text-white/70 transition-colors hover:text-foreground"
                 >
                   <Avatar src={u.avatar_url || u.avatar} name={u.name} size={24} />
                   <span className="truncate">{u.name || u.username}</span>
@@ -264,7 +269,7 @@ export default function PhotographerShell() {
           )}
 
           {/* User chip. The "..." opens everything the rail deliberately omits. */}
-          <div className="relative mt-auto w-full">
+          <div className="relative mt-auto w-full shrink-0 pt-3">
             {currentUser ? (
               <>
                 <AccountMenu

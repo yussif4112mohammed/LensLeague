@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import './NotificationsDrawer.css';
 
@@ -52,6 +53,32 @@ function describe(n) {
   }
 }
 
+
+/**
+ * Where a notification takes you.
+ *
+ * A notification you cannot act on is a dead end - "you have a new message" that
+ * does not open the message is worse than no notification, because it costs
+ * attention and returns nothing. Anything with no sensible destination returns
+ * null and simply does not behave like a link.
+ */
+function destinationFor(n) {
+  switch (n.type) {
+    case 'message':          return n.thread_id ? `/inbox?thread=${n.thread_id}`
+                                  : n.actor_id ? `/inbox?chat=${n.actor_id}` : '/inbox';
+    case 'booking_request':
+    case 'booking_update':   return '/inbox';
+    case 'battle_result':    return '/leagues';
+    case 'competition_result': return '/leagues';
+    case 'follow':           return n.actor_id ? `/profile/${n.actor_id}` : null;
+    case 'like':
+    case 'comment':
+    case 'reply':
+    case 'mention':          return '/profile/me';
+    default:                 return null;
+  }
+}
+
 /** Initials, for the notifications with no actor or no avatar. */
 function initials(name) {
   if (!name) return '·';
@@ -60,6 +87,7 @@ function initials(name) {
 
 export default function NotificationsDrawer({ isOpen, onClose }) {
   const { notifications, unreadNotificationCount, markNotificationsRead } = useApp();
+  const navigate = useNavigate();
 
   // Close on Escape. A drawer that traps you is worse than no drawer.
   useEffect(() => {
@@ -109,8 +137,21 @@ export default function NotificationsDrawer({ isOpen, onClose }) {
               return (
                 <div
                   key={n.id}
-                  className={`notif-item ${!n.is_read ? 'notif-item--unread' : ''}`}
-                  onClick={() => { if (!n.is_read) markNotificationsRead([n.id]); }}
+                  role={destinationFor(n) ? 'link' : undefined}
+                  tabIndex={destinationFor(n) ? 0 : undefined}
+                  className={`notif-item ${!n.is_read ? 'notif-item--unread' : ''} ${destinationFor(n) ? 'notif-item--actionable' : ''}`}
+                  onClick={() => {
+                    if (!n.is_read) markNotificationsRead([n.id]);
+                    const to = destinationFor(n);
+                    if (to) { onClose(); navigate(to); }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    if (!n.is_read) markNotificationsRead([n.id]);
+                    const to = destinationFor(n);
+                    if (to) { onClose(); navigate(to); }
+                  }}
                 >
                   {n.actor_avatar ? (
                     <img src={n.actor_avatar} alt="" className="notif-item__avatar" />

@@ -25,16 +25,26 @@ export default function InboxPage() {
   // rather than "not signed in".
   const myId = currentUser?.id || null;
 
-  // Auto-select chat thread if URL contains a query (e.g. ?chat=2)
+  // Open a specific conversation from a link.
+  //
+  //   ?thread=<id>  addresses the conversation itself, which is what a message
+  //                 notification carries and what keeps working when a thread
+  //                 has more than two people in it.
+  //   ?chat=<id>    addresses the other person. Kept because existing links use
+  //                 it, and it is the natural thing to write from a profile.
   useEffect(() => {
+    const threadId = searchParams.get('thread');
     const chatPartnerId = searchParams.get('chat');
-    if (chatPartnerId) {
-      const userThreads = threads.filter(t => t.photographerId === myId || t.clientId === myId);
-      const targetThread = userThreads.find(t => t.clientId === chatPartnerId || t.photographerId === chatPartnerId);
-      if (targetThread) {
-        setSelectedThreadId(targetThread.id);
-        setActiveTab('chats');
-      }
+    if (!threadId && !chatPartnerId) return;
+
+    const mine = threads.filter(t => t.photographerId === myId || t.clientId === myId);
+    const target = threadId
+      ? mine.find(t => t.id === threadId)
+      : mine.find(t => t.clientId === chatPartnerId || t.photographerId === chatPartnerId);
+
+    if (target) {
+      setSelectedThreadId(target.id);
+      setActiveTab('chats');
     }
   }, [searchParams, threads, myId]);
 

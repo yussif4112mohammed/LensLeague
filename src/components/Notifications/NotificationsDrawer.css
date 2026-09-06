@@ -123,9 +123,19 @@
   gap: 6px;
 }
 
-.notif-item--unread { cursor: pointer; }
+/* Unread no longer implies clickable - .notif-item--actionable decides that,
+   so a row that goes nowhere does not pretend otherwise. */
 .notif-item--unread:hover { background: rgba(136, 189, 242, 0.12); }
 
 @media (prefers-reduced-motion: reduce) {
   .notif-drawer { animation: none; }
+}
+
+/* Only the rows that actually go somewhere look clickable. A cursor that
+   promises navigation and delivers none is its own small lie. */
+.notif-item--actionable { cursor: pointer; }
+.notif-item--actionable:hover { background: rgba(255, 255, 255, 0.05); }
+.notif-item--actionable:focus-visible {
+  outline: 2px solid var(--accent-primary, #88BDF2);
+  outline-offset: 2px;
 }

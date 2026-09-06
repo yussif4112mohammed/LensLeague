@@ -103,6 +103,15 @@ unprompted and every post is an advertisement.
 
 ## Standing rules
 
+- **Build for scale, not for eight users.** The founder's standing constraint, and
+  the one most easily lost, because the current data volume hides every fault.
+  Ask what a design costs at ten thousand users and a million rows. Bound what
+  grows: a notification per message grows with traffic, one unread marker per
+  conversation grows with people times conversations — choose the second. Prefer
+  set-based SQL to a loop with a call per row. Coalesce bursts rather than
+  reacting per event. Index what every page load reads. Never pull a whole table
+  into client state "for now". Where a shortcut is taken deliberately, name it as
+  debt in the same breath rather than discovering it later.
 - **Regional before global.** "Best in Accra this month" is winnable and worth
   sharing; "rank 47 globally" is neither. As the platform grows, add rooms rather
   than lengthening one ladder.

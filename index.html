@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpeg" href="/vercel_lens.jpg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover is required for env(safe-area-inset-*) to return a
+         real value. Without it those insets resolve to 0 on iPhone, and the
+         bottom navigation in PhotographerShell.css - which already asks for
+         them - sits under the home indicator. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="LensLeague — The world's most beautiful and intuitive photography platform. Showcasing photography as the hero." />
     <meta name="theme-color" content="#08080A" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />

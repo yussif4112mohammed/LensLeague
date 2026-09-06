@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { FALLBACK_CATEGORIES, validatePersonalStyle, isKnownCategory } from '../lib/photography';
 
@@ -38,6 +38,9 @@ export function AppProvider({ children }) {
   // never fabricated in the client: every one is written by a database trigger,
   // so a notification cannot be forged by the browser that displays it.
   const [notifications, setNotifications] = useState([]);
+  // Holds the pending coalesced refetch, so a burst of realtime events costs one
+  // query rather than one per event.
+  const notifRefetch = useRef(null);
 
   // Photos list state
   const [photos, setPhotos] = useState([]);
@@ -628,12 +631,20 @@ export function AppProvider({ children }) {
     let notifChannel = null;
     if (currentUser?.id) {
       loadNotifications();
+
+      // Coalesced, not per-event. A burst - somebody catching up on a thread, a
+      // batch of battles finalising at the same moment - would otherwise fire one
+      // full thirty-row refetch per row that arrives. One refetch settles the
+      // whole burst, and the trailing edge means the last event still counts.
       notifChannel = supabase
         .channel('notifications_realtime')
         .on('postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'notifications',
+          { event: '*', schema: 'public', table: 'notifications',
             filter: `recipient_id=eq.${currentUser.id}` },
-          () => { loadNotifications(); })
+          () => {
+            clearTimeout(notifRefetch.current);
+            notifRefetch.current = setTimeout(loadNotifications, 400);
+          })
         .subscribe();
     } else {
       // Signed out: nothing of yours to show.
@@ -643,6 +654,7 @@ export function AppProvider({ children }) {
     return () => {
       supabase.removeChannel(msgChannel);
       if (notifChannel) supabase.removeChannel(notifChannel);
+      clearTimeout(notifRefetch.current);
     };
   }, [currentUser]);
 

@@ -34,6 +34,11 @@ export function AppProvider({ children }) {
   // Answered by the database (admin_console_access), not by an email string.
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Notifications. Real rows from the `notifications` table (migration v20),
+  // never fabricated in the client: every one is written by a database trigger,
+  // so a notification cannot be forged by the browser that displays it.
+  const [notifications, setNotifications] = useState([]);
+
   // Photos list state
   const [photos, setPhotos] = useState([]);
   // The platform's photography categories. One source of truth, read from the
@@ -607,10 +612,68 @@ export function AppProvider({ children }) {
       })
       .subscribe();
 
+    // Notifications arrive the same way messages do. RLS applies to realtime as
+    // well as to selects, so the filter below is a bandwidth optimisation rather
+    // than the security boundary - a subscriber is only ever sent rows it could
+    // already have read.
+    loadNotifications();
+    const notifChannel = supabase
+      .channel('notifications_realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications',
+          filter: `recipient_id=eq.${currentUser.id}` },
+        () => { loadNotifications(); })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(msgChannel);
+      supabase.removeChannel(notifChannel);
     };
   }, [currentUser]);
+
+  /**
+   * Your notifications, newest first, with the actor already joined on by the
+   * database so the drawer does not fire a query per row.
+   *
+   * Failure is silent and non-destructive: an empty drawer is a far better
+   * outcome than a crash, and the previous state is left alone rather than
+   * being replaced with nothing.
+   */
+  const loadNotifications = async () => {
+    if (!currentUser?.id || String(currentUser.id).startsWith('usr_')) return;
+    try {
+      const { data, error } = await supabase.rpc('get_my_notifications', {
+        p_limit: 30,
+        p_only_unread: false,
+      });
+      if (error) throw error;
+      setNotifications(data || []);
+    } catch (err) {
+      console.warn('Could not load notifications:', err.message);
+    }
+  };
+
+  /**
+   * Mark them read. Pass ids, or nothing for all of them.
+   *
+   * Optimistic, like every other mutation here: the badge clears immediately and
+   * rolls back if the write fails.
+   */
+  const markNotificationsRead = async (ids = null) => {
+    const before = notifications;
+    setNotifications(prev =>
+      prev.map(n => (!ids || ids.includes(n.id)) ? { ...n, is_read: true } : n)
+    );
+    try {
+      const { error } = await supabase.rpc('mark_notifications_read', { p_ids: ids });
+      if (error) throw error;
+    } catch (err) {
+      console.warn('Could not mark notifications read:', err.message);
+      setNotifications(before);
+    }
+  };
+
+  const unreadNotificationCount = notifications.filter(n => !n.is_read).length;
 
   // Helper: group flat Supabase messages list into structured UI threads
   const compileSupabaseThreads = (threadsData, myId) => {
@@ -1695,7 +1758,12 @@ export function AppProvider({ children }) {
       searchUsers,
       searchPosts,
       toggleLikePost,
-      updateProfileSettings
+      updateProfileSettings,
+      // Notifications (migration v20)
+      notifications,
+      unreadNotificationCount,
+      loadNotifications,
+      markNotificationsRead
     }}>
       {children}
     </AppContext.Provider>

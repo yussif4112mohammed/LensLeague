@@ -95,7 +95,7 @@ export default function FeedPage() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
-  const { fetchPhotosPaginated, battles, challenges, users, currentUser } = useApp();
+  const { fetchPhotosPaginated, battles, challenges, users, currentUser, unreadNotificationCount } = useApp();
 
   const [feedPhotos, setFeedPhotos] = useState([]);
   const [page, setPage] = useState(0);
@@ -198,9 +198,22 @@ export default function FeedPage() {
             <Inbox className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-border" />
           </button>
-          <button onClick={() => setNotifOpen(true)} className="text-muted-foreground hover:text-foreground hover:scale-110 active:scale-95 transition-all relative">
+          {/* The dot here used to be unconditional - it announced unread
+              notifications whether or not any existed. It is now a real count,
+              and it is absent when there is nothing to report. */}
+          <button
+            onClick={() => setNotifOpen(true)}
+            aria-label={unreadNotificationCount > 0
+              ? `Notifications, ${unreadNotificationCount} unread`
+              : 'Notifications'}
+            className="text-muted-foreground hover:text-foreground hover:scale-110 active:scale-95 transition-all relative"
+          >
             <Bell className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-border" />
+            {unreadNotificationCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-primary text-primary-foreground text-[10px] font-bold tabular-nums rounded-full border-2 border-border">
+                {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+              </span>
+            )}
           </button>
         </div>
       </header>

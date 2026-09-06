@@ -96,3 +96,36 @@
   align-items: center;
   justify-content: space-between;
 }
+
+/* An actor is optional: a battle result is not caused by a person, and a
+   profile may have no avatar. Initials keep the row's left edge aligned with
+   every other row rather than collapsing the layout. */
+.notif-item__avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  color: var(--text-secondary, #9CA3AF);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  flex: none;
+}
+
+/* The platform is new, so this is the state most people will actually see.
+   It says what will appear here rather than just that nothing has. */
+.notif-empty {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notif-item--unread { cursor: pointer; }
+.notif-item--unread:hover { background: rgba(136, 189, 242, 0.12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .notif-drawer { animation: none; }
+}

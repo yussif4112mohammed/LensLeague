@@ -620,18 +620,29 @@ export function AppProvider({ children }) {
     // well as to selects, so the filter below is a bandwidth optimisation rather
     // than the security boundary - a subscriber is only ever sent rows it could
     // already have read.
-    loadNotifications();
-    const notifChannel = supabase
-      .channel('notifications_realtime')
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications',
-          filter: `recipient_id=eq.${currentUser.id}` },
-        () => { loadNotifications(); })
-      .subscribe();
+    //
+    // GUARDED, and this is not optional: THIS EFFECT RUNS WHETHER OR NOT ANYONE
+    // IS SIGNED IN. It has no early return, so on the landing page currentUser
+    // is null. Reading currentUser.id here threw a TypeError inside the effect,
+    // React unmounted the whole tree, and every visitor got a blank page.
+    let notifChannel = null;
+    if (currentUser?.id) {
+      loadNotifications();
+      notifChannel = supabase
+        .channel('notifications_realtime')
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications',
+            filter: `recipient_id=eq.${currentUser.id}` },
+          () => { loadNotifications(); })
+        .subscribe();
+    } else {
+      // Signed out: nothing of yours to show.
+      setNotifications([]);
+    }
 
     return () => {
       supabase.removeChannel(msgChannel);
-      supabase.removeChannel(notifChannel);
+      if (notifChannel) supabase.removeChannel(notifChannel);
     };
   }, [currentUser]);
 

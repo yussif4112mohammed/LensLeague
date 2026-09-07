@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CommentSheet from '../CommentSheet/CommentSheet';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
-import { parseGearOrGetExif } from '../../utils/exif';
+import { fromStoredExif, ratioLabel } from '@/lib/photoMeta';
 import { useApp } from '../../context/AppContext';
 import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Camera } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -79,7 +79,22 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
     }
   };
 
-  const exif = parseGearOrGetExif(photo.gear, photo.id, photo.ownerName);
+  // Only what this photograph actually carries. parseGearOrGetExif stood here
+  // and read no file at all: it summed the character codes of the photo id and
+  // used that to pick one of six premium bodies, then presented it as this
+  // photographer's gear. A frame shot on a phone was captioned as a Hasselblad.
+  // fromStoredExif returns null when the row knows nothing, and the panel below
+  // is rendered only when there is something true to put in it.
+  const exif = photo.exif || fromStoredExif(photo.exif_data, photo.gear);
+  const exifCells = exif
+    ? [
+        ['Focal', exif.focalLength],
+        ['Aperture', exif.aperture],
+        ['Shutter', exif.shutter],
+        ['ISO', exif.iso],
+      ].filter(([, v]) => v)
+    : [];
+  const shapeLabel = ratioLabel(photo.width, photo.height);
   const photoTitle = getPhotoTitle(photo.caption);
 
   const triggerLike = () => {
@@ -150,8 +165,18 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
   if (compact) {
     return (
-      <div 
-        className="group relative aspect-square overflow-hidden bg-card rounded-none md:rounded-xl cursor-pointer border border-border"
+      <div
+        // The frame as it was shot. This was a hardcoded aspect-square, so a
+        // portfolio of 3:2 landscapes and 4:5 portraits was centre-cropped into
+        // identical boxes - the exact "photos should be their original aspect
+        // ratio, not 1:1" that the first outside photographer reported. The
+        // square is kept only as the fallback for rows uploaded before the
+        // dimensions existed, where the true shape is genuinely unknown.
+        className={cn(
+          "group relative overflow-hidden bg-card rounded-none md:rounded-xl cursor-pointer border border-border",
+          photo.aspectRatio ? "" : "aspect-square"
+        )}
+        style={photo.aspectRatio ? { aspectRatio: photo.aspectRatio } : undefined}
         onClick={handleImageClick}
         id={`photo-tile-${photo.id}`}
       >
@@ -240,14 +265,18 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
         </div>
 
         {/* Media Frame */}
-        <div 
-          className="relative w-full aspect-[4/5] sm:aspect-auto sm:max-h-[85vh] bg-black flex items-center justify-center cursor-pointer group overflow-hidden border-b border-border transition-transform duration-500"
+        <div
+          className={cn(
+            "relative w-full sm:max-h-[85vh] bg-black flex items-center justify-center cursor-pointer group overflow-hidden border-b border-border transition-transform duration-500",
+            photo.aspectRatio ? "" : "aspect-[4/5] sm:aspect-auto"
+          )}
+          style={photo.aspectRatio ? { aspectRatio: photo.aspectRatio } : undefined}
           onClick={handleTap}
         >
           {photo.isVideo ? (
             <VideoPlayer
               src={photo.url}
-              aspectRatio={photo.aspectRatio || '9/16'}
+              aspectRatio={photo.aspectRatio || undefined}
               autoPlay={false}
               className="w-full h-full"
             />
@@ -255,41 +284,40 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
             <img
               src={getOptimizedImageUrl(photo.url, 1080)}
               alt={photo.caption || `Photo by ${photo.ownerName}`}
-              className="w-full h-full object-contain sm:object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+              className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-[1.02]"
               loading="lazy"
             />
           )}
 
-          {/* HUD Overlay for EXIF (Visible on Hover) */}
+          {/* Camera details, when the file carried any. Previously this block
+              was unconditional and every cell was invented; now an absent value
+              simply is not drawn, and a photograph with no metadata shows its
+              title and its shape instead of six fabricated readings. */}
           <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none flex flex-col justify-end">
-            <div className="flex items-end justify-between">
-              <div>
-                <h4 className="text-xl font-bold tracking-tight text-foreground mb-1">“{photoTitle}”</h4>
-                <div className="flex items-center gap-2 text-xs text-foreground font-medium tracking-wide">
-                  <Camera className="w-3 h-3 text-muted-foreground" />
-                  <span>{exif.camera}</span>
-                  <span className="opacity-50">•</span>
-                  <span>{exif.lens}</span>
-                </div>
+            <div className="flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <h4 className="text-xl font-bold tracking-tight text-foreground mb-1 truncate">“{photoTitle}”</h4>
+                {exif?.camera || exif?.lens ? (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-foreground font-medium tracking-wide">
+                    <Camera className="w-3 h-3 shrink-0 text-muted-foreground" />
+                    {exif.camera && <span>{exif.camera}</span>}
+                    {exif.camera && exif.lens && <span className="opacity-50">•</span>}
+                    {exif.lens && <span>{exif.lens}</span>}
+                  </div>
+                ) : shapeLabel ? (
+                  <div className="text-xs font-medium tracking-wide text-muted-foreground">{shapeLabel}</div>
+                ) : null}
               </div>
-              <div className="grid grid-cols-2 gap-2 text-right">
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg flex items-center justify-between gap-4">
-                  <span className="text-[9px] text-foreground uppercase tracking-widest">Focal</span>
-                  <span className="text-xs font-bold text-foreground">{exif.focalLength}</span>
+              {exifCells.length > 0 && (
+                <div className="grid shrink-0 grid-cols-2 gap-2 text-right">
+                  {exifCells.map(([label, value]) => (
+                    <div key={label} className="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg flex items-center justify-between gap-4">
+                      <span className="text-[9px] text-foreground uppercase tracking-widest">{label}</span>
+                      <span className="text-xs font-bold text-foreground">{value}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg flex items-center justify-between gap-4">
-                  <span className="text-[9px] text-foreground uppercase tracking-widest">Aperture</span>
-                  <span className="text-xs font-bold text-foreground">{exif.aperture}</span>
-                </div>
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg flex items-center justify-between gap-4">
-                  <span className="text-[9px] text-foreground uppercase tracking-widest">Shutter</span>
-                  <span className="text-xs font-bold text-foreground">{exif.shutter}</span>
-                </div>
-                <div className="bg-black/40 backdrop-blur-md border border-white/10 px-2 py-1 rounded-lg flex items-center justify-between gap-4">
-                  <span className="text-[9px] text-foreground uppercase tracking-widest">ISO</span>
-                  <span className="text-xs font-bold text-foreground">{exif.iso}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

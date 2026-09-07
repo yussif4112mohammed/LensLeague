@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import './VideoPlayer.css';
 
-export default function VideoPlayer({ src, poster, aspectRatio = '3/4', autoPlay = false, className = '' }) {
+export default function VideoPlayer({ src, poster, aspectRatio, autoPlay = false, className = '' }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -28,7 +28,7 @@ export default function VideoPlayer({ src, poster, aspectRatio = '3/4', autoPlay
   return (
     <div 
       className={`video-player-container ${className}`} 
-      style={{ aspectRatio: aspectRatio || '3/4' }}
+      style={aspectRatio ? { aspectRatio } : undefined}
       onClick={togglePlay}
     >
       <video

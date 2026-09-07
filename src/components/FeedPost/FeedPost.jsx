@@ -103,7 +103,7 @@ export default function FeedPost({ photo, onOpen, onComments, priority = false }
             width={IMAGE_SIZES.feedPost}
             /* Reserve the box before the bytes land, so posts below do not get
                shoved down as each photograph decodes. */
-            aspectRatio={photo.aspectRatio?.replace('/', ' / ') || '3 / 4'}
+            aspectRatio={photo.aspectRatio || undefined}
             priority={priority}
             className="transition-transform duration-700 group-hover:scale-[1.01]"
           />

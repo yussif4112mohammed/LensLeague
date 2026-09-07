@@ -42,7 +42,7 @@ export default function ClientSaved() {
                 src={p.url} 
                 alt={p.caption} 
                 className="w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                style={{ aspectRatio: p.aspectRatio || '3/4' }} 
+                style={p.aspectRatio ? { aspectRatio: p.aspectRatio } : undefined} 
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-100 flex flex-col justify-end p-3">
                 <Button 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { readPhotoMeta } from '@/lib/photoMeta';
 import { Upload, ArrowLeft, ArrowRight, Check, Loader2, Camera, MapPin, Image as ImageIcon, Crop, RotateCcw, Sun } from 'lucide-react';
 
 const DESTINATIONS = [
@@ -38,6 +39,10 @@ export default function UploadPage() {
   const [modStatus, setModStatus] = useState(null);
   const [error, setError] = useState('');
   const [fileObj, setFileObj] = useState(null);
+  // Measured from the file, never typed and never guessed.
+  const [dimensions, setDimensions] = useState({ width: null, height: null });
+  const [exifFound, setExifFound] = useState(false);
+  const [readingMeta, setReadingMeta] = useState(false);
 
   // The accept="" attribute is only a file-picker hint — it is trivially
   // bypassed. The bucket enforces these same limits server-side (migration v11);
@@ -73,6 +78,34 @@ export default function UploadPage() {
     const url = URL.createObjectURL(file);
     setPreview(url);
     setStep(2);
+
+    // Ask the file what it knows, rather than asking the photographer to retype
+    // it. Camera, lens, aperture, shutter and ISO were five fields on an
+    // eleven-field form, and the answers were already in the file.
+    //
+    // Never blocks publishing: a screenshot, a stripped export or a format the
+    // parser does not recognise are all ordinary, and the frame still goes up.
+    setReadingMeta(true);
+    setExifFound(false);
+    setDimensions({ width: null, height: null });
+    readPhotoMeta(file, { isVideo: isAllowedVideo })
+      .then(meta => {
+        if (meta.width && meta.height) {
+          setDimensions({ width: meta.width, height: meta.height });
+        }
+        if (meta.exif) {
+          setExifFound(true);
+          // Prefilled, not locked. The file is usually right and the
+          // photographer always knows better.
+          if (meta.exif.camera)   setCamera(meta.exif.camera);
+          if (meta.exif.lens)     setLens(meta.exif.lens);
+          if (meta.exif.aperture) setAperture(meta.exif.aperture);
+          if (meta.exif.shutter)  setShutter(meta.exif.shutter);
+          if (meta.exif.iso)      setIso(meta.exif.iso);
+        }
+      })
+      .catch(() => { /* dimensions and EXIF are both optional */ })
+      .finally(() => setReadingMeta(false));
   };
 
   const handlePublish = async () => {
@@ -91,7 +124,11 @@ export default function UploadPage() {
         location,
         destination,
         alt_text: altText,
-        exifData: { camera, lens, aperture, shutter, iso }
+        exifData: { camera, lens, aperture, shutter, iso },
+        // The shape of the frame, measured. Everything downstream used to
+        // assume 3/4 for every photograph in the product.
+        width: dimensions.width,
+        height: dimensions.height
       });
 
       setModStatus('clear');
@@ -331,14 +368,60 @@ export default function UploadPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Camera className="w-4 h-4 text-muted-foreground" />
-                  <label className="text-sm font-semibold text-foreground">Camera & EXIF Metadata (Optional)</label>
+                  <label className="text-sm font-semibold text-foreground">Camera details</label>
                 </div>
+
+                {/* Read from the file, not typed. These five fields were the
+                    bulk of the form, and the answers were already in the
+                    photograph. They stay editable - the file is usually right
+                    and the photographer always knows better - but they are
+                    folded away, because a filled-in field nobody needs to touch
+                    should not take up the screen. */}
+                <div className="mb-4 rounded-xl border border-border bg-card/30 p-4">
+                  {readingMeta ? (
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Reading the camera details from your file…
+                    </p>
+                  ) : exifFound ? (
+                    <>
+                      <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Check className="h-4 w-4" />
+                        Read from your file
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {[camera, lens, aperture, shutter, iso].filter(Boolean).join('  ·  ')}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      This file carries no camera details. That is common with
+                      screenshots and exports — you can add them yourself below,
+                      or leave them out.
+                    </p>
+                  )}
+                  {dimensions.width && dimensions.height && (
+                    <p className="mt-2 font-mono text-xs text-muted-foreground">
+                      {dimensions.width} × {dimensions.height}
+                      {' · shown at its own shape, never cropped to a square'}
+                    </p>
+                  )}
+                </div>
+
+                <details className="mb-4 group">
+                  <summary className="cursor-pointer list-none text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                    {exifFound ? 'Correct the camera details' : 'Add camera details'}
+                  </summary>
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Input id="upload-camera" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Camera body" value={camera} onChange={e => setCamera(e.target.value)} />
+                    <Input id="upload-lens" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Lens" value={lens} onChange={e => setLens(e.target.value)} />
+                    <Input id="upload-aperture" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Aperture" value={aperture} onChange={e => setAperture(e.target.value)} />
+                    <Input id="upload-shutter" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Shutter" value={shutter} onChange={e => setShutter(e.target.value)} />
+                    <Input id="upload-iso" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="ISO" value={iso} onChange={e => setIso(e.target.value)} />
+                  </div>
+                </details>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input id="upload-camera" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Camera Body (e.g. Sony A7IV)" value={camera} onChange={e => setCamera(e.target.value)} />
-                  <Input id="upload-lens" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Lens (e.g. 85mm f/1.4 GM)" value={lens} onChange={e => setLens(e.target.value)} />
-                  <Input id="upload-aperture" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Aperture (e.g. 1.4)" value={aperture} onChange={e => setAperture(e.target.value)} />
-                  <Input id="upload-shutter" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="Shutter (e.g. 1/1000)" value={shutter} onChange={e => setShutter(e.target.value)} />
-                  <Input id="upload-iso" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12" placeholder="ISO (e.g. 100)" value={iso} onChange={e => setIso(e.target.value)} />
                   <div className="relative">
                     <MapPin className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input id="upload-location" className="bg-card/50 border-border text-foreground placeholder:text-muted-foreground rounded-xl h-12 pl-10" placeholder="Location (e.g. Paris)" value={location} onChange={e => setLocation(e.target.value)} />

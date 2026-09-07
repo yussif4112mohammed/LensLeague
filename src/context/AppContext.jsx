@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { FALLBACK_CATEGORIES, validatePersonalStyle, isKnownCategory } from '../lib/photography';
+import { aspectRatioOf, orientationOf, ratioLabel, fromStoredExif } from '../lib/photoMeta';
 
 const AppContext = createContext(null);
 
@@ -398,7 +399,19 @@ export function AppProvider({ children }) {
             customStyle: p.custom_style || null,
             gear: p.exif_data?.camera || p.exif_data?.camera_model || null,
             likes: 0,
-            aspectRatio: p.media_url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4',
+            // Measured at upload and stored by migration v23, not guessed from the
+            // file extension. The line that stood here reported every still as
+            // 3/4 and every .mp4 as 9/16, so a 3:2 landscape was rendered in a
+            // portrait box and cropped - the single thing the first outside
+            // photographer to use the product complained about. null now means
+            // unknown, and a caller can decide what to do about that rather
+            // than inheriting a wrong ratio as though it were measured.
+            width: p.width ?? null,
+            height: p.height ?? null,
+            aspectRatio: aspectRatioOf(p.width, p.height),
+            orientation: orientationOf(p.width, p.height),
+            ratioLabel: ratioLabel(p.width, p.height),
+            exif: fromStoredExif(p.exif_data),
             timestamp: new Date(p.created_at).toLocaleDateString()
           };
         });
@@ -408,7 +421,16 @@ export function AppProvider({ children }) {
         const generateFairBattles = (photoList) => {
           const grouped = {};
           photoList.forEach(p => {
-            const ratio = p.aspectRatio || '3/4';
+            // Group by SHAPE, not by the exact ratio string.
+            //
+            // This used to key on p.aspectRatio, which was the constant '3/4'
+            // for every still - so the grouping did nothing and every photo
+            // landed in one bucket. Now that the ratio is real, keying on it
+            // would fail the opposite way: '6000 / 4000' and '3000 / 2000' are
+            // the same shape but different strings, and almost every frame
+            // would become its own group of one, pairing with nothing. Three
+            // buckets is what a fair match actually needs.
+            const ratio = orientationOf(p.width, p.height) || 'unknown';
             if (!grouped[ratio]) grouped[ratio] = [];
             grouped[ratio].push(p);
           });
@@ -428,7 +450,7 @@ export function AppProvider({ children }) {
               const pB = list[i+1];
               dynamicBattles.push({
                 id: `bat_${Date.now()}_${pA.id}_${pB.id}`,
-                category: pA.category === pB.category ? pA.category : 'Mixed ' + ratio,
+                category: pA.category === pB.category ? pA.category : 'Mixed',
                 endsIn: '24h',
                 photoA: { ...pA, score: 1200 },
                 photoB: { ...pB, score: 1200 },
@@ -1409,7 +1431,19 @@ export function AppProvider({ children }) {
             gear: p.exif_data?.camera_model,
             location: owner.location,
             likes: p.votes || 0,
-            aspectRatio: p.media_url?.toLowerCase()?.includes('.mp4') ? '9/16' : '3/4',
+            // Measured at upload and stored by migration v23, not guessed from the
+            // file extension. The line that stood here reported every still as
+            // 3/4 and every .mp4 as 9/16, so a 3:2 landscape was rendered in a
+            // portrait box and cropped - the single thing the first outside
+            // photographer to use the product complained about. null now means
+            // unknown, and a caller can decide what to do about that rather
+            // than inheriting a wrong ratio as though it were measured.
+            width: p.width ?? null,
+            height: p.height ?? null,
+            aspectRatio: aspectRatioOf(p.width, p.height),
+            orientation: orientationOf(p.width, p.height),
+            ratioLabel: ratioLabel(p.width, p.height),
+            exif: fromStoredExif(p.exif_data),
             timestamp: 'Just now'
           };
         });
@@ -1425,7 +1459,7 @@ export function AppProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
-  const uploadPhoto = async ({ file, url, caption, category, customStyle, gear, location, exifData, destination = 'feed', alt_text = '' }) => {
+  const uploadPhoto = async ({ file, url, caption, category, customStyle, gear, location, exifData, destination = 'feed', alt_text = '', width = null, height = null }) => {
     // Validate at the choke point, not in the form. Every upload path goes
     // through here, so a request edited in the browser cannot introduce a
     // category the platform does not define, or a style carrying markup.
@@ -1492,6 +1526,14 @@ export function AppProvider({ children }) {
       customStyle: customStyle || null,
       destination,
       alt_text,
+      // The optimistic row must carry the same measured shape the reloaded row
+      // will, or the photograph visibly jumps size the moment the feed refetches.
+      width: width || null,
+      height: height || null,
+      aspectRatio: aspectRatioOf(width, height),
+      orientation: orientationOf(width, height),
+      ratioLabel: ratioLabel(width, height),
+      exif: fromStoredExif(exifData),
       likes: 0,
       comments: 0,
       created_at: new Date().toISOString(),
@@ -1530,6 +1572,11 @@ export function AppProvider({ children }) {
             categories: [category || 'Nature'],
             custom_style: customStyle || null,
             exif_data: exifData || null,
+            // Measured in the browser at upload (migration v23). aspect_ratio
+            // is a generated column derived from these, so it is never written
+            // directly and can never disagree with them.
+            width: width || null,
+            height: height || null,
             // alt_text and location were collected from the photographer and
             // then thrown away: the old code wrote them to `photos`, which has
             // neither column, inside a swallowed catch. Both columns now exist

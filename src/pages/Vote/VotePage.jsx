@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BattleCard from '../../components/BattleCard/BattleCard';
 import ProgressRing from '../../components/ProgressRing/ProgressRing';
 import { useApp } from '../../context/AppContext';
+import { ratioLabel } from '@/lib/photoMeta';
 import { Button } from '@/components/ui/button';
 import { Trophy, Timer, ArrowRight, RefreshCcw, Swords, Upload } from 'lucide-react';
 
@@ -11,10 +12,12 @@ import { Trophy, Timer, ArrowRight, RefreshCcw, Swords, Upload } from 'lucide-re
 // browser caps nothing, and this one previously reset to 0 on "Vote again".
 const SESSION_GOAL = 20;
 
-function formatAspectRatio(ratio) {
-  if (!ratio) return null;
-  const labels = { '9/16': '9:16 Portrait', '16/9': '16:9 Landscape', '1/1': '1:1 Square', '4/5': '4:5 Portrait' };
-  return labels[ratio] || ratio;
+// The shape a photograph was actually shot in, read from the pixels measured at
+// upload. The lookup table that stood here mapped four hardcoded strings to
+// labels, and since every photo in the product carried the same invented '3/4',
+// it never matched and never rendered.
+function shapeOf(photo) {
+  return ratioLabel(photo?.width, photo?.height);
 }
 
 /**
@@ -144,8 +147,8 @@ export default function VotePage() {
     setSeenIds(prev => [...prev, battle.id]);
   };
 
-  const ratioA = formatAspectRatio(battle.photoA?.aspectRatio);
-  const ratioB = formatAspectRatio(battle.photoB?.aspectRatio);
+  const ratioA = shapeOf(battle.photoA);
+  const ratioB = shapeOf(battle.photoB);
 
   return (
     // No background of its own: the shell already paints bg-background, and the

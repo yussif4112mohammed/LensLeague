@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { parseGearOrGetExif } from '../../utils/exif';
+import { fromStoredExif } from '@/lib/photoMeta';
 import './BattleCard.css';
 
 export default function BattleCard({ battle, onVote, onSkip }) {
@@ -29,8 +29,23 @@ export default function BattleCard({ battle, onVote, onSkip }) {
   const pctA = total ? Math.round((battle.photoA.votes / total) * 100) : 50;
   const pctB = 100 - pctA;
 
-  const exifA = parseGearOrGetExif(battle.photoA.gear, battle.photoA.id, battle.photoA.photographerName);
-  const exifB = parseGearOrGetExif(battle.photoB.gear, battle.photoB.id, battle.photoB.photographerName);
+  // Real metadata or none. parseGearOrGetExif invented all of this from the
+  // photo id, which on a page whose whole purpose is comparing two photographs
+  // meant the "Canon EOS R5 / f/1.2 / ISO 100" under one frame and the
+  // "Leica Q3 / f/1.7 / ISO 200" under the other were both fiction, and voters
+  // were weighing gear that did not exist.
+  const exifA = battle.photoA.exif || fromStoredExif(battle.photoA.exif_data, battle.photoA.gear);
+  const exifB = battle.photoB.exif || fromStoredExif(battle.photoB.exif_data, battle.photoB.gear);
+
+  const exifPills = (exif) =>
+    exif
+      ? [
+          ['Focal', exif.focalLength],
+          ['Aperture', exif.aperture],
+          ['Shutter', exif.shutter],
+          ['ISO', exif.iso],
+        ].filter(([, v]) => v)
+      : [];
 
   const handleVote = async (side) => {
     if (voted) return;
@@ -69,28 +84,22 @@ export default function BattleCard({ battle, onVote, onSkip }) {
             />
             {/* EXIF HUD Overlay */}
             <div className="battle-card__hud-overlay">
-              <div className="hud-exif-header">
-                <div className="hud-exif-camera">{exifA.camera}</div>
-                <div className="hud-exif-lens">{exifA.lens}</div>
-              </div>
-              <div className="hud-exif-grid">
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifA.focalLength}</span>
-                  <span className="hud-exif-pill__lbl">Focal</span>
+              {(exifA?.camera || exifA?.lens) && (
+                <div className="hud-exif-header">
+                  {exifA.camera && <div className="hud-exif-camera">{exifA.camera}</div>}
+                  {exifA.lens && <div className="hud-exif-lens">{exifA.lens}</div>}
                 </div>
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifA.aperture}</span>
-                  <span className="hud-exif-pill__lbl">Aperture</span>
+              )}
+              {exifPills(exifA).length > 0 && (
+                <div className="hud-exif-grid">
+                  {exifPills(exifA).map(([label, value]) => (
+                    <div key={label} className="hud-exif-pill">
+                      <span className="hud-exif-pill__val">{value}</span>
+                      <span className="hud-exif-pill__lbl">{label}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifA.shutter}</span>
-                  <span className="hud-exif-pill__lbl">Shutter</span>
-                </div>
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifA.iso}</span>
-                  <span className="hud-exif-pill__lbl">ISO</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -149,28 +158,22 @@ export default function BattleCard({ battle, onVote, onSkip }) {
             />
             {/* EXIF HUD Overlay */}
             <div className="battle-card__hud-overlay">
-              <div className="hud-exif-header">
-                <div className="hud-exif-camera">{exifB.camera}</div>
-                <div className="hud-exif-lens">{exifB.lens}</div>
-              </div>
-              <div className="hud-exif-grid">
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifB.focalLength}</span>
-                  <span className="hud-exif-pill__lbl">Focal</span>
+              {(exifB?.camera || exifB?.lens) && (
+                <div className="hud-exif-header">
+                  {exifB.camera && <div className="hud-exif-camera">{exifB.camera}</div>}
+                  {exifB.lens && <div className="hud-exif-lens">{exifB.lens}</div>}
                 </div>
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifB.aperture}</span>
-                  <span className="hud-exif-pill__lbl">Aperture</span>
+              )}
+              {exifPills(exifB).length > 0 && (
+                <div className="hud-exif-grid">
+                  {exifPills(exifB).map(([label, value]) => (
+                    <div key={label} className="hud-exif-pill">
+                      <span className="hud-exif-pill__val">{value}</span>
+                      <span className="hud-exif-pill__lbl">{label}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifB.shutter}</span>
-                  <span className="hud-exif-pill__lbl">Shutter</span>
-                </div>
-                <div className="hud-exif-pill">
-                  <span className="hud-exif-pill__val">{exifB.iso}</span>
-                  <span className="hud-exif-pill__lbl">ISO</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

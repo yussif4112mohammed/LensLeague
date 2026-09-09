@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { supabase } from '../lib/supabaseClient';
 import { FALLBACK_CATEGORIES, validatePersonalStyle, isKnownCategory } from '../lib/photography';
 import { aspectRatioOf, orientationOf, ratioLabel, fromStoredExif } from '../lib/photoMeta';
+import { humaniseWriteError, isRateLimitError } from '../lib/writeErrors';
 
 const AppContext = createContext(null);
 
@@ -1540,6 +1541,9 @@ export function AppProvider({ children }) {
       timestamp: 'Just now'
     };
 
+    // Held because newPhoto.id is reassigned to the real row id on success. If
+    // the publish fails we need the placeholder's id to take it back out again.
+    const optimisticId = newPhoto.id;
     setPhotos(prev => [newPhoto, ...prev]);
 
     try {
@@ -1586,7 +1590,13 @@ export function AppProvider({ children }) {
           })
           .select('id')
           .single();
-        if (portfolioError) throw portfolioError;
+        if (portfolioError) {
+          // portfolio_items IS the upload. Everything after this point is
+          // best-effort compatibility writing, so this failure alone has to
+          // reach the photographer.
+          portfolioError.__essential = true;
+          throw portfolioError;
+        }
         newPhoto.id = portfolioItem.id;
         newPhoto.gear = gear || null;
         newPhoto.location = location || null;
@@ -1621,6 +1631,18 @@ export function AppProvider({ children }) {
         });
       }
     } catch (err) {
+      // This catch used to swallow everything and then return newPhoto anyway,
+      // so a failed publish showed the photographer a success screen and a
+      // redirect to a feed their photograph was not in. Migration v24 makes that
+      // reachable on an ordinary day - hit the daily upload limit and the insert
+      // is refused - so the lie is no longer survivable.
+      //
+      // The legacy `photos` and `posts` writes below the portfolio insert are
+      // genuinely best-effort and still only warn.
+      if (err?.__essential || isRateLimitError(err)) {
+        setPhotos(prev => prev.filter(p => p.id !== optimisticId));
+        throw new Error(humaniseWriteError(err, 'Could not publish this photograph. Try again.'));
+      }
       console.warn('Supabase photo upload note:', err.message);
     }
 
@@ -1636,8 +1658,14 @@ export function AppProvider({ children }) {
     setFollows(prev => [...prev, newFollow]);
 
     try {
-      await supabase.from('follows').insert(newFollow);
+      const { error } = await supabase.from('follows').insert(newFollow);
+      // A refused follow left the button reading "Following" until reload: the
+      // optimistic row was added and the failure only logged. With a daily cap
+      // in place that is now a state a real person reaches.
+      if (error) throw error;
     } catch (err) {
+      setFollows(prev => prev.filter(
+        f => !(f.follower_id === followerId && f.following_id === followingId)));
       console.warn('Supabase follow error:', err.message);
     }
   };
@@ -1694,7 +1722,7 @@ export function AppProvider({ children }) {
 
     if (error) {
       setComments(prev => prev.filter(c => c.id !== tempId));
-      return { success: false, error: error.message };
+      return { success: false, error: humaniseWriteError(error) };
     }
 
     // Swap the placeholder for the real record.

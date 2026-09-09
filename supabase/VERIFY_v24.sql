@@ -10,7 +10,7 @@
 -- counter, and the behavioural proof is in the note at the bottom.
 -- =================================================================================
 WITH checks AS (
-  SELECT 1 AS n, 'rate_limits table exists' AS check,
+  SELECT 1 AS n, 'rate_limits table exists' AS label,
          to_regclass('public.rate_limits') IS NOT NULL AS ok
   UNION ALL SELECT 2, 'rate_limit_counters table exists',
          to_regclass('public.rate_limit_counters') IS NOT NULL
@@ -74,7 +74,10 @@ WITH checks AS (
                   WHERE tablename='rate_limit_counters'
                     AND indexname='rate_limit_counters_window_idx')
 )
-SELECT n AS "#", check,
+-- `check` is reserved in Postgres, so the column is `label` inside the CTE and
+-- only aliased on the way out - which is legal, and is what VERIFY_v18 through
+-- v23 already do.
+SELECT n AS "#", label AS check,
        CASE WHEN ok THEN 'PASS' ELSE '*** FAIL ***' END AS result
 FROM checks
 ORDER BY n;

@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:tokens": "node scripts/check-design-tokens.mjs"
+    "check:tokens": "node scripts/check-design-tokens.mjs",
+    "lint": "npx --yes oxlint --config .oxlintrc.json src"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

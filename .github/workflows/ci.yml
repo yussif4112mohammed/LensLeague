@@ -1,0 +1,82 @@
+# =============================================================================
+# LensLeague CI
+#
+# WHY THIS EXISTS
+# Pushing to master IS the production deploy - Vercel builds whatever lands
+# there, with nothing in between. Until now the only thing standing between a
+# broken commit and every visitor was whether somebody remembered to run the
+# suite on their laptop first. On 2026-09-06 somebody did not, and the site
+# served a blank page to everyone until a user asked why.
+#
+# This runs the same three commands on every push and every pull request, on a
+# clean machine, before the deploy has any chance to be believed.
+#
+# It also removes a slower failure. Development on this project happens across
+# two machines - a Windows laptop and a Linux workspace whose node_modules
+# cannot load the Windows rollup binary - so "please run npm test and paste the
+# output" has been a manual handoff on nearly every change. CI is the thing that
+# ends that.
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # Lets a failed run be retried from the Actions tab without an empty commit.
+  workflow_dispatch:
+
+# A newer push makes an older run's answer irrelevant. Cancel it rather than
+# paying for a verdict on a commit nobody will deploy.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches the version development actually happens on. A CI that runs
+          # a different Node than the developers is a CI that finds different
+          # bugs than the ones they have.
+          node-version: '22'
+          cache: npm
+
+      # ci, not install: installs exactly the lockfile, and fails rather than
+      # quietly resolving a different tree. The whole value of this job is that
+      # it ran against the same dependencies the deploy will.
+      - name: Install
+        run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      # Includes scripts/check-design-tokens.mjs, which fails the build on a
+      # literal colour in JSX. That guard already exists; this is what makes it
+      # unskippable.
+      - name: Build
+        run: npm run build
+        env:
+          # The Supabase client falls back to placeholders when these are
+          # absent, so a build proves the bundle compiles without needing the
+          # real keys anywhere near a CI log. Vercel supplies the real ones.
+          VITE_SUPABASE_URL: ''
+          VITE_SUPABASE_ANON_KEY: ''
+
+      # Advisory for now, deliberately.
+      #
+      # .oxlintrc.json has been in this repository unused - no script ran it -
+      # so nobody knows what it reports yet. Making an unknown quantity blocking
+      # is how a team gets a permanently red CI and learns to ignore the tick
+      # entirely. Read the output for a week, fix what it finds, then delete
+      # continue-on-error and mean it.
+      - name: Lint (advisory)
+        run: npm run lint
+        continue-on-error: true

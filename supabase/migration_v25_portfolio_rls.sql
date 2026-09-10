@@ -14,9 +14,15 @@
 --
 -- HOW IT SURVIVED THIS LONG
 --   1. v3 enabled RLS at line 335 and wrote the policies at line 353. The ALTER
---      statements clearly ran; the CREATE POLICY block clearly did not. Evidence:
---      profiles carries an INSERT policy in production that v3 never wrote, so
---      the policies live there came from v11, not v3.
+--      statements ran; the CREATE POLICY block did not - and now we know why.
+--      v3's albums policy references albums.client_id. The LIVE albums table has
+--      five columns and no client_id: v3's CREATE TABLE is IF NOT EXISTS, the
+--      table already existed with a different shape, so v3's definition was
+--      skipped while its policies were written against it anyway. The policy
+--      block hit `column client_id does not exist`, errored, and took every
+--      statement after it down. Evidence it never ran: profiles carries an
+--      INSERT policy in production that v3 never wrote, so what is live there
+--      came from v11.
 --   2. v11 hardened this schema table by table and touched portfolio_items - but
 --      only its triggers. It never checked whether the table had a policy.
 --      albums is not mentioned in ANY migration after v10.
@@ -49,13 +55,15 @@ BEGIN;
 CREATE OR REPLACE FUNCTION public.album_is_visible(p_album_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public, pg_temp AS $$
+  -- Columns verified against the LIVE table, not migration_v3: albums is
+  -- (id, photographer_id, title, privacy_level, created_at). There is no
+  -- client_id, which is precisely what killed v3's policy block.
   SELECT EXISTS (
     SELECT 1 FROM public.albums a
      WHERE a.id = p_album_id
        AND (
          a.privacy_level IN ('public', 'unlisted')
          OR a.photographer_id = auth.uid()
-         OR a.client_id = auth.uid()
        )
   );
 $$;
@@ -109,16 +117,15 @@ DROP POLICY IF EXISTS "Albums viewable by everyone if public" ON public.albums;
 DROP POLICY IF EXISTS "Private albums viewable by client"     ON public.albums;
 DROP POLICY IF EXISTS "Users can manage own albums"           ON public.albums;
 
--- One SELECT policy rather than v3's two. Multiple permissive policies on the
--- same command are OR-ed, which works, but it means two expressions to keep in
--- step; the owner case was missing from both of v3's, so a photographer could
--- not see their own private album.
+-- One SELECT policy rather than v3's two, and no client_id clause: this table
+-- has no such column. v3 modelled a private_client album that the live schema
+-- never had, and writing a policy against an imagined shape is what left both
+-- tables with no policies at all.
 CREATE POLICY albums_select ON public.albums
   FOR SELECT TO anon, authenticated
   USING (
     privacy_level IN ('public', 'unlisted')
     OR photographer_id = auth.uid()
-    OR client_id = auth.uid()
   );
 
 CREATE POLICY albums_insert_own ON public.albums

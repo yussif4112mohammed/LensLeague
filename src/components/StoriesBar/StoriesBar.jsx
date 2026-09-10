@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import './StoriesBar.css';
+import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 
 export default function StoriesBar() {
   const scrollRef = useRef(null);
@@ -13,8 +14,10 @@ export default function StoriesBar() {
     { 
       id: 'your-story', 
       name: 'Your Story', 
-      avatar: currentUser?.avatar || 'https://ui-avatars.com/api/?name=You&background=random&color=fff&size=128', 
-      cover: currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80',
+      // Null rather than a stranger or a third-party render. The tile below
+      // shows initials when there is no picture.
+      avatar: avatarUrlOf(currentUser?.avatar_url, currentUser?.avatar),
+      cover: avatarUrlOf(currentUser?.avatar_url, currentUser?.avatar),
       isOwn: true, 
       hasStory: false 
     },
@@ -23,8 +26,8 @@ export default function StoriesBar() {
        return {
          id: p.id,
          name: (p.name || 'User').split(' ')[0],
-         avatar: p.avatar,
-         cover: userPhoto ? userPhoto.url : p.avatar,
+         avatar: avatarUrlOf(p.avatar_url, p.avatar),
+         cover: userPhoto ? userPhoto.url : avatarUrlOf(p.avatar_url, p.avatar),
          isOwn: false,
          hasStory: !!userPhoto
        };
@@ -44,12 +47,24 @@ export default function StoriesBar() {
           >
             {/* Main Shoot Preview Image */}
             <div className="film-slide__frame">
-              <img src={getOptimizedImageUrl(story.cover, 200, 75)} alt={`${story.name}'s preview`} className="film-slide__image" />
+              {story.cover ? (
+                <img src={getOptimizedImageUrl(story.cover, 200, 75)} alt={`${story.name}'s preview`} className="film-slide__image" />
+              ) : (
+                // No picture yet. An empty frame rather than a broken image or
+                // somebody else's photograph.
+                <div className="film-slide__image film-slide__image--empty" aria-hidden="true" />
+              )}
               <div className="film-slide__overlay" />
               
               {/* Creator avatar overlay */}
               <div className="film-slide__avatar-badge">
-                <img src={getOptimizedImageUrl(story.avatar, 100, 75)} alt={story.name} className="film-slide__avatar" />
+                {story.avatar ? (
+                  <img src={getOptimizedImageUrl(story.avatar, 100, 75)} alt={story.name} className="film-slide__avatar" />
+                ) : (
+                  <span className="film-slide__avatar film-slide__avatar--initials">
+                    {initialsOf(story.name)}
+                  </span>
+                )}
                 {story.isOwn && (
                   <span className="film-slide__plus">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">

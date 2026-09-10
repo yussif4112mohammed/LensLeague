@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { FALLBACK_CATEGORIES, validatePersonalStyle, isKnownCategory } from '../lib/photography';
 import { aspectRatioOf, orientationOf, ratioLabel, fromStoredExif } from '../lib/photoMeta';
 import { humaniseWriteError, isRateLimitError } from '../lib/writeErrors';
+import { avatarUrlOf } from '../lib/avatars';
 
 const AppContext = createContext(null);
 
@@ -1475,7 +1476,10 @@ export function AppProvider({ children }) {
     const userId = currentUser?.id;
     if (!userId) return { success: false, error: 'Sign in to upload.' };
     const userName = currentUser?.display_name || currentUser?.name || 'Photographer';
-    const userAvatar = currentUser?.avatar_url || currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop';
+    // Null when they have no picture. This used to fall back to a hardcoded
+    // stock photograph, which then travelled with the upload and appeared as
+    // the photographer's own face beside their work.
+    const userAvatar = avatarUrlOf(currentUser?.avatar_url, currentUser?.avatar);
 
     let finalUrl = url;
 

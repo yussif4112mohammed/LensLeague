@@ -136,3 +136,20 @@
     rgba(0, 0, 0, 0.5) 100%
   );
 }
+
+/* Shown when somebody has no picture yet. Initials and an empty frame, rather
+   than a broken image or a stock photograph standing in for a real person. */
+.film-slide__image--empty {
+  background: var(--bg-elevated-1, #12141B);
+}
+
+.film-slide__avatar--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated-2, #1b1e27);
+  color: var(--text-secondary, #9CA3AF);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}

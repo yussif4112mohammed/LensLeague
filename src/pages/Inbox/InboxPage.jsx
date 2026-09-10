@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -60,6 +61,19 @@ export default function InboxPage() {
   });
 
   const selectedThread = roleThreads.find(t => t.id === selectedThreadId);
+
+  // Who the open conversation is with, derived once so the header, the name and
+  // any future use cannot disagree with the list about the same person.
+  const partnerName = selectedThread
+    ? (isPhotographer ? selectedThread.clientName : selectedThread.photographerName) || 'Someone'
+    : '';
+  const partnerAvatar = selectedThread
+    ? avatarUrlOf(
+        isPhotographer ? selectedThread.clientAvatar : selectedThread.photographerAvatar,
+        selectedThread.photographerAvatar,
+        selectedThread.clientAvatar
+      )
+    : null;
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -137,7 +151,16 @@ export default function InboxPage() {
                   filteredThreads.map((t, index) => {
                     const lastMsg = t.messages[t.messages.length - 1];
                     const partnerName = isPhotographer ? t.clientName : t.photographerName;
-                    const avatarUrl = t.photographerAvatar || t.clientAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=random`;
+                    // The partner's own picture, or none - the AvatarFallback
+                    // below draws their initials. This used to reach out to
+                    // ui-avatars.com, which sent the person's name to a third
+                    // party and, with background=random, gave the same contact a
+                    // different colour on every reload.
+                    const avatarUrl = avatarUrlOf(
+                      isPhotographer ? t.clientAvatar : t.photographerAvatar,
+                      t.photographerAvatar,
+                      t.clientAvatar
+                    );
                     const isActive = selectedThreadId === t.id;
                     
                     return (
@@ -155,7 +178,7 @@ export default function InboxPage() {
                         <div className="relative">
                           <Avatar className="h-12 w-12 border border-border">
                             <AvatarImage src={avatarUrl} alt={partnerName} />
-                            <AvatarFallback className="bg-muted text-muted-foreground">{partnerName[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-muted text-muted-foreground">{initialsOf(partnerName)}</AvatarFallback>
                           </Avatar>
                           {isActive && (
                             <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></span>
@@ -289,19 +312,26 @@ export default function InboxPage() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   
+                  {/* The same picture the list shows, from the same helper.
+                      What stood here was a hardcoded stock photograph of a
+                      stranger, rendered unconditionally for one side of every
+                      conversation and ignoring the real person's avatar even
+                      when they had one - so a photographer could update his
+                      profile picture, say so in the chat, and still be shown as
+                      a woman he has never met. */}
                   <Avatar className="h-10 w-10 border border-border">
-                    <AvatarImage 
-                      src={isPhotographer ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&q=80' : selectedThread.photographerAvatar} 
-                      alt={isPhotographer ? selectedThread.clientName : selectedThread.photographerName} 
+                    <AvatarImage
+                      src={partnerAvatar || undefined}
+                      alt={partnerName}
                     />
                     <AvatarFallback className="bg-muted text-muted-foreground">
-                      {(isPhotographer ? selectedThread.clientName : selectedThread.photographerName)[0]}
+                      {initialsOf(partnerName)}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div>
                     <div className="font-semibold text-foreground">
-                      {isPhotographer ? selectedThread.clientName : selectedThread.photographerName}
+                      {partnerName}
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>

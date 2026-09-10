@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { cn } from '@/lib/utils';
+import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 export default function CommentSheet({ photo, onClose }) {
   const { comments: allComments, addPhotoComment, currentUser } = useApp();
   const [newComment, setNewComment] = useState('');
@@ -108,7 +109,20 @@ export default function CommentSheet({ photo, onClose }) {
 
         {/* Input row */}
         <form className="flex items-center gap-3 p-4 bg-card/50 backdrop-blur-md border-t border-white/5 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0" onSubmit={handleSend}>
-          <img src={currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80'} alt="You" className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-white/10" />
+          {/* The commenter's own picture, or their initials. A stock
+              photograph used to stand here, so somebody with no avatar was
+              shown a stranger's face labelled "You". */}
+          {avatarUrlOf(currentUser?.avatar_url, currentUser?.avatar) ? (
+            <img
+              src={avatarUrlOf(currentUser?.avatar_url, currentUser?.avatar)}
+              alt="You"
+              className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-white/10"
+            />
+          ) : (
+            <div className="w-10 h-10 shrink-0 rounded-full bg-muted text-muted-foreground ring-1 ring-white/10 flex items-center justify-center text-xs font-semibold">
+              {initialsOf(currentUser?.display_name || currentUser?.name)}
+            </div>
+          )}
           <input
             ref={inputRef}
             id="comment-input"

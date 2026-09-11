@@ -400,7 +400,18 @@ export function AppProvider({ children }) {
             category: p.categories?.[0] || 'General',
             customStyle: p.custom_style || null,
             gear: p.exif_data?.camera || p.exif_data?.camera_model || null,
-            likes: 0,
+            // The real counts, from the columns that hold them.
+            //
+            // This was a hardcoded 0, so a photograph with ten likes rendered as
+            // zero on every load. Liking it bumped the optimistic value to one,
+            // and the next refresh read the hardcoded zero again - which looks
+            // exactly like "my like was not saved" and is why it was reported
+            // that way. The likes were always in the database; the feed simply
+            // never asked. v14 added like_count and comment_count with triggers
+            // that keep them true, and ProfilePage has been reading them
+            // correctly all along.
+            likes: p.like_count || 0,
+            comments: p.comment_count || 0,
             // Measured at upload and stored by migration v23, not guessed from the
             // file extension. The line that stood here reported every still as
             // 3/4 and every .mp4 as 9/16, so a 3:2 landscape was rendered in a
@@ -1432,7 +1443,11 @@ export function AppProvider({ children }) {
             customStyle: p.custom_style || null,
             gear: p.exif_data?.camera_model,
             location: owner.location,
-            likes: p.votes || 0,
+            // votes is the battle Elo score, not a like count. Reading it here
+            // meant the heart on the feed showed how a photograph was doing in
+            // competition - two different numbers wearing the same icon.
+            likes: p.like_count || 0,
+            comments: p.comment_count || 0,
             // Measured at upload and stored by migration v23, not guessed from the
             // file extension. The line that stood here reported every still as
             // 3/4 and every .mp4 as 9/16, so a 3:2 landscape was rendered in a

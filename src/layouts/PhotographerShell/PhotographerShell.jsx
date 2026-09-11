@@ -38,13 +38,18 @@ const NAV_ITEMS = [
   { to: '/feed', label: 'Feed', id: 'nav-feed', icon: Home, mobile: true },
   { to: '/discover', label: 'Explore', id: 'nav-explore', icon: Compass, mobile: true },
   { to: '/compete/vote', label: 'Battles', id: 'nav-battles', icon: Swords, mobile: true },
-  { to: '/upload', label: 'Upload', id: 'nav-upload', icon: PlusSquare, mobile: true },
+  // railHidden: the desktop rail already has a prominent green Upload button a
+  // few rows below this list, so listing it here drew the same destination
+  // twice on the same sidebar. The mobile bottom bar has no such button, so the
+  // entry still belongs there.
+  { to: '/upload', label: 'Upload', id: 'nav-upload', icon: PlusSquare, mobile: true, railHidden: true },
   { to: '/leagues', label: 'Leagues', id: 'nav-leagues', icon: Trophy },
   { to: '/saved', label: 'Saved', id: 'nav-saved', icon: Bookmark },
   { to: '/profile/me', label: 'My portfolio', id: 'nav-portfolio', icon: CircleUserRound, mobile: true },
 ];
 
 const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.mobile);
+const RAIL_NAV_ITEMS = NAV_ITEMS.filter((i) => !i.railHidden);
 
 const ACCOUNT_ITEMS = [
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
@@ -176,7 +181,7 @@ export default function PhotographerShell() {
           </button>
 
           <nav className="flex flex-col gap-0.5 md:items-center md:gap-2 xl:items-stretch xl:gap-0.5">
-            {NAV_ITEMS.map((item) => (
+            {RAIL_NAV_ITEMS.map((item) => (
               <Tooltip key={item.to}>
                 <TooltipTrigger asChild>
                   <NavLink

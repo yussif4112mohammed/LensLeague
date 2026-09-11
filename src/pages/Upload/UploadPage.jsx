@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { readPhotoMeta } from '@/lib/photoMeta';
-import { Upload, ArrowLeft, ArrowRight, Check, Loader2, Camera, MapPin, Image as ImageIcon, Crop, RotateCcw, Sun } from 'lucide-react';
+import { readPhotoMeta, rotateImageFile } from '@/lib/photoMeta';
+import { Upload, ArrowLeft, ArrowRight, Check, Loader2, Camera, MapPin, Image as ImageIcon, RotateCcw } from 'lucide-react';
 
 const DESTINATIONS = [
   { value: 'feed', label: 'Add to Feed', desc: 'Share to your followers\' feed' },
@@ -43,6 +43,35 @@ export default function UploadPage() {
   const [dimensions, setDimensions] = useState({ width: null, height: null });
   const [exifFound, setExifFound] = useState(false);
   const [readingMeta, setReadingMeta] = useState(false);
+  const [rotating, setRotating] = useState(false);
+
+  /**
+   * A quarter turn to the right, applied to the FILE and not just the preview.
+   *
+   * Crop, Rotate and Adjust sat here as three buttons with no onClick - an
+   * editor that did nothing when pressed. Rotate is the one a photographer
+   * actually needs (a frame that came off the camera sideways is the frame
+   * everybody else then votes on), so it is real now. Crop and Adjust are gone
+   * rather than left as decoration; they can come back when they work.
+   */
+  const handleRotate = async () => {
+    if (!fileObj || isVideo || rotating) return;
+    setRotating(true);
+    setError('');
+    try {
+      const rotated = await rotateImageFile(fileObj, { quarterTurns: 1 });
+      setFileObj(rotated.file);
+      // Release the old object URL rather than leaking one per rotation.
+      setPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(rotated.file); });
+      if (rotated.width && rotated.height) {
+        setDimensions({ width: rotated.width, height: rotated.height });
+      }
+    } catch (err) {
+      setError(err.message || 'Could not rotate this image.');
+    } finally {
+      setRotating(false);
+    }
+  };
 
   // The accept="" attribute is only a file-picker hint — it is trivially
   // bypassed. The bucket enforces these same limits server-side (migration v11);
@@ -229,17 +258,27 @@ export default function UploadPage() {
                   <img src={preview} alt="Preview" className="max-w-full max-h-[60vh] object-contain" />
                 )}
               </div>
-              <div className="flex gap-4 justify-center">
-                <Button variant="secondary" className="bg-muted hover:bg-muted text-foreground rounded-xl">
-                  <Crop className="w-4 h-4 mr-2" /> Crop
-                </Button>
-                <Button variant="secondary" className="bg-muted hover:bg-muted text-foreground rounded-xl">
-                  <RotateCcw className="w-4 h-4 mr-2" /> Rotate
-                </Button>
-                <Button variant="secondary" className="bg-muted hover:bg-muted text-foreground rounded-xl">
-                  <Sun className="w-4 h-4 mr-2" /> Adjust
-                </Button>
-              </div>
+              {!isVideo && (
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={handleRotate}
+                    disabled={rotating || !fileObj}
+                    className="bg-muted hover:bg-muted text-foreground rounded-xl"
+                  >
+                    {rotating ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Rotating…</>
+                    ) : (
+                      <><RotateCcw className="w-4 h-4 mr-2" /> Rotate</>
+                    )}
+                  </Button>
+                  {dimensions.width && dimensions.height && (
+                    <span className="text-xs text-muted-foreground">
+                      {dimensions.width} × {dimensions.height}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="flex items-center justify-between">

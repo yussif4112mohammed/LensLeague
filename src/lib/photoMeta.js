@@ -321,3 +321,65 @@ export function ratioLabel(width, height) {
   if (a > 40 || b > 40) return `${Math.round(w)} × ${Math.round(h)}`;
   return `${a}:${b} ${orientationOf(w, h)}`;
 }
+
+/**
+ * Turn a still a quarter turn to the right, and hand back a real file.
+ *
+ * The upload form had Crop, Rotate and Adjust buttons with no onClick at all -
+ * three controls that looked like an editor and did nothing when pressed. A
+ * photographer whose frame came off the camera sideways had no way to fix it,
+ * and the sideways frame is what everybody else then voted on.
+ *
+ * This rotates the pixels rather than setting a CSS transform, because the file
+ * is what gets uploaded: a preview that looks right while the stored photograph
+ * stays on its side would be the same lie in a nicer wrapper. Width and height
+ * swap, so the measured dimensions written by migration v23 stay true.
+ *
+ * JPEG is re-encoded at 0.92, which is visually lossless at photographic sizes;
+ * PNG and WebP round-trip losslessly. EXIF does not survive a canvas re-encode,
+ * which is why the caller keeps the metadata it read BEFORE rotating.
+ */
+export async function rotateImageFile(file, { quarterTurns = 1 } = {}) {
+  const turns = ((quarterTurns % 4) + 4) % 4;
+  if (turns === 0) return { file, width: null, height: null };
+
+  const bitmap = typeof createImageBitmap === 'function'
+    ? await createImageBitmap(file)
+    : await new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read the image.')); };
+        img.src = url;
+      });
+
+  const w = bitmap.width;
+  const h = bitmap.height;
+  const swap = turns % 2 === 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = swap ? h : w;
+  canvas.height = swap ? w : h;
+
+  const ctx = canvas.getContext('2d');
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate((turns * 90 * Math.PI) / 180);
+  ctx.drawImage(bitmap, -w / 2, -h / 2);
+  bitmap.close?.();
+
+  // Keep the original type where the browser can encode it, so a PNG stays a
+  // PNG and the storage bucket's MIME allow-list (migration v19) still matches.
+  const type = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+    ? file.type
+    : 'image/jpeg';
+
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Could not rotate this image.'))), type, 0.92);
+  });
+
+  const name = file.name.replace(/(\.[^.]+)?$/, m => m || '');
+  return {
+    file: new File([blob], name, { type, lastModified: Date.now() }),
+    width: canvas.width,
+    height: canvas.height,
+  };
+}

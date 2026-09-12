@@ -465,8 +465,14 @@ export function AppProvider({ children }) {
                 id: `bat_${Date.now()}_${pA.id}_${pB.id}`,
                 category: pA.category === pB.category ? pA.category : 'Mixed',
                 endsIn: '24h',
-                photoA: { ...pA, score: 1200 },
-                photoB: { ...pB, score: 1200 },
+                // A battle with no counts is a battle that crashes the card
+                // the moment somebody votes on it. Persisted battles carry
+                // these; the generated fallback did not, and nothing noticed
+                // because the fallback only runs when photo_battles is empty.
+                photoA: { ...pA, score: 1200, votes: 0 },
+                photoB: { ...pB, score: 1200, votes: 0 },
+                totalVotes: 0,
+                status: 'active',
               });
             }
           });

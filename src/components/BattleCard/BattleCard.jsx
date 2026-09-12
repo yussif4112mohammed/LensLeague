@@ -7,7 +7,12 @@ export default function BattleCard({ battle, onVote, onSkip }) {
   const { castBattleVote } = useApp();
   const [voted, setVoted] = useState(null); // 'a' | 'b' | null
   const [impact, setImpact] = useState(null);
-  const [eloResults, setEloResults] = useState(null);
+  // What the server actually returned: vote counts and status. It does NOT
+  // return an Elo delta - castBattleVote stopped inventing those when the fake
+  // ratings were removed - and reading a field it never sends is what crashed
+  // this page on every vote.
+  const [result, setResult] = useState(null);
+  const [voteError, setVoteError] = useState('');
   const [touchStartY, setTouchStartY] = useState(null);
 
   const handleTouchStart = (e) => {
@@ -25,8 +30,21 @@ export default function BattleCard({ battle, onVote, onSkip }) {
     setTouchStartY(null);
   };
 
-  const total = battle.photoA.votes + battle.photoB.votes;
-  const pctA = total ? Math.round((battle.photoA.votes / total) * 100) : 50;
+  // ONE source for every number on this card.
+  //
+  // Two separate crashes lived in the old arithmetic. battle.totalVotes was
+  // read with .toLocaleString() and generateFairBattles does not set it - or
+  // any vote count - so a battle from that fallback took the page down the
+  // instant somebody voted. And `battle.photoA.votes + battle.photoB.votes`
+  // on undefined gives NaN, which is falsy, so the bar silently showed a
+  // 50/50 split that no one had voted for.
+  //
+  // After a vote the server's counts win: castBattleVote returns the true
+  // tally, which is better than adding one to a number we started unsure of.
+  const votesA = result ? result.votesA : (battle.photoA.votes || 0);
+  const votesB = result ? result.votesB : (battle.photoB.votes || 0);
+  const totalVotes = votesA + votesB;
+  const pctA = totalVotes ? Math.round((votesA / totalVotes) * 100) : 50;
   const pctB = 100 - pctA;
 
   // Real metadata or none. parseGearOrGetExif invented all of this from the
@@ -49,13 +67,23 @@ export default function BattleCard({ battle, onVote, onSkip }) {
 
   const handleVote = async (side) => {
     if (voted) return;
+    setVoteError('');
     setVoted(side);
     setImpact(side);
     
-    // Calculate and trigger Elo adjustments in database and local state
     const results = await castBattleVote(battle.id, side);
-    if (results) {
-      setEloResults(results);
+
+    // `if (results)` was always true - a refusal is an object too, so
+    // { success: false, error: 'You have already voted' } was stored as a
+    // result and rendered as one. Check what it actually says.
+    if (results?.success) {
+      setResult(results);
+    } else {
+      // Put the card back so the voter can try again, and tell them why.
+      setVoted(null);
+      setVoteError(results?.error || 'Your vote was not recorded.');
+      setTimeout(() => setImpact(null), 600);
+      return;
     }
 
     setTimeout(() => setImpact(null), 600);
@@ -110,12 +138,11 @@ export default function BattleCard({ battle, onVote, onSkip }) {
               <div>
                 <span className="battle-card__name">{battle.photoA.photographerName}</span>
                 <div className="battle-card__elo">
-                  ⚡ {eloResults ? eloResults.newRatingA : (battle.photoA.rating || 1200)}
-                  {eloResults && (
-                    <span className={`elo-badge ${eloResults.changeA.startsWith('+') ? 'elo-badge--up' : 'elo-badge--down'}`}>
-                      {eloResults.changeA}
-                    </span>
-                  )}
+                  {/* The real tally, or nothing. This read eloResults.newRatingA
+                      and eloResults.changeA - two fields the server has never
+                      sent since the invented ratings were removed - so every
+                      vote threw on undefined.startsWith and took the page down. */}
+                  {`${votesA.toLocaleString()} ${votesA === 1 ? 'vote' : 'votes'}`}
                 </div>
               </div>
             </div>
@@ -183,12 +210,11 @@ export default function BattleCard({ battle, onVote, onSkip }) {
               <div>
                 <span className="battle-card__name">{battle.photoB.photographerName}</span>
                 <div className="battle-card__elo">
-                  ⚡ {eloResults ? eloResults.newRatingB : (battle.photoB.rating || 1200)}
-                  {eloResults && (
-                    <span className={`elo-badge ${eloResults.changeB.startsWith('+') ? 'elo-badge--up' : 'elo-badge--down'}`}>
-                      {eloResults.changeB}
-                    </span>
-                  )}
+                  {/* The real tally, or nothing. This read eloResults.newRatingB
+                      and eloResults.changeB - two fields the server has never
+                      sent since the invented ratings were removed - so every
+                      vote threw on undefined.startsWith and took the page down. */}
+                  {`${votesB.toLocaleString()} ${votesB === 1 ? 'vote' : 'votes'}`}
                 </div>
               </div>
             </div>
@@ -218,19 +244,26 @@ export default function BattleCard({ battle, onVote, onSkip }) {
           </div>
           <div className="battle-card__bar-labels">
             <span className="body-sm" style={{ color: '#FFB020', fontWeight: 700 }}>
-              {(battle.photoA.votes + (voted === 'a' ? 1 : 0)).toLocaleString()} votes
+              {`${votesA.toLocaleString()} ${votesA === 1 ? 'vote' : 'votes'}`}
             </span>
             <span className="body-sm" style={{ color: '#6E6E76' }}>
-              {battle.totalVotes.toLocaleString()} total
+              {`${totalVotes.toLocaleString()} total`}
             </span>
             <span className="body-sm" style={{ color: '#00E5FF', fontWeight: 700 }}>
-              {(battle.photoB.votes + (voted === 'b' ? 1 : 0)).toLocaleString()} votes
+              {`${votesB.toLocaleString()} ${votesB === 1 ? 'vote' : 'votes'}`}
             </span>
           </div>
         </div>
       )}
 
-      {!voted && (
+      {voteError && (
+        // The database raises readable messages for the cases a voter actually
+        // hits - already voted, own battle, closed, daily cap. They were being
+        // thrown away, so a refused vote looked like a broken button.
+        <p className="battle-card__hint body-sm" role="status">{voteError}</p>
+      )}
+
+      {!voted && !voteError && (
         <p className="battle-card__hint body-sm">Pick the photo that resonates most with you</p>
       )}
     </div>

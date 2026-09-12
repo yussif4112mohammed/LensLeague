@@ -9,7 +9,7 @@ import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Send, Search, ArrowLeft, MessageCircle, Phone, Video, MoreVertical, Check, CheckCheck, Calendar, DollarSign } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageCircle, MoreVertical, Check, CheckCheck, Calendar, DollarSign } from 'lucide-react';
 
 export default function InboxPage() {
   const { currentRole, currentUser, bookings, threads, acceptBooking, declineBooking, sendMessage, completeBooking } = useApp();
@@ -66,6 +66,11 @@ export default function InboxPage() {
   // any future use cannot disagree with the list about the same person.
   const partnerName = selectedThread
     ? (isPhotographer ? selectedThread.clientName : selectedThread.photographerName) || 'Someone'
+    : '';
+  // The last thing actually said in this conversation, which is real, unlike
+  // the presence indicator that used to sit in the header.
+  const lastMessageAt = selectedThread?.messages?.length
+    ? selectedThread.messages[selectedThread.messages.length - 1]?.timestamp || ''
     : '';
   const partnerAvatar = selectedThread
     ? avatarUrlOf(
@@ -180,9 +185,12 @@ export default function InboxPage() {
                             <AvatarImage src={avatarUrl} alt={partnerName} />
                             <AvatarFallback className="bg-muted text-muted-foreground">{initialsOf(partnerName)}</AvatarFallback>
                           </Avatar>
-                          {isActive && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></span>
-                          )}
+                          {/* Removed. This was drawn when isActive - meaning
+                              "this conversation is the one you have open", not
+                              "this person is online" - so opening a chat made a
+                              presence dot appear beside somebody who might not
+                              have opened the app in a week. The selected row
+                              already has its own background highlight. */}
                         </div>
                         
                         <div className="flex-1 min-w-0">
@@ -333,20 +341,30 @@ export default function InboxPage() {
                     <div className="font-semibold text-foreground">
                       {partnerName}
                     </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                      Online
-                    </div>
+                    {/* There is no presence in this product. No heartbeat, no
+                        last-seen column, nothing subscribing to either - this
+                        was a green dot and the word "Online" rendered
+                        unconditionally, so everybody appeared permanently
+                        available. The photographer on the other end of this
+                        conversation noticed and said so.
+
+                        What IS true is when they last wrote, so that is what
+                        this shows. Real presence needs a heartbeat and a
+                        last_seen_at column; until it exists, saying nothing
+                        beats saying something false. */}
+                    {lastMessageAt && (
+                      <div className="text-xs text-muted-foreground">
+                        Last message {lastMessageAt}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full hidden sm:flex">
-                    <Phone className="h-5 w-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full hidden sm:flex">
-                    <Video className="h-5 w-5" />
-                  </Button>
+                  {/* Phone and Video were here with no onClick between them -
+                      the same dead decoration Crop and Adjust were on the
+                      upload form. LensLeague has no calling. They are gone
+                      rather than left to be pressed and do nothing. */}
                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
                     <MoreVertical className="h-5 w-5" />
                   </Button>

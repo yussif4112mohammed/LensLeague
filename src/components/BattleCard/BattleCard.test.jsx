@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 /**
  * These two components were the ones nothing in the suite ever mounted.
@@ -14,11 +15,19 @@ import { render, screen } from '@testing-library/react';
  * and assert that what a viewer reads is true.
  */
 
+// Hoisted so the tests below can decide what a vote returns.
+const castBattleVoteMock = vi.hoisted(() => vi.fn());
+
 vi.mock('../../context/AppContext', () => ({
-  useApp: () => ({
-    castBattleVote: vi.fn().mockResolvedValue({ success: true }),
-  }),
+  useApp: () => ({ castBattleVote: castBattleVoteMock }),
 }));
+
+beforeEach(() => {
+  castBattleVoteMock.mockReset();
+  castBattleVoteMock.mockResolvedValue({
+    success: true, status: 'active', winnerId: null, votesA: 0, votesB: 0,
+  });
+});
 
 import BattleCard from './BattleCard';
 
@@ -72,5 +81,70 @@ describe('BattleCard', () => {
     render(<BattleCard battle={battleOf(a, side({ photographerName: 'Kofi' }))} />);
     expect(screen.getByText('Canon EOS R5')).toBeInTheDocument();
     expect(screen.getByText('RF 50mm f/1.2')).toBeInTheDocument();
+  });
+});
+
+/**
+ * The vote path, which took production down the day it first had battles to vote on.
+ *
+ * castBattleVote returns { success, status, winnerId, votesA, votesB }. The card
+ * read eloResults.changeA.startsWith('+') - a field the server stopped sending
+ * when the invented Elo ratings were removed - so the FIRST vote anybody cast
+ * threw on undefined and React unmounted the page.
+ *
+ * Four render tests existed for this component and none of them clicked
+ * anything. That is the gap these close.
+ */
+describe('BattleCard, voting', () => {
+  const okVote = { success: true, status: 'active', winnerId: null, votesA: 1, votesB: 0 };
+
+  it('does not crash when a vote succeeds', async () => {
+    const user = userEvent.setup();
+    castBattleVoteMock.mockResolvedValueOnce(okVote);
+    render(<BattleCard battle={battleOf(side(), side({ photographerName: 'Kofi' }))} />);
+    await user.click(screen.getByRole('button', { name: /vote for ama/i }));
+
+    // Scoped to Ama's side of the card. The count is now shown in two true
+    // places - beside the photographer and in the results bar - so an unscoped
+    // query matches both and fails for the wrong reason.
+    const amaSide = screen.getByRole('button', { name: /vote for ama/i });
+    expect(await within(amaSide).findByText(/^1 vote$/)).toBeInTheDocument();
+  });
+
+  it('shows the real tally the server returned, not an invented rating', async () => {
+    const user = userEvent.setup();
+    castBattleVoteMock.mockResolvedValueOnce({ ...okVote, votesA: 3, votesB: 2 });
+    render(<BattleCard battle={battleOf(side(), side({ photographerName: 'Kofi' }))} />);
+    await user.click(screen.getByRole('button', { name: /vote for ama/i }));
+
+    const amaSide = screen.getByRole('button', { name: /vote for ama/i });
+    const kofiSide = screen.getByRole('button', { name: /vote for kofi/i });
+    expect(await within(amaSide).findByText(/^3 votes$/)).toBeInTheDocument();
+    expect(within(kofiSide).getByText(/^2 votes$/)).toBeInTheDocument();
+    // The total is the server's, not local arithmetic.
+    expect(screen.getByText(/^5 total$/)).toBeInTheDocument();
+    // And no trace of the invented 1200 rating this used to show.
+    expect(screen.queryByText(/1200/)).not.toBeInTheDocument();
+  });
+
+  it('tells the voter why a refused vote was refused', async () => {
+    // `if (results)` was always true - a refusal is an object too - so the
+    // error was stored as though it were a result and never shown.
+    const user = userEvent.setup();
+    castBattleVoteMock.mockResolvedValueOnce({ success: false, error: 'You have already voted on this battle.' });
+    render(<BattleCard battle={battleOf(side(), side({ photographerName: 'Kofi' }))} />);
+    await user.click(screen.getByRole('button', { name: /vote for ama/i }));
+    expect(await screen.findByText(/already voted/i)).toBeInTheDocument();
+  });
+
+  it('lets the voter try again after a refusal', async () => {
+    const user = userEvent.setup();
+    castBattleVoteMock.mockResolvedValueOnce({ success: false, error: 'Network error.' });
+    render(<BattleCard battle={battleOf(side(), side({ photographerName: 'Kofi' }))} />);
+    const voteA = screen.getByRole('button', { name: /vote for ama/i });
+    await user.click(voteA);
+    await screen.findByText(/network error/i);
+    // A refused vote must not leave the card locked.
+    expect(voteA).not.toBeDisabled();
   });
 });

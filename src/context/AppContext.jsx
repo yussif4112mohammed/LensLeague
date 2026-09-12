@@ -81,6 +81,19 @@ export function AppProvider({ children }) {
   const [follows, setFollows] = useState([]);
   const [comments, setComments] = useState([]);
   const [savedItemIds, setSavedItemIds] = useState([]);
+  // Which photographs THIS person has liked. Loaded once, like savedItemIds.
+  //
+  // Nothing held this before, so every card had to decide for itself whether it
+  // was liked - and FeedPost, which is what the feed actually renders, decided
+  // with useState(false). It never asked. The like reached the database
+  // correctly and the heart went hollow on the next load, which reads exactly
+  // like "my like was not saved". Clicking again then DELETED it, because
+  // toggleLikePost toggles against the real row.
+  //
+  // PhotoCard did ask, but with one query per card - an N+1 that got slower
+  // with every photograph on screen. One query for the whole session replaces
+  // both approaches.
+  const [likedItemIds, setLikedItemIds] = useState([]);
 
   // ── Username Availability Check (calls DB RPC) ──
   const checkUsernameAvailable = async (username) => {
@@ -395,7 +408,7 @@ export function AppProvider({ children }) {
             url: p.media_url,
             ownerId: p.photographer_id,
             ownerName: owner.name || 'Anonymous',
-            ownerAvatar: owner.avatar_url || '',
+            ownerAvatar: avatarUrlOf(owner.avatar_url, owner.avatar) || '',
             caption: p.caption,
             category: p.categories?.[0] || 'General',
             customStyle: p.custom_style || null,
@@ -607,12 +620,19 @@ export function AppProvider({ children }) {
           .eq('user_id', currentUser.id)
           .eq('target_type', 'portfolio_item');
         setSavedItemIds((savedData || []).map(item => item.target_id));
+
+        const { data: likedData } = await supabase
+          .from('likes')
+          .select('item_id')
+          .eq('user_id', currentUser.id);
+        setLikedItemIds((likedData || []).map(row => row.item_id).filter(Boolean));
       } else {
         // If logged out, clear private data from memory
         setBookings([]);
         setThreads([]);
         setFollows([]);
         setSavedItemIds([]);
+        setLikedItemIds([]);
       }
 
       // 4b. Photography categories - platform-controlled, closed set.
@@ -765,9 +785,17 @@ export function AppProvider({ children }) {
         id: thread.id, // Use real thread UUID
         photographerId: isPhotographer ? myId : (otherParticipant?.user_id || ''),
         photographerName: isPhotographer ? myProfile.name : otherProfile.name,
-        photographerAvatar: isPhotographer ? myProfile.avatar_url : otherProfile.avatar_url,
+        photographerAvatar: isPhotographer
+          ? avatarUrlOf(myProfile.avatar_url, myProfile.avatar)
+          : avatarUrlOf(otherProfile.avatar_url, otherProfile.avatar),
         clientId: !isPhotographer ? myId : (otherParticipant?.user_id || ''),
         clientName: !isPhotographer ? myProfile.name : otherProfile.name,
+        // Never set before. The inbox asked for it, got undefined, and fell
+        // back to the other side's picture - so a photographer saw their own
+        // face beside the client's name.
+        clientAvatar: !isPhotographer
+          ? avatarUrlOf(myProfile.avatar_url, myProfile.avatar)
+          : avatarUrlOf(otherProfile.avatar_url, otherProfile.avatar),
         messages: sortedMessages.map(msg => ({
           id: msg.id,
           senderId: msg.sender_id,
@@ -832,7 +860,7 @@ export function AppProvider({ children }) {
       clientName: clientName,
       photographerId,
       photographerName: photographer.name,
-      photographerAvatar: photographer.avatar,
+      photographerAvatar: avatarUrlOf(photographer.avatar_url, photographer.avatar),
       date: details.date,
       budget: details.budget,
       location: details.location,
@@ -864,7 +892,7 @@ export function AppProvider({ children }) {
       id: `th_${Date.now()}`,
       photographerId,
       photographerName: photographer.name,
-      photographerAvatar: photographer.avatar,
+      photographerAvatar: avatarUrlOf(photographer.avatar_url, photographer.avatar),
       clientId: clientUid,
       clientName: clientName,
       messages: [
@@ -1376,6 +1404,7 @@ export function AppProvider({ children }) {
     // Optimistic: respond now, correct later if the server disagrees.
     setPhotos(prev => prev.map(p =>
       p.id === postId ? { ...p, likes: Math.max(0, (p.likes || 0) + delta) } : p));
+    setLikedItemIds(prev => liked ? [...prev, postId] : prev.filter(id => id !== postId));
 
     const { error } = liked
       ? await supabase.from('likes').insert({ user_id: userId, item_id: postId })
@@ -1385,7 +1414,8 @@ export function AppProvider({ children }) {
       // Roll the optimistic change back rather than leaving a lie on screen.
       setPhotos(prev => prev.map(p =>
         p.id === postId ? { ...p, likes: Math.max(0, (p.likes || 0) - delta) } : p));
-      return { success: false, error: error.message };
+      setLikedItemIds(prev => liked ? prev.filter(id => id !== postId) : [...prev, postId]);
+      return { success: false, error: humaniseWriteError(error) };
     }
     return { success: true, liked };
   };
@@ -1443,7 +1473,13 @@ export function AppProvider({ children }) {
             isVideo: p.media_url?.toLowerCase()?.includes('.mp4') || p.media_url?.toLowerCase()?.includes('.webm') || p.media_url?.includes('/video/'),
             ownerId: p.photographer_id,
             ownerName: owner.name || 'Photographer',
-            ownerAvatar: owner.avatar || '',
+            // avatar_url is where the picture actually lives; `avatar`
+            // predates it and is empty for every current profile. This line
+            // read the empty one, which is why photographers showed as
+            // initials on the feed and in battles while their real picture sat
+            // in the row next to it. syncFromSupabase had it right; this
+            // second mapping did not, and the feed uses this one.
+            ownerAvatar: avatarUrlOf(owner.avatar_url, owner.avatar) || '',
             caption: p.caption,
             category: p.categories?.[0] || 'General',
             customStyle: p.custom_style || null,
@@ -1872,6 +1908,7 @@ export function AppProvider({ children }) {
       follows,
       comments,
       savedItemIds,
+      likedItemIds,
       connections,
       requestConnection,
       acceptConnection,

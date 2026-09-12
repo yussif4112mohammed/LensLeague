@@ -51,6 +51,20 @@ const NAV_ITEMS = [
 const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((i) => i.mobile);
 const RAIL_NAV_ITEMS = NAV_ITEMS.filter((i) => !i.railHidden);
 
+// Everything the mobile tab bar has no room for.
+//
+// The five tabs are Feed, Explore, Battles, Upload and Portfolio. Leagues,
+// Saved, Analytics, Inbox and Settings live only in the desktop rail's account
+// menu, which is hidden below md - so on a phone those five screens were
+// reachable by typing the URL and no other way. The app is used on phones.
+const MOBILE_MORE_ITEMS = [
+  { to: '/leagues', label: 'Leagues', icon: Trophy },
+  { to: '/saved', label: 'Saved', icon: Bookmark },
+  { to: '/inbox', label: 'Inbox', icon: Inbox },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/settings', label: 'Settings', icon: Settings },
+];
+
 const ACCOUNT_ITEMS = [
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/inbox', label: 'Inbox', icon: Inbox },
@@ -140,6 +154,7 @@ function AccountMenu({ open, onClose, onNavigate, onLogout }) {
 
 export default function PhotographerShell() {
   const navigate = useNavigate();
+  const [moreOpen, setMoreOpen] = useState(false);
   const { currentUser, users, follows, logoutUser, unreadNotificationCount } = useApp();
 
   // Notifications were reachable only from the mobile feed header, which is
@@ -350,8 +365,52 @@ export default function PhotographerShell() {
                 </span>
               </NavLink>
             ))}
+
+            {/* The way to everything the five tabs cannot hold. */}
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              aria-label="More"
+              aria-expanded={moreOpen}
+              className="flex h-full flex-1 flex-col items-center justify-center gap-1 text-white/50 transition-colors hover:text-white/80"
+            >
+              <MoreHorizontal className="h-5 w-5" strokeWidth={1.7} />
+              <span className="text-[9px] font-semibold tracking-wide">More</span>
+            </button>
           </div>
         </nav>
+
+        {/* Mobile "More" sheet. Leagues, Saved, Inbox, Analytics and Settings
+            had no route on a phone at all before this. */}
+        {moreOpen && (
+          <div
+            className="fixed inset-0 z-[60] md:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More"
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setMoreOpen(false)}
+              className="absolute inset-0 h-full w-full bg-black/60 backdrop-blur-sm"
+            />
+            <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl border-t border-white/[.08] bg-rail pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2">
+              <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-white/20" />
+              {MOBILE_MORE_ITEMS.map((item) => (
+                <button
+                  key={item.to}
+                  type="button"
+                  onClick={() => { setMoreOpen(false); navigate(item.to); }}
+                  className="flex w-full items-center gap-3 px-5 py-3.5 text-left text-[14px] text-white/80 transition-colors hover:bg-white/[.06] hover:text-foreground"
+                >
+                  <item.icon className="h-[18px] w-[18px]" strokeWidth={1.7} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );

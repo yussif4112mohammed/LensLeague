@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { Heart, MessageCircle, Bookmark } from 'lucide-react';
@@ -16,13 +15,18 @@ export default function FeedPost({ photo, onOpen, onComments, priority = false }
     follows,
     comments,
     savedItemIds,
+    likedItemIds,
     followUser,
     unfollowUser,
     toggleLikePost,
     toggleSavedItem,
   } = useApp();
 
-  const [liked, setLiked] = useState(false);
+  // Whether THIS person has liked THIS photograph, from the one place that
+  // knows. This was useState(false): the heart started hollow on every load no
+  // matter what, so a like looked lost, and clicking again deleted the real row
+  // because toggleLikePost toggles against the database.
+  const liked = (likedItemIds || []).includes(photo.id);
 
   const isOwn = currentUser?.id === photo.ownerId;
   const isFollowing = (follows || []).some(
@@ -118,12 +122,15 @@ export default function FeedPost({ photo, onOpen, onComments, priority = false }
 
         <div className="flex items-center gap-4 text-[11.5px] text-foreground/[.55]">
           <button
-            onClick={() => { setLiked(v => !v); toggleLikePost?.(photo.id); }}
+            onClick={() => toggleLikePost?.(photo.id)}
             aria-pressed={liked}
             className={cn('flex items-center gap-[5px] transition-colors', liked ? 'text-brand' : 'hover:text-white/80')}
           >
             <Heart className="h-[13px] w-[13px]" strokeWidth={1.7} fill={liked ? 'currentColor' : 'none'} />
-            {(photo.likes || 0) + (liked ? 1 : 0)}
+            {/* No local +1. likes comes from like_count and toggleLikePost
+                already moves it optimistically, so adding one here counted the
+                same like twice. */}
+            {photo.likes || 0}
           </button>
 
           <button

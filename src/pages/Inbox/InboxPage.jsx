@@ -72,12 +72,17 @@ export default function InboxPage() {
   const lastMessageAt = selectedThread?.messages?.length
     ? selectedThread.messages[selectedThread.messages.length - 1]?.timestamp || ''
     : '';
+  // ONLY the other person's picture. No cross-side fallback.
+  //
+  // This is my own bug, and it was worse than the one it replaced. I wrote a
+  // fallback chain - partner, then photographerAvatar, then clientAvatar -
+  // reasoning that more candidates meant fewer blanks. But the thread object
+  // never carried clientAvatar at all, so for a photographer the chain fell
+  // straight through to photographerAvatar, which IS their own avatar. The
+  // result: your own face shown as the person you are talking to. A blank is a
+  // missing picture; somebody else's face is a false claim about who they are.
   const partnerAvatar = selectedThread
-    ? avatarUrlOf(
-        isPhotographer ? selectedThread.clientAvatar : selectedThread.photographerAvatar,
-        selectedThread.photographerAvatar,
-        selectedThread.clientAvatar
-      )
+    ? avatarUrlOf(isPhotographer ? selectedThread.clientAvatar : selectedThread.photographerAvatar)
     : null;
 
   const handleSendMessage = (e) => {
@@ -161,10 +166,10 @@ export default function InboxPage() {
                     // ui-avatars.com, which sent the person's name to a third
                     // party and, with background=random, gave the same contact a
                     // different colour on every reload.
+                    // The partner's own picture or their initials - never the
+                    // other side's, which is what the old fallback chain did.
                     const avatarUrl = avatarUrlOf(
-                      isPhotographer ? t.clientAvatar : t.photographerAvatar,
-                      t.photographerAvatar,
-                      t.clientAvatar
+                      isPhotographer ? t.clientAvatar : t.photographerAvatar
                     );
                     const isActive = selectedThreadId === t.id;
                     

@@ -24,11 +24,15 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
-  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, users } = useApp();
+  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, users } = useApp();
   const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
-  const [liked, setLiked] = useState(() => localStorage.getItem(`liked_${photo.id}`) === 'true');
+  // One shared source, same as the feed. This was seeded from localStorage,
+  // which meant a like looked present on the browser that made it and absent
+  // everywhere else - and it disagreed with the per-card database query below,
+  // which has also gone: one query for the session beats one per photograph.
+  const liked = (likedItemIds || []).includes(photo.id);
   const [saved, setSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(photo.likes + (localStorage.getItem(`liked_${photo.id}`) === 'true' && !photo.likes ? 1 : 0));
+  const likeCount = photo.likes || 0;
   const [heartBurst, setHeartBurst] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -39,36 +43,15 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const isOwnPhoto = currentUser && photo.ownerId === currentUser.id;
   const commentCount = comments.filter(c => c.photo_id === photo.id || c.item_id === photo.id).length;
 
-  // Keep likes synced with backend, but preserve local anon likes
-  useEffect(() => {
-    const isLocalLiked = localStorage.getItem(`liked_${photo.id}`) === 'true';
-    setLikeCount(photo.likes + (isLocalLiked && !photo.likes ? 1 : 0));
-  }, [photo.likes, photo.id]);
+
 
   useEffect(() => {
     setSaved(savedItemIds.includes(photo.id));
   }, [photo.id, savedItemIds]);
 
-  // Check if current user has already liked this photo
-  useEffect(() => {
-    if (!currentUser) return;
-    const checkLiked = async () => {
-      try {
-        const { supabase } = await import('../../lib/supabaseClient');
-        const { data } = await supabase
-          .from('likes')
-          .select('user_id')
-          .eq('user_id', currentUser.id)
-          .eq('item_id', photo.id)
-          .maybeSingle();
-        if (data) {
-          setLiked(true);
-          localStorage.setItem(`liked_${photo.id}`, 'true');
-        }
-      } catch (e) { /* ignore */ }
-    };
-    checkLiked();
-  }, [currentUser, photo.id]);
+  // The per-card `select from likes where user_id and item_id` that stood here
+  // ran once for every photograph on screen. AppContext loads the whole set in
+  // one query at sign-in instead.
 
   const handleFollowClick = (e) => {
     e.stopPropagation();
@@ -98,25 +81,23 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const photoTitle = getPhotoTitle(photo.caption);
 
   const triggerLike = () => {
-    if (!liked) {
-      setLiked(true);
-      localStorage.setItem(`liked_${photo.id}`, 'true');
-      setLikeCount(c => c + 1);
-      setHeartBurst(true);
-      setShowHeart(true);
-      toggleLikePost(photo.id); // Persist to Supabase
-      setTimeout(() => setHeartBurst(false), 700);
-      setTimeout(() => setShowHeart(false), 900);
-    }
+    if (liked) return;
+    setHeartBurst(true);
+    setShowHeart(true);
+    // AppContext owns the state and moves the count optimistically; this only
+    // plays the animation. It used to write localStorage and increment a local
+    // counter too, which is how the card and the feed came to disagree.
+    toggleLikePost(photo.id);
+    setTimeout(() => setHeartBurst(false), 700);
+    setTimeout(() => setShowHeart(false), 900);
   };
 
   const handleLike = (e) => {
     e.stopPropagation();
+    // Unliking needs no local bookkeeping either: toggleLikePost reads the real
+    // row, decides, and moves both the count and likedItemIds itself.
     if (liked) {
-      setLiked(false);
-      localStorage.removeItem(`liked_${photo.id}`);
-      setLikeCount(c => c - 1);
-      toggleLikePost(photo.id); // Persist unlike to Supabase
+      toggleLikePost(photo.id);
     } else {
       triggerLike();
     }

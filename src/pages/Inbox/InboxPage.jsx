@@ -7,9 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Send, Search, ArrowLeft, MessageCircle, MoreVertical, Check, CheckCheck, Calendar, DollarSign } from 'lucide-react';
+import { Send, Search, ArrowLeft, MessageCircle, Check, CheckCheck, Calendar, DollarSign } from 'lucide-react';
 
 export default function InboxPage() {
   const { currentRole, currentUser, bookings, threads, acceptBooking, declineBooking, sendMessage, completeBooking } = useApp();
@@ -111,22 +110,39 @@ export default function InboxPage() {
           <p className="text-muted-foreground text-sm mt-1">Manage your messages and bookings</p>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-[300px]">
-          <TabsList className="grid w-full grid-cols-2 bg-card/50 border border-border/50 rounded-xl p-1 h-auto">
-            <TabsTrigger 
-              value="chats" 
-              className="rounded-lg py-2 data-[active]:bg-muted data-[active]:text-foreground text-muted-foreground"
+        {/* Two buttons, not a tab widget.
+            These would not switch. The Base UI Tabs primitive manages its own
+            panels, and nothing here uses panels - the two lists are rendered
+            conditionally on activeTab further down, so the widget was being
+            borrowed purely as a segmented control and its state was not
+            reaching our own. Plain buttons cannot fail this way, and they are
+            what this actually is. */}
+        <div
+          role="tablist"
+          aria-label="Inbox sections"
+          className="grid w-full grid-cols-2 gap-1 rounded-xl border border-border/50 bg-card/50 p-1 sm:w-[300px]"
+        >
+          {[
+            { key: 'chats', label: 'Chats' },
+            { key: 'bookings', label: isPhotographer ? 'Requests' : 'Bookings' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'rounded-lg py-2 text-center text-sm font-medium transition-colors',
+                activeTab === tab.key
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
             >
-              Chats
-            </TabsTrigger>
-            <TabsTrigger 
-              value="bookings"
-              className="rounded-lg py-2 data-[active]:bg-muted data-[active]:text-foreground text-muted-foreground"
-            >
-              {isPhotographer ? 'Requests' : 'Bookings'}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -179,8 +195,13 @@ export default function InboxPage() {
                         onClick={() => setSelectedThreadId(t.id)}
                         className={cn(
                           "w-full text-left p-3 rounded-xl transition-all duration-200 flex items-center gap-3 group animate-in slide-in-from-left-4",
-                          isActive 
-                            ? "bg-muted/80" 
+                          // bg-muted/80 is a translucent grey over whatever
+                          // sits behind it, which read as a patch that did not
+                          // belong to the panel. A solid surface plus a brand
+                          // edge says "selected" without fighting the
+                          // background.
+                          isActive
+                            ? "bg-muted border-l-2 border-brand" 
                             : "hover:bg-card/50"
                         )}
                         style={{ animationDelay: `${index * 50}ms` }}
@@ -370,9 +391,11 @@ export default function InboxPage() {
                       the same dead decoration Crop and Adjust were on the
                       upload form. LensLeague has no calling. They are gone
                       rather than left to be pressed and do nothing. */}
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
-                    <MoreVertical className="h-5 w-5" />
-                  </Button>
+                  {/* The three-dot button that stood here had no onClick, so
+                      pressing it did nothing at all - the fourth dead control
+                      found in this app this week, after Crop, Adjust, Phone and
+                      Video. When there is a menu to put behind it, it comes
+                      back. */}
                 </div>
               </div>
 

@@ -20,6 +20,13 @@ vi.mock('../../context/AppContext', () => ({
     toggleLikePost: vi.fn(),
     toggleSavedItem: vi.fn(),
     savedItemIds: [],
+    likedItemIds: [],
+    // The mock has to answer everything the component asks the context for.
+    // This was missing and the component crashed on it - which is the mock
+    // being out of date, not the component being wrong, but it is also the
+    // honest cost of a hand-written double: every new value in the context is
+    // a value the double has to learn about.
+    likeCountFor: (photo) => photo?.likes || 0,
     users: [],
   }),
 }));

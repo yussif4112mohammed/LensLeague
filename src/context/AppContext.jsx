@@ -95,6 +95,27 @@ export function AppProvider({ children }) {
   // both approaches.
   const [likedItemIds, setLikedItemIds] = useState([]);
 
+  // The live like count per photograph.
+  //
+  // The heart and the number were coming from different places. likedItemIds
+  // fixed the heart; the number did not move because FeedPage keeps its OWN
+  // feedPhotos array from fetchPhotosPaginated, while toggleLikePost updates
+  // this context's separate `photos` array. Two arrays, and the feed renders
+  // the one that was never being updated - so the count sat at whatever the
+  // server last said no matter what you did.
+  //
+  // This map is the overlay both of them read. Empty by default: likeCountFor
+  // falls back to the photograph's own value, so nothing has to be seeded and a
+  // photo nobody has touched still shows its true stored count.
+  const [likeCounts, setLikeCounts] = useState({});
+
+  const likeCountFor = useCallback(
+    (photo) => (photo && likeCounts[photo.id] !== undefined
+      ? likeCounts[photo.id]
+      : (photo?.likes || 0)),
+    [likeCounts]
+  );
+
   // ── Username Availability Check (calls DB RPC) ──
   const checkUsernameAvailable = async (username) => {
     if (!username || username.length < 3) return false;
@@ -633,6 +654,7 @@ export function AppProvider({ children }) {
         setFollows([]);
         setSavedItemIds([]);
         setLikedItemIds([]);
+        setLikeCounts({});
       }
 
       // 4b. Photography categories - platform-controlled, closed set.
@@ -1405,6 +1427,12 @@ export function AppProvider({ children }) {
     setPhotos(prev => prev.map(p =>
       p.id === postId ? { ...p, likes: Math.max(0, (p.likes || 0) + delta) } : p));
     setLikedItemIds(prev => liked ? [...prev, postId] : prev.filter(id => id !== postId));
+    setLikeCounts(prev => {
+      const current = prev[postId] !== undefined
+        ? prev[postId]
+        : (photos.find(p => p.id === postId)?.likes || 0);
+      return { ...prev, [postId]: Math.max(0, current + delta) };
+    });
 
     const { error } = liked
       ? await supabase.from('likes').insert({ user_id: userId, item_id: postId })
@@ -1415,6 +1443,11 @@ export function AppProvider({ children }) {
       setPhotos(prev => prev.map(p =>
         p.id === postId ? { ...p, likes: Math.max(0, (p.likes || 0) - delta) } : p));
       setLikedItemIds(prev => liked ? prev.filter(id => id !== postId) : [...prev, postId]);
+      setLikeCounts(prev => {
+        const current = prev[postId];
+        if (current === undefined) return prev;
+        return { ...prev, [postId]: Math.max(0, current - delta) };
+      });
       return { success: false, error: humaniseWriteError(error) };
     }
     return { success: true, liked };
@@ -1909,6 +1942,7 @@ export function AppProvider({ children }) {
       comments,
       savedItemIds,
       likedItemIds,
+      likeCountFor,
       connections,
       requestConnection,
       acceptConnection,

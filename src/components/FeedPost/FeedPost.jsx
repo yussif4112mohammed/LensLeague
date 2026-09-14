@@ -16,6 +16,7 @@ export default function FeedPost({ photo, onOpen, onComments, priority = false }
     comments,
     savedItemIds,
     likedItemIds,
+    likeCountFor,
     followUser,
     unfollowUser,
     toggleLikePost,
@@ -127,10 +128,10 @@ export default function FeedPost({ photo, onOpen, onComments, priority = false }
             className={cn('flex items-center gap-[5px] transition-colors', liked ? 'text-brand' : 'hover:text-white/80')}
           >
             <Heart className="h-[13px] w-[13px]" strokeWidth={1.7} fill={liked ? 'currentColor' : 'none'} />
-            {/* No local +1. likes comes from like_count and toggleLikePost
-                already moves it optimistically, so adding one here counted the
-                same like twice. */}
-            {photo.likes || 0}
+            {/* The live count. photo.likes is this page's own snapshot from
+                fetchPhotosPaginated and never changes after load, which is why
+                the number stayed put while the heart filled. */}
+            {likeCountFor(photo)}
           </button>
 
           <button

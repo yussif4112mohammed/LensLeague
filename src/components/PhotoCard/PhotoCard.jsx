@@ -24,7 +24,7 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
-  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, users } = useApp();
+  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, likeCountFor, users } = useApp();
   const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
   // One shared source, same as the feed. This was seeded from localStorage,
   // which meant a like looked present on the browser that made it and absent
@@ -32,7 +32,7 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   // which has also gone: one query for the session beats one per photograph.
   const liked = (likedItemIds || []).includes(photo.id);
   const [saved, setSaved] = useState(false);
-  const likeCount = photo.likes || 0;
+  const likeCount = likeCountFor(photo);
   const [heartBurst, setHeartBurst] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const [showComments, setShowComments] = useState(false);

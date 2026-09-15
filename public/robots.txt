@@ -1,0 +1,30 @@
+# LensLeague — https://lensleague.app
+# Public pages are open to crawlers. The signed-in application is not:
+# every path below redirects to the login screen for an anonymous visitor,
+# so indexing it would fill search results with copies of one login page.
+
+User-agent: *
+Allow: /$
+Allow: /signup
+Allow: /login
+Allow: /terms
+Allow: /privacy
+Allow: /guidelines
+
+Disallow: /feed
+Disallow: /discover
+Disallow: /explore
+Disallow: /compete
+Disallow: /leagues
+Disallow: /leaderboard
+Disallow: /profile
+Disallow: /analytics
+Disallow: /upload
+Disallow: /settings
+Disallow: /inbox
+Disallow: /saved
+Disallow: /client
+Disallow: /admin
+Disallow: /forgot-password
+
+Sitemap: https://lensleague.app/sitemap.xml

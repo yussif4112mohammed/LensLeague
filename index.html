@@ -2,16 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/jpeg" href="/vercel_lens.jpg" />
+
+    <!-- The 264KB JPEG that stood here was downloaded on every page load just to
+         draw a 16px tab icon. favicon.svg is 9KB and scales to every size. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
     <!-- viewport-fit=cover is required for env(safe-area-inset-*) to return a
          real value. Without it those insets resolve to 0 on iPhone, and the
          bottom navigation in PhotographerShell.css - which already asks for
          them - sits under the home indicator. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="LensLeague — The world's most beautiful and intuitive photography platform. Showcasing photography as the hero." />
+
+    <title>LensLeague — Photography Competitions and Hiring</title>
+    <meta name="description" content="LensLeague is the arena for photographers. Publish your work, compete head-to-head against comparable photographs in your category, earn recognition from community votes, and get hired by clients who can see your record." />
+
+    <!-- The address Google should treat as the real one. Without this, the
+         Vercel preview domain and this one compete as duplicates. -->
+    <link rel="canonical" href="https://lensleague.app/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+    <!-- Link previews: WhatsApp, X, Instagram DMs, Slack, iMessage. Without
+         these a shared link renders as a bare URL with no picture, which is
+         how most people will first encounter the platform. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="LensLeague" />
+    <meta property="og:url" content="https://lensleague.app/" />
+    <meta property="og:title" content="LensLeague — Photography Competitions and Hiring" />
+    <meta property="og:description" content="Publish once, compete against comparable work in your category, and get hired on a record the community judged. The premier league for photography." />
+    <meta property="og:image" content="https://lensleague.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A camera lens, lit against a dark background." />
+    <meta property="og:locale" content="en_GB" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="LensLeague — Photography Competitions and Hiring" />
+    <meta name="twitter:description" content="Publish once, compete against comparable work in your category, and get hired on a record the community judged." />
+    <meta name="twitter:image" content="https://lensleague.app/og-image.jpg" />
+
     <meta name="theme-color" content="#08080A" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <title>LensLeague — The World's Most Beautiful Photography Platform</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Leica Aperture Edition brand fonts: Outfit, Inter, JetBrains Mono -->
@@ -19,6 +50,22 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <!-- Everything on this site is drawn by JavaScript. A crawler that does
+           not run it, or a visitor whose script load fails, otherwise gets a
+           blank page with nothing to read and nothing to click. -->
+      <h1>LensLeague — the premier league for photography</h1>
+      <p>
+        LensLeague is a competition platform and marketplace for photographers.
+        Publish a photograph once and it joins your gallery, your feed and a
+        live round against comparable work in the same category. The community
+        votes for twenty-four hours, and everyone who entered is named — winner,
+        runner-up, honourable mention, or participated. No losses are published
+        anywhere. Clients then search by category, style and location, and hire
+        on a record that was judged rather than self-declared.
+      </p>
+      <p>LensLeague requires JavaScript. Please enable it to continue.</p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

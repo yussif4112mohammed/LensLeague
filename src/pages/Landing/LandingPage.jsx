@@ -57,7 +57,7 @@ export default function LandingPage() {
     <div className="w-full min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground">
       
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/60 backdrop-blur-xl border-b border-border/40 animate-entrance">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6 py-4 bg-background/60 backdrop-blur-xl border-b border-border/40 animate-entrance">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
             <Logo withText={true} className="w-8 h-8" />
@@ -67,17 +67,28 @@ export default function LandingPage() {
             <button onClick={() => navigate('/signup?role=photographer')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer flex items-center gap-1.5">
               Photographers <span className="text-xs bg-secondary px-1.5 py-0.5 rounded-full text-foreground" title="Registered users">{userCount > 0 ? userCount.toLocaleString() : 'Join early'}</span>
             </button>
-            <button onClick={() => navigate('/signup?role=client')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer">
+            {/* Goes where its label says. This navigated to the client
+                sign-up form, so a visitor clicking "Leaderboard" to see who
+                was winning landed in a registration flow for the wrong role.
+                /leagues is the real destination; a signed-out visitor is sent
+                to the login screen by ProtectedRoute, which is a wall they can
+                sign up from rather than one they did not ask for. */}
+            <button onClick={() => navigate('/leagues')} className="hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer">
               Leaderboard
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" className="hidden sm:inline-flex" onClick={() => navigate('/login')}>
+        <div className="flex items-center gap-1 sm:gap-4">
+          {/* Shown at every width. This was `hidden sm:inline-flex`, and the
+              links beside the logo are `hidden md:flex` with no menu behind
+              them, so below 640px the homepage offered a returning user
+              nothing but "Get Started" - a sign-up form for the account they
+              already have. */}
+          <Button variant="ghost" className="px-3 sm:px-4" onClick={() => navigate('/login')}>
             Sign In
           </Button>
-          <Button onClick={() => navigate('/signup')} className="rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-[0_0_15px_rgba(255,255,255,0.4)]">
+          <Button onClick={() => navigate('/signup')} className="rounded-full px-4 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-[0_0_15px_rgba(255,255,255,0.4)]">
             Get Started
           </Button>
         </div>

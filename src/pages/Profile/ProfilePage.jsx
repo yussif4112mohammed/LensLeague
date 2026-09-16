@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import PhotoCard from '../../components/PhotoCard/PhotoCard';
 import CommentSheet from '../../components/CommentSheet/CommentSheet';
+import ImageCropper from '../../components/ImageCropper/ImageCropper';
 import Lightbox from '../../components/Lightbox/Lightbox';
 import { supabase } from '../../lib/supabaseClient';
 import { Camera, SearchX, LogIn, ImageOff, MessageSquare, Plus, Edit2, History, MapPin, X } from 'lucide-react';
@@ -309,6 +310,9 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState(null);
   // The banner had no input at all: "Change cover" opened this modal, and the
   // modal had no cover field, so there was no way to set one.
+  // The file the person just chose, held while they frame it. Nothing is
+  // uploaded until they confirm a crop, so cancelling leaves the old picture.
+  const [pendingCrop, setPendingCrop] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -601,7 +605,11 @@ export default function ProfilePage() {
                           Change Avatar
                           <input type="file" className="absolute inset-0 cursor-pointer opacity-0" accept="image/*" onChange={(e) => {
                             const file = e.target.files[0];
-                            if (file) { setAvatarFile(file); setAvatarPreview(URL.createObjectURL(file)); }
+                            // Framed first. Taking the raw file here is what
+                            // left one avatar showing a nose and another a
+                            // bathroom wall.
+                            if (file) setPendingCrop({ file, kind: 'avatar' });
+                            e.target.value = '';
                           }} />
                         </Button>
                       </div>
@@ -623,7 +631,8 @@ export default function ProfilePage() {
                             accept="image/*"
                             onChange={(e) => {
                               const file = e.target.files[0];
-                              if (file) { setCoverFile(file); setCoverPreview(URL.createObjectURL(file)); }
+                              if (file) setPendingCrop({ file, kind: 'cover' });
+                              e.target.value = '';
                             }}
                           />
                         </div>
@@ -1075,6 +1084,31 @@ export default function ProfilePage() {
           index={lightboxIndex}
           onIndexChange={setLightboxIndex}
           onClose={() => setLightboxIndex(null)}
+        />
+      )}
+
+      {/* Sits outside the edit dialog rather than inside it, so the two are
+          stacked siblings instead of nested dialogs fighting over focus. The
+          edit form stays open underneath and keeps the rest of its fields. */}
+      {pendingCrop && (
+        <ImageCropper
+          file={pendingCrop.file}
+          aspect={pendingCrop.kind === 'avatar' ? 1 : 3}
+          circle={pendingCrop.kind === 'avatar'}
+          outputSize={pendingCrop.kind === 'avatar' ? 512 : 1500}
+          title={pendingCrop.kind === 'avatar' ? 'Frame your profile picture' : 'Frame your banner'}
+          onCancel={() => setPendingCrop(null)}
+          onConfirm={(cropped) => {
+            const url = URL.createObjectURL(cropped);
+            if (pendingCrop.kind === 'avatar') {
+              setAvatarFile(cropped);
+              setAvatarPreview(url);
+            } else {
+              setCoverFile(cropped);
+              setCoverPreview(url);
+            }
+            setPendingCrop(null);
+          }}
         />
       )}
     </div>

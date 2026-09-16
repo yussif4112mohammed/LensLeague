@@ -397,3 +397,22 @@
 }
 
 
+
+/* Initials shown when a photographer has no picture yet. Matches the img
+   above exactly, so a card with one of each does not shift. */
+.battle-card__initials {
+  width: 32px;
+  height: 32px;
+  border-radius: 100px;
+  border: 2px solid var(--border-subtle);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised, rgba(255, 255, 255, 0.07));
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}

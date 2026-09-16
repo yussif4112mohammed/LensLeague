@@ -503,8 +503,8 @@ export function AppProvider({ children }) {
                 // the moment somebody votes on it. Persisted battles carry
                 // these; the generated fallback did not, and nothing noticed
                 // because the fallback only runs when photo_battles is empty.
-                photoA: { ...pA, score: 1200, votes: 0 },
-                photoB: { ...pB, score: 1200, votes: 0 },
+                photoA: { ...pA, score: 1200, votes: 0, photographerName: pA.ownerName, photographerId: pA.ownerId, photographerAvatar: pA.ownerAvatar },
+                photoB: { ...pB, score: 1200, votes: 0, photographerName: pB.ownerName, photographerId: pB.ownerId, photographerAvatar: pB.ownerAvatar },
                 totalVotes: 0,
                 status: 'active',
               });
@@ -538,8 +538,13 @@ export function AppProvider({ children }) {
               id: battle.id,
               category: battle.category,
               endsIn: battle.closes_at ? `${Math.max(0, Math.ceil((new Date(battle.closes_at) - Date.now()) / 3600000))}h left` : 'Live',
-              photoA: { ...photoA, votes: battle.votes_a, rating: 1200, photographerName: photoA.ownerName, photographerId: photoA.ownerId },
-              photoB: { ...photoB, votes: battle.votes_b, rating: 1200, photographerName: photoB.ownerName, photographerId: photoB.ownerId },
+              // photographerAvatar as well as the name: BattleCard reads all
+              // three under those names, and the avatar was the one field
+              // never mapped across - so every battle card rendered
+              // <img src={undefined}> and showed a broken-image glyph where
+              // the photographer's face belongs.
+              photoA: { ...photoA, votes: battle.votes_a, rating: 1200, photographerName: photoA.ownerName, photographerId: photoA.ownerId, photographerAvatar: photoA.ownerAvatar },
+              photoB: { ...photoB, votes: battle.votes_b, rating: 1200, photographerName: photoB.ownerName, photographerId: photoB.ownerId, photographerAvatar: photoB.ownerAvatar },
               totalVotes: battle.votes_a + battle.votes_b,
               status: battle.status
             }];

@@ -1,7 +1,28 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { fromStoredExif } from '@/lib/photoMeta';
+import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 import './BattleCard.css';
+
+/**
+ * The photographer's face, or their initials.
+ *
+ * A bare <img src={maybeUndefined}> renders the browser's broken-image glyph,
+ * which is what every battle card was showing. Everywhere else in the product
+ * a missing picture falls back to initials, and avatarUrlOf rejects the stock
+ * photographs that used to stand in for real people.
+ */
+function PhotographerAvatar({ photo }) {
+  const url = avatarUrlOf(photo?.photographerAvatar, photo?.ownerAvatar);
+  const name = photo?.photographerName || photo?.ownerName || '';
+
+  if (url) return <img src={url} alt={name} />;
+  return (
+    <span className="battle-card__initials" aria-hidden="true">
+      {initialsOf(name)}
+    </span>
+  );
+}
 
 export default function BattleCard({ battle, onVote, onSkip }) {
   const { castBattleVote } = useApp();
@@ -134,7 +155,7 @@ export default function BattleCard({ battle, onVote, onSkip }) {
           {/* Info row at bottom */}
           <div className="battle-card__info">
             <div className="battle-card__photographer">
-              <img src={battle.photoA.photographerAvatar} alt={battle.photoA.photographerName} />
+              <PhotographerAvatar photo={battle.photoA} />
               <div>
                 <span className="battle-card__name">{battle.photoA.photographerName}</span>
                 <div className="battle-card__elo">
@@ -206,7 +227,7 @@ export default function BattleCard({ battle, onVote, onSkip }) {
 
           <div className="battle-card__info">
             <div className="battle-card__photographer">
-              <img src={battle.photoB.photographerAvatar} alt={battle.photoB.photographerName} />
+              <PhotographerAvatar photo={battle.photoB} />
               <div>
                 <span className="battle-card__name">{battle.photoB.photographerName}</span>
                 <div className="battle-card__elo">

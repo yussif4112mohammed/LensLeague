@@ -171,15 +171,13 @@ function EmptyState({ icon: Icon, title, desc, action }) {
 export default function ProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addBookingRequest, users, updateProfile, follows, followUser, unfollowUser, currentUser, photos, sendInquiry } = useApp();
+  const { addBookingRequest, users, updateProfile, follows, followUser, unfollowUser, currentUser, photos, openConversation } = useApp();
   
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   // Inquiry: the client's first message to a photographer. Deliberately a
   // message in the real messaging system, not a separate "contact" concept.
-  const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [inquiryText, setInquiryText] = useState('');
-  const [inquiryError, setInquiryError] = useState('');
-  const [inquirySending, setInquirySending] = useState(false);
+  const [messageOpening, setMessageOpening] = useState(false);
+  const [messageError, setMessageError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -407,7 +405,7 @@ export default function ProfilePage() {
   // Only website. email and phone are REVOKED from the public roles at the
   // database level (migration v11) - they are not merely hidden in the UI, they
   // cannot be selected at all, so those rows could never render. `instagram` is
-  // not a column on profiles either. Contact happens through Inquire, which is
+  // not a column on profiles either. Contact happens through Message, which is
   // the point: a conversation in the app, not an address to harvest.
   const contactRows = [
     photographer.website
@@ -427,20 +425,22 @@ export default function ProfilePage() {
   // always []. The tab has been removed rather than left as a permanently empty
   // section implying reviews exist somewhere.
 
-  const handleInquirySubmit = async (e) => {
-    e.preventDefault();
-    setInquirySending(true);
-    setInquiryError('');
-    const result = await sendInquiry(photographer.id, inquiryText);
-    setInquirySending(false);
-    if (!result.success) {
-      setInquiryError(result.error);
+  /**
+   * Straight into the conversation. This used to be an "Inquire" dialog that
+   * demanded a sentence about the shoot before it would do anything - fine for
+   * hiring, which is what "Hire me" is for, and wrong for simply messaging
+   * someone. The thread is created if it does not exist and reused if it does.
+   */
+  const handleMessage = async () => {
+    setMessageError('');
+    setMessageOpening(true);
+    const result = await openConversation(photographer.id);
+    setMessageOpening(false);
+    if (!result?.success) {
+      setMessageError(result?.error || 'Could not open the conversation.');
       return;
     }
-    // Land them in the conversation, not on a "thanks, we'll be in touch" screen.
-    setInquiryOpen(false);
-    setInquiryText('');
-    navigate('/inbox');
+    navigate(`/inbox?thread=${result.threadId}`);
   };
 
   const handleBookingSubmit = async (e) => {
@@ -712,55 +712,23 @@ export default function ProfilePage() {
                     )}
                   </DialogContent>
                 </Dialog>
-                {/* Inquire, not a price. The spec was explicit: no fixed rate on
-                    the profile, and no contact form that sends nowhere. This
-                    opens a real thread in the real messaging system. */}
-                <Dialog open={inquiryOpen} onOpenChange={setInquiryOpen}>
-                  <DialogTrigger asChild>
-                    <button
-                      id="profile-inquire"
-                      className="flex h-[38px] items-center rounded-[9px] bg-primary px-5 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                    >
-                      Inquire
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent className="border-border bg-card sm:max-w-[460px]">
-                    <DialogHeader>
-                      <DialogTitle>Contact {photographer.name?.split(' ')[0] || 'this photographer'}</DialogTitle>
-                      <DialogDescription className="text-muted-foreground">
-                        Tell them what you have in mind — the kind of shoot, roughly when,
-                        and anything that matters to you. This starts a real conversation
-                        in your inbox.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleInquirySubmit} className="space-y-3">
-                      <Textarea
-                        value={inquiryText}
-                        onChange={(e) => { setInquiryText(e.target.value); setInquiryError(''); }}
-                        placeholder="I'm looking for a photographer for..."
-                        rows={5}
-                        maxLength={2000}
-                        required
-                        className="border-border bg-background"
-                      />
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground">
-                          {inquiryText.trim().length}/2000
-                        </span>
-                        {inquiryError && (
-                          <span className="text-[12px] text-red-400">{inquiryError}</span>
-                        )}
-                      </div>
-                      <Button
-                        type="submit"
-                        disabled={inquirySending}
-                        className="w-full rounded-full font-bold"
-                      >
-                        {inquirySending ? 'Sending…' : 'Send message'}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                {/* Message, not "Inquire". No fixed rate on the profile and no
+                    contact form that sends nowhere - this opens the real thread
+                    in the real messaging system, and reuses it if one exists.
+                    "Hire me" beside it carries the booking intent, which is
+                    what the enquiry form was really for. */}
+                <button
+                  id="profile-message"
+                  type="button"
+                  onClick={handleMessage}
+                  disabled={messageOpening}
+                  className="flex h-[38px] items-center rounded-[9px] bg-primary px-5 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {messageOpening ? 'Opening…' : 'Message'}
+                </button>
+                {messageError && (
+                  <span role="status" className="text-[12px] text-destructive">{messageError}</span>
+                )}
               </>
             )}
           </div>

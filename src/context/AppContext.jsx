@@ -984,6 +984,59 @@ export function AppProvider({ children }) {
    *                       started from a specific photograph, so the
    *                       photographer knows which work prompted it
    */
+  /**
+   * Open the conversation with someone, without asking them to compose first.
+   *
+   * The profile used to offer only "Inquire", which required a sentence before
+   * it would do anything. That is the right shape for a hiring enquiry and the
+   * wrong one for "message this person" - a photographer looking at a peer got
+   * a form about the kind of shoot they had in mind.
+   *
+   * get_or_create_thread is symmetric and idempotent: calling it again for a
+   * pair that already has a thread returns the same one, so this is safe to
+   * press twice.
+   */
+  const openConversation = async (partnerId) => {
+    const myId = currentUser?.id;
+    if (!myId) return { success: false, error: 'Sign in to send a message.' };
+    if (!partnerId) return { success: false, error: 'We could not find that person.' };
+    if (myId === partnerId) return { success: false, error: 'You cannot message yourself.' };
+
+    const existing = threads.find(t =>
+      (t.photographerId === myId && t.clientId === partnerId) ||
+      (t.clientId === myId && t.photographerId === partnerId));
+    if (existing) return { success: true, threadId: existing.id };
+
+    const { data: threadId, error } = await supabase.rpc('get_or_create_thread', {
+      user_a: myId,
+      user_b: partnerId,
+    });
+    if (error) return { success: false, error: humaniseWriteError(error) };
+    if (!threadId) return { success: false, error: 'Could not open a conversation.' };
+
+    // Read the new thread back and compile it exactly as the initial load does,
+    // rather than hand-building a lookalike that drifts from that shape the
+    // next time either is changed. A brand-new thread has no messages, so this
+    // is one small row.
+    const { data: rows } = await supabase
+      .from('message_threads')
+      .select(`
+        id,
+        booking_id,
+        created_at,
+        thread_participants(user_id, profiles:user_id(id, name, avatar_url, account_type)),
+        messages(id, sender_id, body, read_at, created_at, profiles:sender_id(name, avatar_url))
+      `)
+      .eq('id', threadId);
+
+    if (rows?.length) {
+      const [compiled] = compileSupabaseThreads(rows, myId);
+      setThreads(prev => (prev.some(t => t.id === threadId) ? prev : [compiled, ...prev]));
+    }
+
+    return { success: true, threadId };
+  };
+
   const sendInquiry = async (photographerId, body, context = {}) => {
     const clientId = currentUser?.id;
     if (!clientId) return { success: false, error: 'Sign in to contact a photographer.' };
@@ -1914,6 +1967,7 @@ export function AppProvider({ children }) {
       photos,
       categories,
       sendInquiry,
+      openConversation,
       setPhotos,
       bookings,
       threads,

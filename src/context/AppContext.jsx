@@ -1037,6 +1037,71 @@ export function AppProvider({ children }) {
     return { success: true, threadId };
   };
 
+  /**
+   * Leave a review on a completed booking.
+   *
+   * The whole apparatus for this has existed since v27 and nothing called it:
+   * the permission function, the one-per-booking index, the 1-to-5 check, the
+   * public read policy and the trigger freezing who a review is about. The
+   * "Leave Review" button had no click handler. So the marketplace's only
+   * credential - what a client says afterwards - was unreachable, and every
+   * photographer read "No reviews yet" permanently.
+   *
+   * Validation is deliberately thin here. The database decides whether this
+   * person may review this booking (completed, and they were a party to it),
+   * and it is the only opinion that counts; duplicating those rules in the
+   * browser would just be a second place to keep them right.
+   */
+  const submitReview = async ({ bookingId, revieweeId, rating, body }) => {
+    const reviewerId = currentUser?.id;
+    if (!reviewerId) return { success: false, error: 'Sign in to leave a review.' };
+    if (!bookingId || !revieweeId) return { success: false, error: 'That booking is no longer available.' };
+    if (reviewerId === revieweeId) return { success: false, error: 'You cannot review yourself.' };
+
+    const score = Number(rating);
+    if (!Number.isInteger(score) || score < 1 || score > 5) {
+      return { success: false, error: 'Choose a rating from one to five stars.' };
+    }
+
+    const text = (body || '').trim();
+    if (text.length > 2000) return { success: false, error: 'Keep it under 2000 characters.' };
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert({
+        booking_id: bookingId,
+        reviewer_id: reviewerId,
+        reviewee_id: revieweeId,
+        rating: score,
+        body: text || null,
+      })
+      .select('id, rating, body, created_at')
+      .single();
+
+    if (error) {
+      // The unique index is the one refusal worth translating: "duplicate key"
+      // means they have already reviewed this booking, which is a sentence, not
+      // a constraint name.
+      if (/duplicate key|unique/i.test(error.message || '')) {
+        return { success: false, error: 'You have already reviewed this booking.' };
+      }
+      return { success: false, error: humaniseWriteError(error) };
+    }
+
+    // The stored rating and review_count on the profile are maintained by a
+    // trigger (migration v31), not here - a client is not allowed to write
+    // either column, and should not be.
+    setUsers(prev => prev.map(u => u.id === revieweeId
+      ? {
+          ...u,
+          review_count: (u.review_count || 0) + 1,
+          rating: ((Number(u.rating) || 0) * (u.review_count || 0) + score) / ((u.review_count || 0) + 1),
+        }
+      : u));
+
+    return { success: true, review: data };
+  };
+
   const sendInquiry = async (photographerId, body, context = {}) => {
     const clientId = currentUser?.id;
     if (!clientId) return { success: false, error: 'Sign in to contact a photographer.' };
@@ -1102,33 +1167,49 @@ export function AppProvider({ children }) {
     return { success: true, threadId, message };
   };
 
-  const acceptBooking = async (bookingId) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'accepted' } : b));
-    
-    await supabase.from('bookings').update({ status: 'accepted' }).eq('id', bookingId);
+  /**
+   * Move a booking to a new status, and tell the truth about whether it moved.
+   *
+   * All three of these used to update the screen and then fire the write off
+   * without looking at the result. If the database refused - a policy, a
+   * constraint, a column that is not there - the client saw "accepted" and
+   * nothing had happened. That is the exact failure that hid a total upload
+   * outage for months: the interface kept saying it worked.
+   *
+   * The optimistic update stays, because the common case should feel instant.
+   * What is new is that a refusal puts the old status back and returns a
+   * message the caller can show.
+   */
+  const setBookingStatus = async (bookingId, status, systemMessage) => {
+    const previous = bookings.find(b => b.id === bookingId);
+    if (!previous) return { success: false, error: 'That booking is no longer available.' };
 
-    const booking = bookings.find(b => b.id === bookingId);
-    if (booking) {
-      addSystemMessage(booking.photographerId, booking.clientId, `${booking.photographerName} accepted the booking request! Chat is now active.`);
+    setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status } : b)));
+
+    const { error } = await supabase.from('bookings').update({ status }).eq('id', bookingId);
+
+    if (error) {
+      setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: previous.status } : b)));
+      return { success: false, error: humaniseWriteError(error) };
     }
-  };
 
-  const declineBooking = async (bookingId) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'declined' } : b));
-    
-    await supabase.from('bookings').update({ status: 'declined' }).eq('id', bookingId);
-
-    const booking = bookings.find(b => b.id === bookingId);
-    if (booking) {
-      addSystemMessage(booking.photographerId, booking.clientId, 'Booking request was declined by the photographer.');
+    if (systemMessage) {
+      addSystemMessage(previous.photographerId, previous.clientId, systemMessage(previous));
     }
+    return { success: true };
   };
 
-  const completeBooking = async (bookingId) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'completed' } : b));
-    
-    await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId);
-  };
+  const acceptBooking = (bookingId) =>
+    setBookingStatus(bookingId, 'accepted',
+      b => `${b.photographerName} accepted the booking request! Chat is now active.`);
+
+  const declineBooking = (bookingId) =>
+    setBookingStatus(bookingId, 'declined',
+      () => 'Booking request was declined by the photographer.');
+
+  const completeBooking = (bookingId) =>
+    setBookingStatus(bookingId, 'completed',
+      () => 'The shoot is marked complete. You can leave a review.');
 
   const addSystemMessage = async (photographerId, clientId, body) => {
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1277,17 +1358,26 @@ export function AppProvider({ children }) {
       created_at: new Date().toISOString()
     };
     setReports(prev => [newReport, ...prev]);
-    try {
-      await supabase.from('reports').insert({
-        reporter_id: userId,
-        target_type: targetType,
-        target_id: targetId,
-        reason
-      });
-    } catch (err) {
-      console.warn('submitReport error:', err.message);
+
+    // supabase-js returns errors, it does not throw them, so the try/catch that
+    // stood here could never fire and a refused report was perfectly silent -
+    // the reporter got a confirmation and no report existed. Of all the writes
+    // in the product this is the worst one to lose quietly: somebody took the
+    // trouble to flag something.
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: userId,
+      target_type: targetType,
+      target_id: targetId,
+      reason
+    });
+
+    if (error) {
+      setReports(prev => prev.filter(r => r.id !== newReport.id));
+      return { success: false, error: humaniseWriteError(error) };
     }
+
     await recordAuditLog('REPORT_SUBMITTED', targetId, { target_type: targetType, reason });
+    return { success: true };
   };
 
   const verifyPhotographer = async (userId) => {
@@ -1594,7 +1684,14 @@ export function AppProvider({ children }) {
             orientation: orientationOf(p.width, p.height),
             ratioLabel: ratioLabel(p.width, p.height),
             exif: fromStoredExif(p.exif_data),
-            timestamp: 'Just now'
+            // The real date. This was the literal string 'Just now' on every
+            // row the feed loaded, so a feed of month-old photographs all
+            // claimed to have been posted seconds ago - which reads as fake,
+            // and is the one impression the product cannot afford. The profile
+            // path has always formatted this correctly; the two disagreed.
+            timestamp: p.created_at
+              ? new Date(p.created_at).toLocaleDateString()
+              : ''
           };
         });
       } else {
@@ -1698,6 +1795,10 @@ export function AppProvider({ children }) {
     const optimisticId = newPhoto.id;
     setPhotos(prev => [newPhoto, ...prev]);
 
+    // Set when the photograph published but could not be entered into a round.
+    // Returned rather than thrown, because the upload itself succeeded.
+    let queueWarning = null;
+
     try {
       // portfolio_items is the canonical public gallery used by profile, feed,
       // search, likes and saved items in the current schema.
@@ -1756,8 +1857,17 @@ export function AppProvider({ children }) {
         setPhotos(prev => prev.map(photo => photo.id.startsWith('p_') && photo.created_at === newPhoto.created_at ? newPhoto : photo));
         // This is intentionally automatic: publishing work queues it for a fair
         // same-category match without asking the creator to opt in.
+        // Entering the competition is the product's whole promise, so a
+        // failure here reaches the photographer rather than the console. It is
+        // NOT treated as essential: the photograph is published and safe either
+        // way, and telling someone their upload failed when it did not would be
+        // worse than telling them it is not competing yet.
         const { error: queueError } = await supabase.rpc('queue_portfolio_item_for_battle', { p_item_id: portfolioItem.id });
-        if (queueError) console.warn('Competition queue note:', queueError.message);
+        if (queueError) {
+          console.warn('Competition queue refused:', queueError.message);
+          queueWarning = humaniseWriteError(queueError)
+            || 'Published, but it could not be entered into a round yet.';
+        }
       }
 
       // Insert into legacy photos table for backward compatibility
@@ -1799,7 +1909,7 @@ export function AppProvider({ children }) {
     }
 
     await recordAuditLog('PHOTO_UPLOAD', newPhoto.id, { category, destination });
-    return newPhoto;
+    return queueWarning ? { ...newPhoto, queueWarning } : newPhoto;
   };
 
   const followUser = async (followingId) => {
@@ -1968,6 +2078,7 @@ export function AppProvider({ children }) {
       categories,
       sendInquiry,
       openConversation,
+      submitReview,
       setPhotos,
       bookings,
       threads,

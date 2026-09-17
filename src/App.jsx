@@ -41,10 +41,19 @@ const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/signup', element: <SignUpPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/admin', element: <AdminPage /> },
   { path: '/terms', element: <TermsPage /> },
   { path: '/privacy', element: <PrivacyPage /> },
   { path: '/guidelines', element: <GuidelinesPage /> },
+
+  // ────── Admin (Protected) ──────
+  // Deliberately NOT in the public block, where it used to sit. AdminPage
+  // guards itself on admin_console_access() and every action behind it is
+  // independently authorised in the database, so this was never an access
+  // hole - but an "Access Denied" screen served to anyone who guessed the URL
+  // announces that an admin console exists, which is free information for an
+  // attacker and looks unfinished besides. Signed-out visitors now get the
+  // login screen like every other private route.
+  { path: '/admin', element: <ProtectedRoute><AdminPage /></ProtectedRoute> },
 
   // ────── Photographer SPA (Protected) ──────
   {

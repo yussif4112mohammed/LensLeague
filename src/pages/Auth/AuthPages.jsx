@@ -310,7 +310,13 @@ export function SignUpPage() {
             id: authData.user.id,
             name: form.name,
             username: cleanUsername,
-            avatar: `https://images.unsplash.com/photo-${role === 'client' ? '1438761681033-6461ffad8d80' : '1507003211169-0a1dd7228f2d'}?w=100&h=100&fit=crop&q=80`,
+            // No avatar. This wrote one of two stock Unsplash photographs, so
+            // every photographer on the platform wore the same stranger's face
+            // and every client wore another - which is why it looked like
+            // someone else's picture was showing on your profile. Left null,
+            // the initials fallback renders until they upload one, and
+            // avatarUrlOf rejects these URLs everywhere else anyway.
+            avatar: null,
             bio: role === 'photographer' ? 'LensLeague creator.' : 'Hiring on LensLeague.',
             location: form.location || 'Global',
             role: role,

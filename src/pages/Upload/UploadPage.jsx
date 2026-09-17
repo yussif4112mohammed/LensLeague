@@ -143,7 +143,7 @@ export default function UploadPage() {
     
     try {
       if (!currentUser) throw new Error('Please sign in before publishing.');
-      await uploadPhoto({
+      const published = await uploadPhoto({
         file: fileObj,
         url: fileObj ? undefined : preview,
         caption,
@@ -161,7 +161,11 @@ export default function UploadPage() {
       });
 
       setModStatus('clear');
-      setTimeout(() => navigate('/feed'), 1200);
+      // Published, but not competing. Say so instead of letting the
+      // photographer assume their work is in a round when it is not - the
+      // automatic entry is the thing they were promised.
+      if (published?.queueWarning) setError(published.queueWarning);
+      setTimeout(() => navigate('/feed'), published?.queueWarning ? 3500 : 1200);
     } catch (err) {
       console.error('Publish error:', err);
       setError(err.message || 'Error occurred while publishing your photo.');
@@ -225,25 +229,6 @@ export default function UploadPage() {
               </div>
             </label>
 
-            <div className="space-y-4">
-              <p className="text-sm font-medium text-muted-foreground">Or use a sample photo:</p>
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-                  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80',
-                  'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80',
-                ].map((url, i) => (
-                  <button 
-                    key={i} 
-                    onClick={() => { setPreview(url); setFileObj(null); setStep(2); }}
-                    className="relative aspect-[4/3] rounded-2xl overflow-hidden group border border-border hover:border-ring transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <img src={url} alt={`Sample ${i+1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 

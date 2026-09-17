@@ -275,11 +275,13 @@ export default function LandingPage() {
                  </div>
                </div>
                
-               {/* Avatars */}
-               <Avatar className="absolute top-[20%] left-[20%] w-12 h-12 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&q=80" /></Avatar>
-               <Avatar className="absolute bottom-[20%] right-[30%] w-10 h-10 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&q=80" /></Avatar>
-               <Avatar className="absolute top-[40%] right-[10%] w-14 h-14 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&q=80" /></Avatar>
-               <Avatar className="absolute bottom-[30%] left-[15%] w-10 h-10 border-2 border-border shadow-xl"><AvatarImage src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&q=80" /></Avatar>
+               {/* Four stock photographs of strangers used to be pinned around
+                   this logo, arranged to read as members. With ten real
+                   accounts there is nothing to gain by implying a crowd, and
+                   avatarUrlOf rejects exactly these URLs everywhere else in the
+                   product - the homepage was the one place still doing it.
+                   Real member avatars can go here once there are enough to
+                   choose from. */}
             </div>
           </div>
 
@@ -297,18 +299,28 @@ export default function LandingPage() {
             <div className="md:col-span-2">
                <h4 className="text-foreground font-bold mb-6 text-sm">Platform</h4>
                <ul className="space-y-4 text-sm font-medium text-muted-foreground">
-                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 group">Photographers <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
-                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 group">Clients <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
-                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 group">Leaderboard <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 {/* Real destinations. Every link in this footer was href="#",
+                     which is the clearest signal a visitor gets that a site is
+                     unfinished. Terms, Privacy and Guidelines existed as real
+                     pages with real text that nothing anywhere linked to - a
+                     platform hosting other people's work with unreachable terms
+                     is a liability, not a polish item. */}
+                 <li><a href="/signup?role=photographer" className="hover:text-foreground transition-colors flex items-center gap-1 group">For photographers <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 <li><a href="/signup?role=client" className="hover:text-foreground transition-colors flex items-center gap-1 group">For clients <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
+                 <li><a href="/login" className="hover:text-foreground transition-colors flex items-center gap-1 group">Sign in <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" /></a></li>
                </ul>
             </div>
 
             <div className="md:col-span-2">
-               <h4 className="text-foreground font-bold mb-6 text-sm">Socials</h4>
+               {/* Was Instagram, Twitter/X and YouTube, all pointing at "#".
+                   There are no accounts to link yet, and three dead social
+                   icons say less than three working legal links. Put Socials
+                   back when the accounts exist. */}
+               <h4 className="text-foreground font-bold mb-6 text-sm">Legal</h4>
                <ul className="space-y-4 text-sm font-medium text-muted-foreground">
-                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center justify-between group">Instagram <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
-                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center justify-between group">Twitter/X <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
-                 <li><a href="#" className="hover:text-foreground transition-colors flex items-center justify-between group">YouTube <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
+                 <li><a href="/terms" className="hover:text-foreground transition-colors flex items-center justify-between group">Terms <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
+                 <li><a href="/privacy" className="hover:text-foreground transition-colors flex items-center justify-between group">Privacy <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
+                 <li><a href="/guidelines" className="hover:text-foreground transition-colors flex items-center justify-between group">Guidelines <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" /></a></li>
                </ul>
             </div>
 

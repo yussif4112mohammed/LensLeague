@@ -24,7 +24,7 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
-  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, likeCountFor, users } = useApp();
+  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, likeCountFor, users, submitReport } = useApp();
   const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
   // One shared source, same as the feed. This was seeded from localStorage,
   // which meant a like looked present on the browser that made it and absent
@@ -34,6 +34,10 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
   const [saved, setSaved] = useState(false);
   const likeCount = likeCountFor(photo);
   const [heartBurst, setHeartBurst] = useState(false);
+  // The three-dot menu. What stood here was a browser alert() reading
+  // "coming soon", which teaches people the controls cannot be trusted.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuNote, setMenuNote] = useState('');
   const [showHeart, setShowHeart] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const navigate = useNavigate();
@@ -236,12 +240,71 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
                 </Button>
               </>
             )}
-            <button 
-              onClick={(e) => { e.stopPropagation(); alert('Post options (Share, Report, Copy Link) coming soon.'); }}
-              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
+            <div className="relative">
+              <button
+                aria-label="Post options"
+                aria-expanded={menuOpen}
+                onClick={(e) => { e.stopPropagation(); setMenuNote(''); setMenuOpen(o => !o); }}
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+
+              {menuOpen && (
+                <>
+                  {/* Click-away. A menu you cannot dismiss by looking away is
+                      worse than no menu on a touch screen. */}
+                  <button
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    className="fixed inset-0 z-40 cursor-default"
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
+                  />
+                  <div
+                    role="menu"
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-11 z-50 w-48 overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+                  >
+                    <button
+                      role="menuitem"
+                      className="block w-full px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                      onClick={async () => {
+                        const link = `${window.location.origin}/profile/${photo.ownerId}`;
+                        try {
+                          await navigator.clipboard.writeText(link);
+                          setMenuNote('Link copied.');
+                        } catch {
+                          // Clipboard access is refused outside a secure context
+                          // and in some embedded webviews. Say so rather than
+                          // appearing to have copied nothing.
+                          setMenuNote('Could not copy — copy it from the address bar.');
+                        }
+                      }}
+                    >
+                      Copy link
+                    </button>
+                    <button
+                      role="menuitem"
+                      className="block w-full px-4 py-3 text-left text-sm text-destructive transition-colors hover:bg-muted"
+                      onClick={async () => {
+                        if (!currentUser) { setMenuNote('Sign in to report a photograph.'); return; }
+                        const result = await submitReport('portfolio_item', photo.id, 'Reported from the feed');
+                        setMenuNote(result?.success === false
+                          ? (result.error || 'Could not send the report.')
+                          : 'Reported. A moderator will look at it.');
+                      }}
+                    >
+                      Report this photograph
+                    </button>
+                    {menuNote && (
+                      <p role="status" className="border-t border-border px-4 py-2 text-[12px] text-muted-foreground">
+                        {menuNote}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 

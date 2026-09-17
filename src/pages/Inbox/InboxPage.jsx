@@ -12,6 +12,20 @@ import { Send, Search, ArrowLeft, MessageCircle, Check, CheckCheck, Calendar, Do
 
 export default function InboxPage() {
   const { currentRole, currentUser, bookings, threads, acceptBooking, declineBooking, sendMessage, completeBooking } = useApp();
+  // Why a booking would not move, per booking. These three writes used to
+  // ignore the database's answer entirely.
+  const [bookingErrors, setBookingErrors] = useState({});
+  const runBookingAction = async (bookingId, action) => {
+    setBookingErrors(prev => ({ ...prev, [bookingId]: '' }));
+    const result = await action(bookingId);
+    if (!result?.success) {
+      setBookingErrors(prev => ({
+        ...prev,
+        [bookingId]: result?.error || 'That did not go through. Please try again.',
+      }));
+    }
+  };
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -275,19 +289,25 @@ export default function InboxPage() {
                           </div>
                         )}
 
+                        {bookingErrors[b.id] && (
+                          <p role="status" className="mt-2 text-[12px] text-destructive">
+                            {bookingErrors[b.id]}
+                          </p>
+                        )}
+
                         <div className="flex gap-2 mt-2">
                           {isPhotographer && b.status === 'requested' && (
                             <>
                               <Button 
                                 variant="outline" 
                                 className="flex-1 bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 hover:text-red-300 rounded-xl"
-                                onClick={() => declineBooking(b.id)}
+                                onClick={() => runBookingAction(b.id, declineBooking)}
                               >
                                 Decline
                               </Button>
                               <Button 
                                 className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl"
-                                onClick={() => acceptBooking(b.id)}
+                                onClick={() => runBookingAction(b.id, acceptBooking)}
                               >
                                 Accept
                               </Button>
@@ -297,7 +317,7 @@ export default function InboxPage() {
                           {isPhotographer && b.status === 'accepted' && (
                             <Button 
                               className="w-full bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:text-blue-300 rounded-xl"
-                              onClick={() => completeBooking(b.id)}
+                              onClick={() => runBookingAction(b.id, completeBooking)}
                             >
                               Mark Completed
                             </Button>

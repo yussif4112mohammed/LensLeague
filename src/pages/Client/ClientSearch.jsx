@@ -311,11 +311,12 @@ export default function ClientSearch() {
                         </div>
 
                         <div className="flex flex-col md:items-end justify-between gap-3 md:w-48 shrink-0 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
-                          {p.starting_rate && (
-                            <div className="text-sm text-muted-foreground md:text-right">
-                              from <span className="text-foreground font-semibold">{p.starting_rate}</span>
-                            </div>
-                          )}
+                          {/* The starting rate is deliberately not shown. The
+                              column is a bare integer with no currency stored
+                              anywhere, so "from 800" would be a number a client
+                              has to guess at - and guessing wrong about price is
+                              the expensive kind of wrong. It goes back on this
+                              card when a currency goes in the database. */}
                           <div className="flex flex-col gap-2 w-full">
                             <Button
                               onClick={() => navigate(`/profile/${p.id}`)}

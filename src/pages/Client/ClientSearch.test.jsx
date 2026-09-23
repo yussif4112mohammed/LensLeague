@@ -61,7 +61,7 @@ import ClientSearch from './ClientSearch';
 const RATED = {
   id: 'p-1', name: 'Eben Mensah', username: 'eben', avatar_url: null,
   bio: '', location: 'Accra', specialties: ['Portrait'], service_categories: ['Portrait'],
-  starting_rate: 'GHS 800', availability_status: 'Available',
+  starting_rate: 800, availability_status: 'Available',
   rating: 4.8, review_count: 12, wins: 3, points: 40, verified: true, total_matches: 137
 };
 

@@ -44,8 +44,15 @@ stats AS (
 ),
 checks(n, ok, label) AS (
 
-  SELECT 1, (SELECT s.bounds_total FROM stats s) >= 15,
-         'every user-typed column carries a length bound'
+  -- Named columns rather than a count. "at least fifteen bounds exist" passes
+  -- while the one that matters is missing; these four are the ones a person
+  -- actually types into, and each is asserted by name.
+  SELECT 1, (
+           SELECT count(*) FROM pg_constraint c
+           WHERE c.conname IN ('profiles_bio_maxlen', 'profiles_name_maxlen',
+                               'portfolio_items_caption_maxlen', 'reports_reason_maxlen')
+         ) = 4,
+         'bio, name, caption and report reason are each bounded'
 
   UNION ALL
   SELECT 2, EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'profiles_website_scheme'),

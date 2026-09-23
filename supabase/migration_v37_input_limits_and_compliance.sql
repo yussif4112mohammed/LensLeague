@@ -63,7 +63,6 @@ BEGIN
       ('profiles',        'website',              300),
       ('profiles',        'photography_style',     80),
       ('profiles',        'camera_gear',          300),
-      ('profiles',        'starting_rate',         60),
       ('profiles',        'availability_status',   60),
       ('profiles',        'avatar_url',          1000),
       ('profiles',        'cover_url',           1000),
@@ -78,10 +77,20 @@ BEGIN
       ('briefs',          'prompt',               600)
     ) AS t(tbl, col, maxlen)
   LOOP
-    -- Skip anything this database does not have.
+    -- Skip anything this database does not have, and anything that is not
+    -- text.
+    --
+    -- The second half of that is not defensive padding. The first version of
+    -- this list had profiles.starting_rate in it, which is an INTEGER, and
+    -- char_length(integer) does not exist - so the migration aborted on a
+    -- column bound that made no sense in the first place. The list is written
+    -- from what the columns are believed to be; this checks what they are.
     CONTINUE WHEN NOT EXISTS (
       SELECT 1 FROM information_schema.columns
-      WHERE table_schema = 'public' AND table_name = r.tbl AND column_name = r.col
+      WHERE table_schema = 'public'
+        AND table_name  = r.tbl
+        AND column_name = r.col
+        AND data_type IN ('text', 'character varying')
     );
 
     v_name := format('%s_%s_maxlen', r.tbl, r.col);
@@ -98,6 +107,7 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE 'v37: added % length bound(s)', v_added;
+  RAISE NOTICE 'v37: any column in the list that is missing or not text was skipped rather than bounded';
 END
 $bounds$;
 

@@ -73,6 +73,21 @@ export function AppProvider({ children }) {
 
   // Battle dispute cases
   const [disputes, setDisputes] = useState([]);
+  // The admin console's own data. Deliberately NOT part of syncFromSupabase:
+  // a moderation queue is not something to fetch for every visitor on every
+  // page load, and at ten thousand users it would be the most expensive read
+  // in the app performed for the people least entitled to it.
+  const [auditLog, setAuditLog] = useState([]);
+  // The Brief (migration v35). One open constraint at a time; the database
+  // decides which one and how many entries the caller has left, so the upload
+  // screen and the brief screen cannot disagree about it.
+  const [currentBrief, setCurrentBrief] = useState(null);
+  const [briefEntries, setBriefEntries] = useState([]);
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [allBriefs, setAllBriefs] = useState([]);
+  const [platformStats, setPlatformStats] = useState(null);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState(null);
 
   // Active battles list state (supporting dynamic Elo updates)
   const [battles, setBattles] = useState([]);
@@ -225,7 +240,21 @@ export function AppProvider({ children }) {
             // owned by the database. The client must not send them: they are
             // reverted by the guard trigger added in migration v11.
           };
-          await supabase.from('profiles').insert(newProfileData);
+          // supabase-js RETURNS its errors; it does not throw them, so the
+          // try/catch around this could never fire. A refused insert used to
+          // leave `profile` assigned from the local object below and the person
+          // signed in against a profile row that does not exist - every write
+          // they made afterwards referenced a missing foreign key, silently.
+          // Of all the writes in the product this is the worst one to lose.
+          const { error: profileInsertError } = await supabase
+            .from('profiles')
+            .insert(newProfileData);
+          if (profileInsertError) {
+            throw new Error(humaniseWriteError(
+              profileInsertError,
+              'Your account was created but its profile could not be saved. Please try signing in again.'
+            ));
+          }
           profile = newProfileData;
         }
         if (profile) {
@@ -262,11 +291,23 @@ export function AppProvider({ children }) {
 
       const publicUrl = urlData.publicUrl;
 
-      await supabase.from('profiles').update({
+      // The file reached storage; that is only half the job. If this update is
+      // refused the new avatar shows on this screen and is gone on the next
+      // reload, with nothing in the console - the exact shape of the "my
+      // profile picture will not stick" report.
+      const { error: avatarWriteError } = await supabase.from('profiles').update({
         avatar_url: publicUrl,
         avatar: publicUrl,
         updated_at: new Date().toISOString()
       }).eq('id', userId);
+
+      if (avatarWriteError) {
+        console.warn('Avatar row update refused:', avatarWriteError.message);
+        throw new Error(humaniseWriteError(
+          avatarWriteError,
+          'The photograph uploaded but your profile could not be updated.'
+        ));
+      }
 
       setCurrentUser(prev => ({ ...prev, avatar_url: publicUrl, avatar: publicUrl }));
       return publicUrl;
@@ -280,28 +321,45 @@ export function AppProvider({ children }) {
     const userId = currentUser?.id;
     if (!userId || !categoryIds?.length) return;
 
-    try {
-      // Clear existing selections and insert new ones
-      await supabase.from('profile_categories').delete().eq('profile_id', userId);
-      const rows = categoryIds.map(cid => ({ profile_id: userId, category_id: cid }));
-      await supabase.from('profile_categories').insert(rows);
-    } catch (err) {
-      console.warn('Profile categories error:', err.message);
+    // Delete-then-insert, with neither result checked, was a way to lose a
+    // photographer's categories entirely: the delete lands, the insert is
+    // refused, and they are now uncategorised and unfindable in category
+    // search - silently, with a success-shaped return.
+    const { error: clearError } = await supabase
+      .from('profile_categories')
+      .delete()
+      .eq('profile_id', userId);
+    if (clearError) {
+      return { success: false, error: humaniseWriteError(clearError, 'Could not update your categories.') };
     }
+
+    const rows = categoryIds.map(cid => ({ profile_id: userId, category_id: cid }));
+    const { error: insertError } = await supabase.from('profile_categories').insert(rows);
+    if (insertError) {
+      return { success: false, error: humaniseWriteError(insertError, 'Could not save your categories.') };
+    }
+    return { success: true };
   };
 
   const completeOnboarding = async () => {
     const userId = currentUser?.id;
     if (!userId) return;
 
-    try {
-      await supabase.from('profiles').update({
-        onboarding_completed: true,
-        updated_at: new Date().toISOString()
-      }).eq('id', userId);
-    } catch (err) {
-      console.warn('Onboarding completion error:', err.message);
+    // onboarding_completed is not in PROFILE_COLUMNS and is not created by any
+    // migration in supabase/. If the column does not exist PostgREST rejects
+    // the whole update, and under the old swallowed catch nobody would ever
+    // find out. Reported rather than hidden, so the answer is a schema fix and
+    // not a mystery.
+    const { error: onboardingError } = await supabase.from('profiles').update({
+      onboarding_completed: true,
+      updated_at: new Date().toISOString()
+    }).eq('id', userId);
+
+    if (onboardingError) {
+      console.warn('Onboarding flag refused:', onboardingError.message);
+      return { success: false, error: humaniseWriteError(onboardingError, 'Could not finish setting up your account.') };
     }
+    return { success: true };
 
     setCurrentUser(prev => ({ ...prev, onboarding_completed: true }));
   };
@@ -946,23 +1004,30 @@ export function AppProvider({ children }) {
       return [newThread, ...prev];
     });
 
-    try {
-      // Use the get_or_create_thread RPC to find or create a thread
-      const { data: threadId } = await supabase.rpc('get_or_create_thread', {
-        user_a: clientUid,
-        user_b: photographerId
+    // The booking row exists by this point, so a failure here must not fail the
+    // booking - but it must not be invisible either. Without the opening
+    // message the photographer gets a request with no conversation attached,
+    // and the client sits waiting for a reply to something nobody can see.
+    let messageWarning = null;
+    const { data: threadId, error: threadError } = await supabase.rpc('get_or_create_thread', {
+      user_a: clientUid,
+      user_b: photographerId
+    });
+
+    if (threadError || !threadId) {
+      messageWarning = 'Your request was sent, but the message thread could not be opened.';
+    } else {
+      const { error: messageError } = await supabase.from('messages').insert({
+        thread_id: threadId,
+        sender_id: clientUid,
+        body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`
       });
-      if (threadId) {
-        await supabase.from('messages').insert({
-          thread_id: threadId,
-          sender_id: clientUid,
-          body: `Hi ${photographer.name}! I requested a booking for ${details.date}. Details: ${details.message}`
-        });
+      if (messageError) {
+        messageWarning = 'Your request was sent, but the opening message did not go through.';
       }
-    } catch (err) {
-      console.warn('Thread/message creation error:', err.message);
     }
-    return { success: true, booking: createdBooking };
+
+    return { success: true, booking: createdBooking, messageWarning };
   };
 
   /**
@@ -1316,31 +1381,277 @@ export function AppProvider({ children }) {
   // Admin actions
   // Moderation runs through SECURITY DEFINER RPCs that check a real permission
   // in the database. The browser can no longer write to reports/profiles directly.
-  const approvePhotoReport = async (reportId) => {
+  /**
+   * The Brief — one weekly constraint everybody shoots to.
+   *
+   * get_current_brief returns the open brief, or the most recent closed one
+   * when nothing is open, so the screen is never blank. Entry counts come back
+   * in the same call deliberately: two calls could disagree, and a photographer
+   * being told they have an entry left when they do not is a worse bug than a
+   * slightly staler number.
+   */
+  const loadCurrentBrief = useCallback(async () => {
+    setBriefLoading(true);
+    const { data, error } = await supabase.rpc('get_current_brief');
+    if (error) {
+      // A missing function means v35 has not been applied. That is a deployment
+      // state, not a runtime error worth shouting about; the screens that use
+      // this handle a null brief by saying nothing is running.
+      setCurrentBrief(null);
+      setBriefLoading(false);
+      return { success: false, error: error.message };
+    }
+    const brief = (data && data[0]) || null;
+    setCurrentBrief(brief);
+    setBriefLoading(false);
+    return { success: true, brief };
+  }, []);
+
+  const loadBriefEntries = useCallback(async (briefId, { cursor = null, limit = 30 } = {}) => {
+    const { data, error } = await supabase.rpc('get_brief_entries', {
+      p_brief_id: briefId || null,
+      p_limit: limit,
+      p_cursor: cursor
+    });
+    if (error) return { success: false, error: error.message, entries: [] };
+    const entries = data || [];
+    // Keyset pagination: append when continuing, replace when starting over.
+    setBriefEntries(prev => (cursor ? [...prev, ...entries] : entries));
+    return { success: true, entries, hasMore: entries.length === limit };
+  }, []);
+
+  /**
+   * Enter a photograph into the open brief.
+   *
+   * Every rule that matters - you own it, a brief is open, the photograph was
+   * made during the window, you are under the cap - is checked inside
+   * enter_brief. This function does not re-check any of them, because a check
+   * here would only be a second opinion an attacker can skip. It reports what
+   * the database said.
+   */
+  const enterBrief = async (itemId) => {
+    const { data, error } = await supabase.rpc('enter_brief', { p_item_id: itemId });
+    if (error) {
+      return { success: false, error: humaniseWriteError(error, 'That could not be entered into the brief.') };
+    }
+    const result = (data && data[0]) || {};
+    setCurrentBrief(prev => prev ? {
+      ...prev,
+      my_entries: result.entries_used ?? prev.my_entries,
+      entries_total: (prev.entries_total ?? 0) + 1
+    } : prev);
+    return { success: true, entriesUsed: result.entries_used, entriesLeft: result.entries_left };
+  };
+
+  /**
+   * Load everything the admin console shows, from the database.
+   *
+   * WHAT WAS WRONG: `reports` and `disputes` were useState([]) and the only
+   * calls to their setters were local mutations. admin_get_reports had existed
+   * since migration v7 and was never called once. So the moderation queue
+   * showed reports filed in the current browser tab and nothing else - a report
+   * filed by a user yesterday was invisible to every moderator forever. The
+   * console looked like a working console. That is the whole failure.
+   *
+   * Called by AdminPage on mount rather than from syncFromSupabase, so the cost
+   * falls on the handful of people entitled to the data.
+   */
+  const loadAdminConsole = useCallback(async () => {
+    setAdminLoading(true);
+    setAdminError(null);
+
+    const [reportsRes, disputesRes, auditRes, statsRes] = await Promise.all([
+      supabase.rpc('admin_get_reports', { p_status: null, p_limit: 100 }),
+      supabase.rpc('admin_get_disputes', { p_status: null, p_limit: 100 }),
+      supabase.rpc('admin_get_audit_log', { p_limit: 100 }),
+      supabase.rpc('admin_get_platform_stats')
+    ]);
+
+    // Each queue fails independently. One missing permission should not blank
+    // the whole console and leave a moderator guessing which part broke.
+    const failures = [];
+    if (reportsRes.error)  failures.push(`reports: ${reportsRes.error.message}`);
+    if (disputesRes.error) failures.push(`disputes: ${disputesRes.error.message}`);
+    if (auditRes.error)    failures.push(`audit log: ${auditRes.error.message}`);
+    if (statsRes.error)    failures.push(`stats: ${statsRes.error.message}`);
+
+    if (!reportsRes.error)  setReports(reportsRes.data || []);
+    if (!disputesRes.error) setDisputes(disputesRes.data || []);
+    if (!auditRes.error)    setAuditLog(auditRes.data || []);
+    if (!statsRes.error)    setPlatformStats((statsRes.data && statsRes.data[0]) || null);
+
+    setAdminError(failures.length ? failures.join(' | ') : null);
+    setAdminLoading(false);
+    return { success: failures.length === 0, errors: failures };
+  }, []);
+
+  /**
+   * Find photographers.
+   *
+   * WHAT WAS WRONG: ClientSearch filtered the `users` array in this context,
+   * which is filled on mount by a select capped at 100 profiles. The
+   * client-facing search of a photography marketplace could not find
+   * photographer one hundred and one, by name, ever. Every filter on that page
+   * was correct and every one of them was applied to the wrong hundred rows.
+   *
+   * search_photographers (v36) applies the same rules across every row, and
+   * returns total_matches so the screen can say how many there really are
+   * rather than counting what it happens to be holding.
+   */
+  const searchPhotographers = useCallback(async ({
+    query = '', category = null, minRating = 0, availableOnly = false,
+    sort = 'rating', page = 0, limit = 24
+  } = {}) => {
+    const { data, error } = await supabase.rpc('search_photographers', {
+      p_query: query || null,
+      p_category: category && category !== 'All' ? category : null,
+      p_min_rating: minRating || 0,
+      p_available_only: Boolean(availableOnly),
+      p_sort: sort,
+      p_limit: limit,
+      p_page: page
+    });
+    if (error) return { success: false, error: error.message, results: [], total: 0 };
+    const results = data || [];
+    return {
+      success: true,
+      results,
+      total: results[0]?.total_matches ?? 0,
+      hasMore: (page + 1) * limit < (results[0]?.total_matches ?? 0)
+    };
+  }, []);
+
+  /**
+   * Everything this platform holds about the signed-in person, in one call.
+   *
+   * Scoped by auth.uid() inside the function, never by an id the client sends —
+   * an export endpoint that takes a user id as a parameter is a data breach
+   * with a friendly name.
+   */
+  const exportMyData = async () => {
+    const { data, error } = await supabase.rpc('export_my_data');
+    if (error) {
+      return { success: false, error: humaniseWriteError(error, 'Your data could not be exported.') };
+    }
+    return { success: true, data };
+  };
+
+  /**
+   * Ask for the account to be erased.
+   *
+   * WHAT WAS WRONG: the settings screen called this "deactivate", set
+   * `is_deactivated = true`, and that was all. The profile, the photographs,
+   * the name and the email all remained. Anyone reading the screen would
+   * reasonably believe more had happened than did.
+   *
+   * Erasing the auth user needs the service role key, which must never reach a
+   * browser, so a single button claiming to delete everything could not be
+   * honest however it was written. request_account_deletion records the request
+   * and takes the account off every public surface at once; an operator then
+   * clears the personal data and removes the auth user. Both steps are named on
+   * the screen rather than implied.
+   */
+  const requestAccountDeletion = async (reason) => {
+    const { data, error } = await supabase.rpc('request_account_deletion', {
+      p_reason: reason || null
+    });
+    if (error) {
+      return { success: false, error: humaniseWriteError(error, 'Your request could not be recorded.') };
+    }
+    return { success: true, requestedAt: data };
+  };
+
+  /** Every brief, including ones not yet open. Staff only, by the RPC. */
+  const loadAllBriefs = useCallback(async () => {
+    const { data, error } = await supabase.rpc('admin_get_briefs', { p_limit: 50 });
+    if (error) return { success: false, error: error.message };
+    setAllBriefs(data || []);
+    return { success: true };
+  }, []);
+
+  /**
+   * Schedule a brief.
+   *
+   * The overlap rule is an exclusion constraint in the database, so two briefs
+   * whose windows touch cannot both exist. That refusal arrives here as an
+   * error and is shown to the operator rather than swallowed - a console that
+   * silently drops a brief somebody spent thought on is worse than one that
+   * says no.
+   */
+  const createBrief = async ({ title, prompt, opensAt, closesAt, category }) => {
+    const { error } = await supabase.rpc('admin_create_brief', {
+      p_title: title,
+      p_prompt: prompt,
+      p_opens_at: opensAt,
+      p_closes_at: closesAt,
+      p_category: category || null
+    });
+    if (error) {
+      return { success: false, error: humaniseWriteError(error, 'That brief could not be scheduled.') };
+    }
+    await loadAllBriefs();
+    await loadCurrentBrief();
+    return { success: true };
+  };
+
+  const dismissReport = async (reportId) => {
     const { error } = await supabase.rpc('admin_resolve_report', {
       p_report_id: reportId,
       p_status: 'dismissed',
       p_notes: 'Dismissed by moderator'
     });
     if (error) {
-      console.warn('Dismiss report refused:', error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: humaniseWriteError(error, 'Could not dismiss that report.') };
     }
-    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'dismissed' } : rep));
+    setReports(prev => prev.map(rep => rep.id === reportId
+      ? { ...rep, status: 'dismissed', resolution_notes: 'Dismissed by moderator' }
+      : rep));
     return { success: true };
   };
 
-  const removeReportedPhoto = async (reportId) => {
-    const { error } = await supabase.rpc('admin_resolve_report', {
+  /**
+   * Take reported content down.
+   *
+   * WHAT WAS WRONG: this called admin_resolve_report, which writes a status on
+   * the REPORT. The photograph stayed in the feed. A moderator pressed "Remove
+   * Photo", the queue cleared, and the reported image was still public. The
+   * screen said the job was done.
+   *
+   * admin_remove_content (v34) hides the photograph, records who removed it and
+   * why, and discards any battle it was still in - in one transaction, so the
+   * queue cannot clear while the content survives.
+   */
+  const removeReportedContent = async (reportId, notes) => {
+    const { data, error } = await supabase.rpc('admin_remove_content', {
       p_report_id: reportId,
-      p_status: 'resolved',
-      p_notes: 'Content removed by moderator'
+      p_notes: notes || null
     });
     if (error) {
-      console.warn('Resolve report refused:', error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: humaniseWriteError(error, 'Could not remove that content.') };
     }
-    setReports(prev => prev.map(rep => rep.id === reportId ? { ...rep, status: 'resolved' } : rep));
+    const outcome = (data && data[0]) || {};
+    setReports(prev => prev.map(rep => rep.id === reportId
+      ? { ...rep, status: 'resolved', target_removed: true, resolution_notes: notes || 'Content removed by moderation' }
+      : rep));
+    // The photograph is gone from every public read path now, so drop it from
+    // the copy this browser is holding rather than waiting for a reload.
+    if (outcome.removed_item_id) {
+      setPhotos(prev => prev.filter(photo => photo.id !== outcome.removed_item_id));
+    }
+    return { success: true, battlesVoided: outcome.battles_voided ?? 0 };
+  };
+
+  const restoreContent = async (itemId, notes) => {
+    const { error } = await supabase.rpc('admin_restore_content', {
+      p_item_id: itemId,
+      p_notes: notes || null
+    });
+    if (error) {
+      return { success: false, error: humaniseWriteError(error, 'Could not restore that photograph.') };
+    }
+    setReports(prev => prev.map(rep => rep.target_id === itemId
+      ? { ...rep, target_removed: false }
+      : rep));
     return { success: true };
   };
 
@@ -1870,28 +2181,13 @@ export function AppProvider({ children }) {
         }
       }
 
-      // Insert into legacy photos table for backward compatibility
-      await supabase.from('photos').insert({
-        url: finalUrl,
-        owner_id: userId,
-        caption,
-        category,
-        destination,
-        alt_text
-        // custom_style exists on portfolio_items (migration v10) and is written above. 
-        // or we could add it if we know the schema. It's stored in React state above.
-      });
-
-      // Also insert into new production `posts` table if authenticated
-      if (userId && !userId.startsWith('usr_') && !userId.startsWith('anon_')) {
-        await supabase.from('posts').insert({
-          author_id: userId,
-          image_url: finalUrl,
-          caption: caption || '',
-          location: currentUser?.location || '',
-          visibility: 'public'
-        });
-      }
+      // A photograph used to be written to three tables: portfolio_items, and
+      // then `photos` and `posts` "for compatibility". Nothing ever read the
+      // other two. Both writes ignored their result - supabase-js RETURNS an
+      // error rather than throwing, so the bare `await` above could not have
+      // noticed a failure even in principle - and the schemas drifted apart
+      // until alt_text and location were being collected from photographers
+      // and dropped on the floor. Migration v33 removed both tables.
     } catch (err) {
       // This catch used to swallow everything and then return newPhoto anyway,
       // so a failed publish showed the photographer a success screen and a
@@ -1899,8 +2195,9 @@ export function AppProvider({ children }) {
       // reachable on an ordinary day - hit the daily upload limit and the insert
       // is refused - so the lie is no longer survivable.
       //
-      // The legacy `photos` and `posts` writes below the portfolio insert are
-      // genuinely best-effort and still only warn.
+      // What still only warns is the competition queue call: the photograph is
+      // published and safe whether or not it entered a round, so that failure
+      // surfaces as a warning rather than an error.
       if (err?.__essential || isRateLimitError(err)) {
         setPhotos(prev => prev.filter(p => p.id !== optimisticId));
         throw new Error(humaniseWriteError(err, 'Could not publish this photograph. Try again.'));
@@ -2095,8 +2392,26 @@ export function AppProvider({ children }) {
       completeBooking,
       sendMessage,
       submitChallengeEntry,
-      approvePhotoReport,
-      removeReportedPhoto,
+      currentBrief,
+      briefEntries,
+      briefLoading,
+      loadCurrentBrief,
+      loadAllBriefs,
+      searchPhotographers,
+      exportMyData,
+      requestAccountDeletion,
+      createBrief,
+      allBriefs,
+      loadBriefEntries,
+      enterBrief,
+      dismissReport,
+      removeReportedContent,
+      restoreContent,
+      loadAdminConsole,
+      auditLog,
+      platformStats,
+      adminLoading,
+      adminError,
       submitReport,
       verifyPhotographer,
       banPhotographer,

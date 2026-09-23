@@ -5,11 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { 
-  ArrowLeft, Mail, User, Star, Globe, Calendar, Bell, 
-  HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight, Camera,
-  Loader2, Users
-} from 'lucide-react';
+import { ArrowLeft, Mail, User, Star, Globe, Calendar, Bell, HelpCircle, Shield, FileText, LogOut, Trash2, ChevronRight, Camera, Loader2, Users, Download, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -93,7 +89,7 @@ function SettingsSection({ title, children }) {
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { logoutUser, currentUser: profile, currentRole, updateProfileSettings } = useApp();
+  const { logoutUser, currentUser: profile, currentRole, updateProfileSettings, exportMyData, requestAccountDeletion } = useApp();
 
   const isAvailable = (status) => !status || status === 'Available' || status === 'Available for booking';
 
@@ -104,7 +100,36 @@ export default function SettingsPage() {
   const [authEmail, setAuthEmail] = useState('');
   const [saveToast, setSaveToast] = useState(null); // null | 'saved' | 'error'
 
-  const [activeModal, setActiveModal] = useState(null); // 'email' | 'username' | 'plan' | 'deactivate'
+  const [activeModal, setActiveModal] = useState(null); // 'email' | 'username' | 'plan' | 'deactivate' | 'delete'
+  const [exporting, setExporting] = useState(false);
+
+  /**
+   * Hand the person their data as a file.
+   *
+   * Built in the browser from what the RPC returned, so nothing is written to a
+   * server and no link needs to be kept alive or expired.
+   */
+  const handleExport = async () => {
+    setExporting(true);
+    setErrorMsg('');
+    const result = await exportMyData();
+    setExporting(false);
+
+    if (!result.success) {
+      setErrorMsg(result.error);
+      showToast('error');
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lensleague-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('saved');
+  };
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -184,10 +209,16 @@ export default function SettingsPage() {
         // Optionally update a mirrored email field in profiles if you have one
       } else if (activeModal === 'deactivate') {
         const success = await updateProfileSettings({ is_deactivated: true });
-        if (!success) throw new Error('Failed to deactivate account.');
+        if (!success) throw new Error('Your profile could not be hidden.');
         await logoutUser();
         navigate('/');
         return; // exit early
+      } else if (activeModal === 'delete') {
+        const result = await requestAccountDeletion(inputValue.trim() || null);
+        if (!result.success) throw new Error(result.error);
+        await logoutUser();
+        navigate('/');
+        return;
       }
 
       setActiveModal(null);
@@ -317,12 +348,28 @@ export default function SettingsPage() {
               destructive
               onClick={handleLogout}
             />
+            {/* Data portability. A person is entitled to a copy of what we
+                hold about them, and it costs one RPC to be able to say yes. */}
+            <SettingsRow
+              id="settings-export-data"
+              icon={Download}
+              label={exporting ? 'Preparing your data…' : 'Download my data'}
+              onClick={handleExport}
+            />
             <SettingsRow
               id="settings-deactivate-account"
-              icon={Trash2}
-              label="Deactivate Account"
-              destructive
+              icon={EyeOff}
+              label="Hide my profile"
               onClick={() => openModal('deactivate')}
+            />
+            {/* Was labelled "Deactivate Account" and set one boolean. Deleting
+                and hiding are different promises and are now different rows. */}
+            <SettingsRow
+              id="settings-delete-account"
+              icon={Trash2}
+              label="Delete my account"
+              destructive
+              onClick={() => openModal('delete')}
             />
           </SettingsSection>
 
@@ -346,7 +393,8 @@ export default function SettingsPage() {
               {activeModal === 'email' && 'Update Email'}
               {activeModal === 'username' && 'Change Username'}
               {activeModal === 'plan' && 'Upgrade Plan'}
-              {activeModal === 'deactivate' && 'Deactivate Account'}
+              {activeModal === 'deactivate' && 'Hide your profile'}
+              {activeModal === 'delete' && 'Delete your account'}
               {activeModal === 'privacy' && 'Privacy Policy'}
               {activeModal === 'terms' && 'Terms of Service'}
             </DialogTitle>
@@ -354,7 +402,11 @@ export default function SettingsPage() {
               {activeModal === 'email' && 'Enter your new email address below. You may need to verify it.'}
               {activeModal === 'username' && 'Choose a unique username for your profile.'}
               {activeModal === 'plan' && 'Pro subscriptions are coming soon! Stay tuned.'}
-              {activeModal === 'deactivate' && 'Are you sure you want to deactivate your account? Your profile will be hidden from the platform until you log back in.'}
+              {activeModal === 'deactivate' && 'Your profile, your photographs and your battles come off every public page until you sign in again. Nothing is deleted.'}
+              {/* Says exactly what happens, including the part that is not
+                  instant. A screen that promises immediate erasure and cannot
+                  deliver it is worse than one that explains the two steps. */}
+              {activeModal === 'delete' && 'This removes your account from LensLeague immediately and asks us to erase your personal data and your photographs permanently. It cannot be undone. Download your data first if you want a copy.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -362,6 +414,16 @@ export default function SettingsPage() {
             <div className="text-sm font-medium text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
               {errorMsg}
             </div>
+          )}
+
+          {activeModal === 'delete' && (
+            <Input
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Anything you want to tell us? (optional)"
+              className="bg-card border-border text-foreground"
+              id="delete-reason"
+            />
           )}
 
           {(activeModal === 'email' || activeModal === 'username') && (

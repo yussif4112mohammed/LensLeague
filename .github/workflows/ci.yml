@@ -70,6 +70,20 @@ jobs:
           VITE_SUPABASE_URL: ''
           VITE_SUPABASE_ANON_KEY: ''
 
+      # Supply chain. --omit=dev on purpose: a vulnerability in vitest or
+      # browserslist is a risk to whoever runs the build, not to a visitor, and
+      # mixing the two produces a number nobody acts on. This step fails only on
+      # something that actually ships in the bundle a photographer downloads.
+      #
+      # Dev-tree advisories are still worth clearing; they are reported by the
+      # second command without failing the run.
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit build tooling (advisory)
+        run: npm audit
+        continue-on-error: true
+
       # Advisory for now, deliberately.
       #
       # .oxlintrc.json has been in this repository unused - no script ran it -

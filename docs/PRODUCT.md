@@ -56,7 +56,7 @@ Reasons, in order of weight:
 Each item ships and works on its own before the next starts. The order is set by
 what is actually blocking, not by what is most interesting.
 
-### 1. The Brief  (next)
+### 1. The Brief  — BUILT, awaiting migration v35
 
 A weekly themed constraint every photographer shoots to: "golden hour, no sun in
 frame", "one colour only", "shot from below knee height". That week's battles are
@@ -70,9 +70,20 @@ upload. It also fixes the browsing problem: scrolling two hundred interpretation
 of one prompt is interesting in a way scrolling two hundred unrelated photographs
 is not, which gives non-photographers a reason to open the app.
 
-Builds on the existing `challenges` table.
+Built on its own tables rather than `challenges`: `briefs` and
+`brief_entries`, in `migration_v35_briefs.sql`. All four rules are in SQL — one
+open brief at a time (an exclusion constraint on the time range, so two
+overlapping briefs cannot exist), three entries per photographer, the photograph
+must have been uploaded inside the window, and entering is what queues it for
+battle. Screens: `/brief`, a toggle on the upload review step defaulted on, a
+card at the top of the feed while a brief is open, and an operator panel in the
+admin console so setting each week's brief is not a hand-written INSERT.
 
-### 2. The Weekly Cover
+Battle matching prefers two answers to the same constraint, falling back to the
+normal queue — a preference, never a filter, so a brief entry is never left
+waiting for a partner that does not exist.
+
+### 2. The Weekly Cover  — next
 
 One photograph a week becomes the face of the app: the hero of the feed, the
 image that appears when anyone shares a LensLeague link, the splash screen. One
@@ -94,6 +105,13 @@ photographers in Accra.
 Why last: it is the most meaningful change in the product — it is the moment
 points convert into money — but it needs both sides populated. Ranking
 photographers for clients does nothing while there are neither.
+
+The seam is prepared. `search_photographers` (migration v36) orders by a single
+`CASE`, so adding recognition tier is one clause in one function rather than a
+rewrite. Two sorts the old client-side search offered — "Most Booked" and
+"Nearest" — were deleted rather than moved: nothing counts bookings per
+photographer and nothing stores a coordinate, so both sorted by nothing while
+looking like they sorted by something.
 
 ### Later, cheap, high leverage
 

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Bell, Calendar, Heart, ChevronRight, Star, MapPin, Users, ImageOff } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { cssUrl } from '@/lib/safeUrl';
 
 export default function ClientHome() {
   const navigate = useNavigate();
@@ -104,7 +105,12 @@ export default function ClientHome() {
         <div className="flex overflow-x-auto gap-4 pb-4 snap-x no-scrollbar">
           {featured.map(p => (
             <Card key={p.id} className="min-w-[240px] bg-card/50 border-border/50 rounded-2xl overflow-hidden cursor-pointer snap-start" onClick={() => navigate(`/profile/${p.id}`)}>
-              <div className="h-32 bg-muted relative bg-cover bg-center" style={{ backgroundImage: `url(${p.cover})` }}>
+              {/* cssUrl refuses anything that is not http(s), and anything
+                  carrying a quote or bracket that could end the url() early and
+                  append declarations after it. A missing cover falls back to
+                  the muted panel rather than an empty url(). */}
+              <div className="h-32 bg-muted relative bg-cover bg-center"
+                   style={cssUrl(p.cover) ? { backgroundImage: cssUrl(p.cover) } : undefined}>
                 <div className="absolute inset-0 bg-gradient-to-t from-card/90 to-transparent"></div>
                 {/* Only badge a rank the photographer actually holds. This
                     printed "Rank #" followed by nothing for everyone unranked,

@@ -27,12 +27,41 @@ The convention that has grown up around this, and is worth keeping:
 
 Every migration is written to be safe to run more than once.
 
-## State as of 2026-09-04
+## State as of 2026-09-21
 
-`schema.sql` is the v1 baseline. v2 through v19 follow.
+`schema.sql` is the v1 baseline. v2 through v36 follow.
 
-**v14 through v19 are applied and verified on production.** VERIFY_v18 returns
-20/20 PASS, VERIFY_v19 returns 9/9 PASS, and SECURITY_AUDIT comes back clean.
+**v2 through v32 are applied and verified on production.** VERIFY_v18 returns
+20/20 PASS, VERIFY_v19 9/9, VERIFY_v29 7/7, VERIFY_v30 7/7, VERIFY_v31 7/7 and
+VERIFY_v32 4/4 with `unchecked_remaining = 0`.
+
+**v33 through v36 are written and NOT applied.** The code that depends on them
+is merged, so until they run those features exist in the repository and not in
+the product. Apply in order; v35 refuses to run without v34.
+
+| | |
+| --- | --- |
+| v33 | Collapses `photos` and `posts` into `portfolio_items` |
+| v34 | Admin foundation, moderation state, `search_path` sweep, closes the open `disputes` policy |
+| v35 | The Brief |
+| v36 | Photographer search |
+
+### The v29 finding, which is the most important thing in this file's history
+
+`cast_photo_battle_vote` **had never once run to completion.** Every call raised
+`column reference "votes_a" is ambiguous`: the function's own `RETURNS TABLE`
+output columns are variables in scope, and the counting `UPDATE` used a bare
+`votes_a`, which matched both the column and the variable.
+
+It survived six migrations because **plpgsql does not validate a function body
+until it runs.** VERIFY_v15 found the function present and correctly
+permissioned — both true. An audit called the engine well built and properly
+locked down — also true. It had simply never executed. The lesson is in
+VERIFY_v29 check 5, which does not ask whether the function exists: it asks
+whether a vote has actually been recorded.
+
+Write at least one behavioural check in every VERIFY. Structure passes when
+nothing works.
 
 **Migration v3 never ran.** This was discovered by introspecting the live database
 on 2026-09-01, and it is the single most important fact in this file's history: v3
@@ -56,8 +85,31 @@ compatibility. This is deliberate and not yet cleaned up.
 | feed read from `portfolio_items` | `posts` and the `get_feed` RPC |
 
 Note also that the storage bucket named `photos` is unrelated to the table named
-`photos`. Nothing writes to that bucket; all real uploads go to `post-media`, and
-avatars to `avatars`. `supabase.from('photos')` in the client is the table.
+`photos`. Its one object is an orphaned avatar from July that nothing points at.
+Real uploads go to `post-media`, and avatars to `avatars`.
+
+### Being removed by v33
+
+A photograph was written to three tables: `portfolio_items`, `photos` and
+`posts`. Only `portfolio_items` was ever read. The other two writes ignored their
+own results, so when they failed nobody was told and when the schemas drifted
+nobody noticed — which is how `alt_text` and `location` were collected from
+photographers for months and written to a table that has neither column.
+
+What the database actually said, before v33 was written:
+
+| Table | Rows | Foreign keys pointing at it | Child columns holding data |
+| --- | --- | --- | --- |
+| `photos` | 0 | 3 | none — all NULL |
+| `posts` | 10, 8 of them duplicates | 7 | none — all NULL |
+
+So nothing depended on the data. What depended on those tables was **code**, and
+that was the dangerous part: four trigger functions read columns the collapse
+deletes, including `tg_notify_like` on every like. plpgsql resolves a column
+reference when the function runs, so those branches were harmless until the
+column went — the same shape as the v29 bug. v33 rewrites the functions first and
+drops the tables second, and deliberately leaves the dead child columns in place,
+because removing them means rewriting `public.notify()`, which has not been read.
 
 ## The competition domain
 
@@ -102,17 +154,46 @@ country and no rating, because nothing records them.
     is_username_available         queue_portfolio_item_for_battle
     search_posts                  search_users
 
-`get_feed` also exists. Privileged work goes through these; the browser does not
-write privileged columns directly.
+Added by v34 (admin console):
 
-## Discrepancy to resolve
+    admin_get_reports             admin_get_disputes
+    admin_get_audit_log           admin_get_platform_stats
+    admin_remove_content          admin_restore_content
 
-Migration v17's header states that no `reviews` table exists, which is why the
-monthly wrap reports no rating. But `reviews` is created in `schema.sql` and again
-in `migration_v2.sql`, both of which appear to have been applied. Either the table
-exists and is unused, or the comment is stale. Check the live database before
-building anything that depends on ratings, and correct whichever is wrong.
+Added by v35 (The Brief), v36 (search) and v37 (limits and compliance):
+
+    get_current_brief             enter_brief
+    get_brief_entries             admin_create_brief
+    admin_get_briefs              search_photographers
+    export_my_data                request_account_deletion
+    admin_complete_account_deletion
+
+`admin_get_reports` is worth a note: it existed from v7 and **was never called
+once.** The admin console's queue was local React state, so a report filed by a
+user was invisible to every moderator forever. An RPC nobody calls is not a
+feature; check both halves.
+
+`get_feed` is dropped by v33 — it returned `SETOF posts` and no client code
+called it. Privileged work goes through these; the browser does not write
+privileged columns directly.
+
+## Resolved: the `reviews` discrepancy
+
+The table exists; v17's header comment was stale. v27 built the rules — a review
+requires a completed booking you were party to, one per booking per reviewer,
+rating constrained to 1–5, identity fields frozen on edit.
+
+What v27 did not do was connect a review to the number a client reads. Nothing
+maintained `profiles.rating` or `profiles.review_count`, and both `ClientHome`
+and `ClientSearch` sort and filter on them — so a photographer could collect ten
+honest reviews and still read "No reviews yet" on every screen that matters.
+v31 added `sync_profile_review_stats`, which recomputes both from the rows rather
+than incrementing a counter, so a miscount heals instead of persisting.
+
+VERIFY_v31 passes 7/7, but with `reviews_total = 0` — checks 4 through 7 passed
+with nothing to check. The structure is right; **the path has not yet been
+exercised by a real review.**
 
 ## Next
 
-`migration_v20_briefs.sql`, for the feature specified in docs/SPEC-the-brief.md.
+Build-order item 2, The Weekly Cover. See docs/PRODUCT.md.

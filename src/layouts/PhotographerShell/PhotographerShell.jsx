@@ -3,23 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import Logo from '@/components/Logo';
 import NotificationsDrawer from '@/components/Notifications/NotificationsDrawer';
-import {
-  Home,
-  Compass,
-  Trophy,
-  Bookmark,
-  CircleUserRound,
-  Plus,
-  MoreHorizontal,
-  Settings,
-  BarChart3,
-  Inbox,
-  LogOut,
-  LogIn,
-  Swords,
-  PlusSquare,
-  Bell,
-} from 'lucide-react';
+import { Home, Compass, Trophy, Bookmark, CircleUserRound, Plus, MoreHorizontal, Settings, BarChart3, Inbox, LogOut, LogIn, Swords, PlusSquare, Bell, Camera } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -38,6 +22,7 @@ const NAV_ITEMS = [
   { to: '/feed', label: 'Feed', id: 'nav-feed', icon: Home, mobile: true },
   { to: '/discover', label: 'Explore', id: 'nav-explore', icon: Compass, mobile: true },
   { to: '/compete/vote', label: 'Battles', id: 'nav-battles', icon: Swords, mobile: true },
+  { to: '/brief', label: 'The Brief', id: 'nav-brief', icon: Camera },
   // railHidden: the desktop rail already has a prominent green Upload button a
   // few rows below this list, so listing it here drew the same destination
   // twice on the same sidebar. The mobile bottom bar has no such button, so the

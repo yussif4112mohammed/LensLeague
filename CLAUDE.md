@@ -11,7 +11,8 @@ This file is the map. The detail lives in `docs/`, and where the two disagree,
 | `docs/ARCHITECTURE.md` | Stack, routing, state, UI, tests, deployment |
 | `docs/DATABASE.md` | How migrations work here, schema drift, the competition domain |
 | `docs/SECURITY.md` | The security model and the audit findings behind it |
-| `docs/SPEC-the-brief.md` | The next feature, specified |
+| `docs/SPEC-the-brief.md` | The Brief, specified. Built in migration v35 |
+| `docs/STATUS.md` | What is done, half-done, not started, and blocked on you |
 
 There is no separate `ROADMAP.md`; the build order is in `docs/PRODUCT.md`.
 
@@ -35,6 +36,17 @@ Migrations are applied by hand and there is no migrations table. Run
 JavaScript is a control an attacker skips by calling the API directly. Points,
 battle results, ranking and eligibility are all decided in the database.
 
+**A write whose result you do not read is a write that can fail silently.**
+supabase-js *returns* its errors; it does not throw them. So
+`try { await supabase.from(x).insert(y) } catch {}` is a catch that can never
+fire, and the person is shown success. This shape has now been found seven times
+here: the upload path that discarded `alt_text` and `location` for months, the
+report that confirmed itself without being filed, the signup that logged someone
+in against a profile row that was never created, the avatar that vanished on
+reload, the categories that could be cleared and not replaced, and two more.
+Destructure `{ error }` on every write and decide deliberately whether it is
+essential (throw) or best-effort (warn, and say what did not happen).
+
 ## Commands
 
     npm run dev           Vite dev server, http://localhost:5173
@@ -48,8 +60,13 @@ battle results, ranking and eligibility are all decided in the database.
 fails the build before Vite starts.
 
 Tests: Vitest and Testing Library, jsdom, configured in `vite.config.js`, setup at
-`src/test/setup.js`. Two suites, 23 tests: `src/lib/photography.test.js` and
-`src/components/FeedbackButton/FeedbackButton.test.jsx`.
+`src/test/setup.js`. **16 suites, 162 tests.**
+
+Several exist because of a specific failure and say so in their own header.
+`App.smoke.test.jsx` and `AppContext.smoke.test.jsx` both mount the real tree,
+because this project has already shipped a change that compiled, passed every
+test, and showed every visitor a blank page. When adding a test, prefer the
+assertion the broken version would have failed.
 
 Lint: `.oxlintrc.json` configures Oxlint, but Oxlint is not in `devDependencies`
 and there is no `lint` script. Run `npx oxlint`, or add it properly first.
@@ -113,9 +130,19 @@ data rather than erroring usefully.
   Google Fonts; `tailwind.config.js` maps `font-sans` and `font-mono` onto Geist
   via `@fontsource`. Both ship. Which one an element gets depends on how it was
   styled. Unresolved — see `docs/ARCHITECTURE.md`.
-- **`reviews` table.** Migration v17 states it does not exist, but `schema.sql`
-  and `migration_v2.sql` both create it. Verify before relying on either.
-- **Bundle size.** One 961 kB chunk, no code splitting.
+- **`reviews` table.** Resolved: it exists. Migration v27 built the rules and
+  v31 made a written review change `profiles.rating` and `review_count`, which
+  nothing had maintained. v17's header comment is stale.
+- **Bundle size.** Resolved: routes are lazy and vendor code is split by how
+  often it changes. The application chunk is ~140 kB; React and supabase-js are
+  cached across deploys.
+- **`StoriesBar`** is imported by nothing and contradicts the product direction
+  in `docs/PRODUCT.md`. It is not in the module graph, so it costs nothing at
+  runtime, but it should be deleted.
+- **`onboarding_completed`** is written by `completeOnboarding` in AppContext,
+  is not in `PROFILE_COLUMNS`, and is created by no migration. Either add the
+  column or delete the function; the write now reports its refusal instead of
+  swallowing it.
 
 ## Files that are not part of the app
 

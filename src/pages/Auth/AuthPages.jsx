@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import Logo from '@/components/Logo';
 import { Camera, Search, ArrowLeft, Loader2, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { assessPassword } from '@/lib/password';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -214,6 +215,14 @@ export function SignUpPage() {
   const [step, setStep] = useState(searchParams.get('role') ? 2 : 1);
   const [role, setRole] = useState(searchParams.get('role') || null);
   const [form, setForm] = useState({ email: '', password: '', name: '', username: '', location: '' });
+
+  // Assessed against the identity too: a password containing the account's own
+  // username or email is the first thing a credential-stuffing run tries.
+  const passwordCheck = assessPassword(form.password, {
+    email: form.email,
+    username: form.username,
+    name: form.name
+  });
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -474,14 +483,47 @@ export function SignUpPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Password</label>
+                      <label htmlFor="signup-password" className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Password</label>
                       <Input
+                        id="signup-password"
                         type="password" required value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} disabled={loading}
-                        placeholder="Min. 8 characters"
+                        placeholder="At least 10 characters"
+                        autoComplete="new-password"
+                        aria-describedby="password-feedback"
                         className="h-12 bg-card border-border focus:border-ring focus:ring-ring text-foreground placeholder:text-muted-foreground rounded-xl"
                       />
+
+                      {/* Said at the moment the password is chosen, which is the
+                          only moment it can be changed cheaply. This is guidance,
+                          not a control - the control is Supabase's own minimum
+                          length and leaked-password check. */}
+                      <div id="password-feedback" className="mt-2 space-y-1.5" aria-live="polite">
+                        {form.password.length > 0 && (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <div className="h-1 flex-1 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={cn(
+                                    'h-full rounded-full transition-all duration-300',
+                                    passwordCheck.score <= 1 ? 'bg-red-500'
+                                      : passwordCheck.score === 2 ? 'bg-yellow-500'
+                                      : 'bg-emerald-500'
+                                  )}
+                                  style={{ width: `${(passwordCheck.score / 4) * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-[11px] font-medium text-muted-foreground w-16 text-right">
+                                {passwordCheck.label}
+                              </span>
+                            </div>
+                            {passwordCheck.problems.map(problem => (
+                              <p key={problem} className="text-[12px] text-yellow-500">{problem}</p>
+                            ))}
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-4 shadow-[0_0_15px_rgba(0,0,0,0.05)] transition-transform duration-200 ease-out active:scale-[0.96]" disabled={loading}>
+                    <Button type="submit" className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-4 shadow-[0_0_15px_rgba(0,0,0,0.05)] transition-transform duration-200 ease-out active:scale-[0.96]" disabled={loading || !passwordCheck.acceptable}>
                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary-foreground" />}
                       {role === 'photographer' ? 'Continue' : 'Create Account'}
                     </Button>

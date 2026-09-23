@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { canEnter, entriesLeft } from '@/lib/brief';
 import { readPhotoMeta, rotateImageFile } from '@/lib/photoMeta';
 import { Upload, ArrowLeft, ArrowRight, Check, Loader2, Camera, MapPin, Image as ImageIcon, RotateCcw } from 'lucide-react';
 
@@ -20,7 +21,7 @@ export default function UploadPage() {
   // another screen, and one list's "Commercial" existed nowhere else at all.
   const { categories: CATEGORIES } = useApp();
   const navigate = useNavigate();
-  const { currentUser, uploadPhoto } = useApp();
+  const { currentUser, uploadPhoto, currentBrief, loadCurrentBrief, enterBrief } = useApp();
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);
   const [isVideo, setIsVideo] = useState(false);
@@ -37,6 +38,10 @@ export default function UploadPage() {
   const [iso, setIso] = useState('');
   const [location, setLocation] = useState('');
   const [modStatus, setModStatus] = useState(null);
+  // The Brief. Defaulted ON, per docs/SPEC-the-brief.md: entering has to be
+  // part of publishing, because an extra screen is where the intent dies.
+  const [enterTheBrief, setEnterTheBrief] = useState(true);
+  const [briefNote, setBriefNote] = useState('');
   const [error, setError] = useState('');
   const [fileObj, setFileObj] = useState(null);
   // Measured from the file, never typed and never guessed.
@@ -137,6 +142,14 @@ export default function UploadPage() {
       .finally(() => setReadingMeta(false));
   };
 
+  useEffect(() => {
+    loadCurrentBrief();
+  }, [loadCurrentBrief]);
+
+  // A photograph uploaded now is inside the window by definition, so the only
+  // question is whether the photographer still has an entry left.
+  const briefIsOfferable = canEnter(currentBrief);
+
   const handlePublish = async () => {
     setModStatus('checking');
     setError('');
@@ -161,11 +174,32 @@ export default function UploadPage() {
       });
 
       setModStatus('clear');
+
+      // Entering the brief happens here rather than on a second screen, and it
+      // happens AFTER the photograph exists, because enter_brief needs an item
+      // id. A refusal is reported and never swallowed: being told you entered
+      // when you did not is the failure this whole feature cannot afford.
+      let briefProblem = '';
+      if (enterTheBrief && briefIsOfferable && published?.id) {
+        const entered = await enterBrief(published.id);
+        if (entered.success) {
+          setBriefNote(
+            entered.entriesLeft > 0
+              ? `Entered into "${currentBrief.title}". ${entered.entriesLeft} more if you want them.`
+              : `Entered into "${currentBrief.title}". That is your last entry for this one.`
+          );
+        } else {
+          briefProblem = entered.error;
+        }
+      }
+
       // Published, but not competing. Say so instead of letting the
       // photographer assume their work is in a round when it is not - the
       // automatic entry is the thing they were promised.
-      if (published?.queueWarning) setError(published.queueWarning);
-      setTimeout(() => navigate('/feed'), published?.queueWarning ? 3500 : 1200);
+      const notice = published?.queueWarning || briefProblem;
+      if (notice) setError(notice);
+      setTimeout(() => navigate(enterTheBrief && briefIsOfferable && !briefProblem ? '/brief' : '/feed'),
+                 notice ? 3500 : 1400);
     } catch (err) {
       console.error('Publish error:', err);
       setError(err.message || 'Error occurred while publishing your photo.');
@@ -516,6 +550,43 @@ export default function UploadPage() {
                 </div>
               </div>
             </div>
+
+            {briefIsOfferable && (
+              <button
+                type="button"
+                onClick={() => setEnterTheBrief(v => !v)}
+                aria-pressed={enterTheBrief}
+                id="enter-brief-toggle"
+                className="w-full text-left mb-8 rounded-2xl border border-border bg-card/50 p-5 flex items-start gap-4 transition-colors hover:bg-card"
+              >
+                <span className={cn(
+                  'mt-0.5 h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors',
+                  enterTheBrief ? 'bg-primary' : 'bg-muted'
+                )}>
+                  <span className={cn(
+                    'block h-4 w-4 rounded-full bg-background transition-transform',
+                    enterTheBrief && 'translate-x-4'
+                  )} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">
+                    Enter this week&rsquo;s brief — {currentBrief.title}
+                  </span>
+                  <span className="block text-sm text-muted-foreground mt-1">
+                    {currentBrief.prompt}
+                  </span>
+                  <span className="block text-[12px] text-muted-foreground mt-2">
+                    {entriesLeft(currentBrief)} of {currentBrief.max_entries ?? 3} entries left
+                  </span>
+                </span>
+              </button>
+            )}
+
+            {briefNote && (
+              <div className="mb-6 rounded-xl border border-border bg-card/50 p-4 text-sm text-foreground">
+                {briefNote}
+              </div>
+            )}
 
             {modStatus === 'checking' && (
               <div className="mb-8 p-4 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center gap-3 animate-in fade-in zoom-in">

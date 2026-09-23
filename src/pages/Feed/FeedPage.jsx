@@ -95,9 +95,13 @@ export default function FeedPage() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
-  const { fetchPhotosPaginated, battles, challenges, users, currentUser, unreadNotificationCount } = useApp();
+  const { fetchPhotosPaginated, battles, challenges, users, currentUser, unreadNotificationCount, currentBrief, loadCurrentBrief } = useApp();
 
   const [feedPhotos, setFeedPhotos] = useState([]);
+
+  useEffect(() => {
+    loadCurrentBrief();
+  }, [loadCurrentBrief]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -240,6 +244,30 @@ export default function FeedPage() {
               ))}
             </div>
           </div>
+
+          {/* The open brief, once, at the top. It is rendered only while the
+              brief is open - a closed brief lingering here would be a stale
+              prompt, which is worse than no prompt. */}
+          {currentBrief?.is_open && (
+            <button
+              type="button"
+              onClick={() => navigate('/brief')}
+              id="feed-brief-card"
+              className="w-full text-left mb-5 md:mb-8 mx-5 md:mx-0 rounded-2xl border border-border bg-card/50 p-5 hover:bg-card transition-colors"
+              style={{ width: 'auto' }}
+            >
+              <span className="font-mono text-[9px] font-semibold tracking-[.11em] text-foreground/[.42]">
+                THIS WEEK&rsquo;S BRIEF
+              </span>
+              <span className="block text-lg font-bold text-foreground mt-2">{currentBrief.title}</span>
+              <span className="block text-sm text-muted-foreground mt-1 line-clamp-2">{currentBrief.prompt}</span>
+              <span className="block text-[12px] text-muted-foreground mt-3 tabular-nums">
+                {currentBrief.entries_total ?? 0} {currentBrief.entries_total === 1 ? 'frame' : 'frames'} in
+                {' · '}
+                {currentBrief.photographers ?? 0} {currentBrief.photographers === 1 ? 'photographer' : 'photographers'}
+              </span>
+            </button>
+          )}
 
           <div className="space-y-[18px] md:space-y-10">
             {loading && feedPhotos.length === 0 ? (
@@ -431,11 +459,12 @@ export default function FeedPage() {
 
           <div className="pt-6 border-t border-border">
             <div className="flex flex-wrap gap-x-4 gap-y-3 text-[12px] text-muted-foreground font-medium">
-              <a href="#" className="hover:text-foreground transition-colors">About</a>
-              <a href="#" className="hover:text-foreground transition-colors">Help</a>
-              <a href="#" className="hover:text-foreground transition-colors">Press</a>
-              <a href="#" className="hover:text-foreground transition-colors">API</a>
-              <a href="#" className="hover:text-foreground transition-colors">Jobs</a>
+              {/* Every link here was href="#". Five controls that looked like
+                  navigation and did nothing, on the page people spend the most
+                  time on. A footer that lies about About, Press, API and Jobs
+                  teaches visitors that the rest of the interface might be
+                  decoration too. Only the pages that exist are linked. */}
+              <Link to="/guidelines" className="hover:text-foreground transition-colors">About</Link>
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
               <Link to="/guidelines" className="hover:text-foreground transition-colors">Guidelines</Link>

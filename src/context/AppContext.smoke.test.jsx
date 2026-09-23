@@ -45,6 +45,9 @@ const channel = {
 };
 
 vi.mock('../lib/supabaseClient', () => ({
+  // The real module exports this too; a mock that omits it makes any
+  // component reading it throw at render.
+  isSupabaseConfigured: true,
   supabase: {
     from: () => queryChain(),
     rpc: () => queryChain(),

@@ -22,8 +22,8 @@ guards itself with the `admin_console_access` RPC, so authorisation is a databas
 decision rather than a routing one.
 
 **`PhotographerShell`** — `/feed`, `/discover`, `/compete`, `/compete/vote`,
-`/compete/challenges`, `/leagues`, `/profile/:id`, `/analytics`, `/upload`,
-`/settings`, `/inbox`, `/saved`, `/explore`.
+`/compete/challenges`, `/brief`, `/leagues`, `/profile/:id`, `/analytics`,
+`/upload`, `/settings`, `/inbox`, `/saved`, `/explore`.
 
 **`ClientShell`** — `/client/home`, `/client/search`, `/client/saved`,
 `/client/bookings`, `/client/inbox`, `/client/profile`.
@@ -113,8 +113,12 @@ decision. Pick one before adding more typography.
 ## Tests, lint, build
 
 Vitest with Testing Library, `jsdom` environment, setup at `src/test/setup.js`,
-configured inside `vite.config.js`. Two suites today: `src/lib/photography.test.js`
-and `src/components/FeedbackButton/FeedbackButton.test.jsx`, 23 tests.
+configured inside `vite.config.js`. **16 suites, 162 tests.**
+
+Two of them mount the real application — `src/App.smoke.test.jsx` and
+`src/context/AppContext.smoke.test.jsx` — because this project has shipped a
+change that compiled, passed every test, and showed every visitor a blank page.
+Compiling is not rendering.
 
     npm run dev           Vite dev server, http://localhost:5173
     npm run build         check-design-tokens.mjs, then vite build
@@ -125,9 +129,25 @@ and `src/components/FeedbackButton/FeedbackButton.test.jsx`, 23 tests.
 `npm run build` runs `scripts/check-design-tokens.mjs` first and fails on literal
 colours in JSX, so a hardcoded hex stops the build before Vite starts.
 
-`.oxlintrc.json` exists and configures `react/rules-of-hooks` and
-`react/only-export-components`, but **oxlint is not in `devDependencies` and there
-is no `lint` script.** Run `npx oxlint`, or add it properly.
+`.oxlintrc.json` configures `react/rules-of-hooks` and
+`react/only-export-components`. `npm run lint` runs it through `npx`; CI runs it
+advisory-only until its output has been read and acted on once.
+
+### Code splitting
+
+Routes are lazy (`React.lazy` in `src/App.jsx`) behind one `Suspense` boundary
+around the router. The landing page, sign-in and both shells stay eager: they are
+on the first paint of nearly every visit, and lazily loading the thing you are
+already looking at only adds a spinner.
+
+`vite.config.js` also splits vendor code by how often it changes — `vendor-react`,
+`vendor-supabase`, `vendor-icons` — so a deploy invalidates the application chunk
+alone rather than making every returning visitor re-download React.
+
+The build was one 986 kB chunk. It is now ~140 kB of application code plus cached
+vendor chunks and a per-route chunk on navigation. `chunkSizeWarningLimit` is set
+to 600 kB deliberately: if it warns again, something large was imported eagerly by
+mistake.
 
 ## Deployment
 

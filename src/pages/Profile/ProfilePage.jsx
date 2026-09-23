@@ -311,6 +311,7 @@ export default function ProfilePage() {
   // The file the person just chose, held while they frame it. Nothing is
   // uploaded until they confirm a crop, so cancelling leaves the old picture.
   const [pendingCrop, setPendingCrop] = useState(null);
+  const [bookingNote, setBookingNote] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -408,9 +409,13 @@ export default function ProfilePage() {
   // not a column on profiles either. Contact happens through Message, which is
   // the point: a conversation in the app, not an address to harvest.
   const contactRows = [
-    photographer.website
-      ? { label: String(photographer.website).replace(/^https?:\/\//, ''),
-          href: photographer.website.startsWith('http') ? photographer.website : `https://${photographer.website}` }
+    // safeExternalUrl allow-lists http and https. The previous guard was
+    // `w.startsWith('http') ? w : 'https://' + w`, which neutralised
+    // javascript: only by accident - the prefix made the scheme unparseable -
+    // and would have stopped doing so the moment anyone tidied the line.
+    displayUrl(photographer.website)
+      ? { label: displayUrl(photographer.website),
+          href: safeExternalUrl(photographer.website) }
       : null,
   ].filter(Boolean);
 
@@ -447,12 +452,17 @@ export default function ProfilePage() {
     e.preventDefault();
     const result = await addBookingRequest(photographer.id, bookingForm);
     if (!result?.success) return;
+    // The booking is real either way, but if its opening message did not send,
+    // the photographer has a request with no conversation attached and the
+    // client is waiting on a reply to something nobody can see. Say so.
+    setBookingNote(result.messageWarning || null);
     setBookingSuccess(true);
     setTimeout(() => {
       setBookingModalOpen(false);
       setBookingSuccess(false);
+      setBookingNote(null);
       setBookingForm({ date: '', budget: '', location: '', message: '' });
-    }, 2000);
+    }, result.messageWarning ? 4500 : 2000);
   };
 
   /**
@@ -698,8 +708,12 @@ export default function ProfilePage() {
                     {bookingSuccess ? (
                       <div className="flex flex-col items-center py-12 text-center">
                         <div className="mb-4 animate-bounce text-5xl">🎉</div>
-                        <h3 className="mb-2 text-xl font-bold">Request Sent</h3>
-                        <p className="text-muted-foreground">Opening conversation thread...</p>
+                        <h3 className="mb-2 text-xl font-bold">Request sent</h3>
+                        {bookingNote ? (
+                          <p className="max-w-xs text-yellow-500">{bookingNote}</p>
+                        ) : (
+                          <p className="text-muted-foreground">Opening the conversation…</p>
+                        )}
                       </div>
                     ) : (
                       <form onSubmit={handleBookingSubmit} className="space-y-4 pt-4">

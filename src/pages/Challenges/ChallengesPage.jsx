@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Trophy, Timer, CheckCircle2, Rocket, Medal, Image as ImageIcon, Camera } from 'lucide-react';
+import { cssUrl } from '@/lib/safeUrl';
 
 function Countdown({ endsAt }) {
   const [timeLeft, setTimeLeft] = useState(() => new Date(endsAt) - new Date());
@@ -128,7 +129,7 @@ export default function ChallengesPage() {
                   const userSub = submissions.find(s => s.challengeId === featured.id);
                   return (
                     <div className="relative rounded-3xl overflow-hidden group shadow-2xl border border-border/50 transition-all hover:-translate-y-1 hover:shadow-primary/10">
-                      <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-[1.03]" style={{ backgroundImage: `url(${featured.coverUrl})` }} />
+                      <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-[1.03]" style={cssUrl(featured.coverUrl) ? { backgroundImage: cssUrl(featured.coverUrl) } : undefined} />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                       
                       <div className="relative p-6 md:p-10 flex flex-col justify-end min-h-[400px]">

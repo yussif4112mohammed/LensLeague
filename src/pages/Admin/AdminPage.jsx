@@ -362,6 +362,7 @@ export default function AdminPage() {
   const {
     isAdmin,
     authLoading,
+    currentUser,
     users,
     reports,
     disputes,
@@ -411,20 +412,30 @@ export default function AdminPage() {
   }
 
   if (!isAdmin) {
+    // Two different situations, and telling them apart matters. Someone signed
+    // out needs to sign in. Someone signed in without the role does not - and
+    // sending them to /login, which redirects to /feed on success, walks them
+    // in a circle with no explanation of what actually went wrong.
+    const signedIn = Boolean(currentUser);
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-6 text-center p-6 bg-background animate-in fade-in zoom-in duration-500">
         <Shield className="w-16 h-16 text-muted-foreground" />
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground">Access denied</h1>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground">
+          {signedIn ? 'Not an operator account' : 'Sign in to continue'}
+        </h1>
         <p className="text-muted-foreground max-w-md leading-relaxed">
-          This console is restricted to platform operators. Sign in with an authorised account to continue.
+          {signedIn
+            ? `You are signed in as ${currentUser.name || currentUser.username || 'this account'}, which does not hold an operator role. Access here is granted in the database, not by signing in again.`
+            : 'This console is restricted to platform operators.'}
         </p>
         <Button
-          onClick={() => navigate('/login')}
+          onClick={() => navigate(signedIn ? '/feed' : '/login')}
           size="lg"
           className="mt-2 font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-          id="go-to-login-btn"
+          id={signedIn ? 'back-to-feed-btn' : 'go-to-login-btn'}
         >
-          Go to log in
+          {signedIn ? 'Back to the feed' : 'Go to log in'}
         </Button>
       </div>
     );
@@ -584,8 +595,8 @@ export default function AdminPage() {
                       <CardContent className="p-4 flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0">
                           <Avatar className="w-10 h-10 shrink-0">
-                            <AvatarImage src={avatarUrlOf(u)} alt="" />
-                            <AvatarFallback>{initialsOf(u)}</AvatarFallback>
+                            <AvatarImage src={avatarUrlOf(u.avatar_url, u.avatar)} alt="" />
+                            <AvatarFallback>{initialsOf(u.name || u.username)}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">

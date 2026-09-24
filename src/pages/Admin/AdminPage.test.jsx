@@ -53,8 +53,18 @@ const STATS = {
   disputes_pending: 0, signups_last_7_days: 19
 };
 
-function queryChain() {
-  const settled = Promise.resolve({ data: [], error: null, count: 0 });
+// Profiles the People tab will render. The first version of this file let
+// `from()` return an empty list for every table, so the People tab was always
+// empty and its rendering was never exercised - which is exactly how
+// `initialsOf(u)` (the whole row, not the name) reached production and crashed
+// the console on load. A double that returns nothing tests nothing.
+const PROFILES = [
+  { id: 'u-1', name: 'Ama Owusu',  username: 'ama',  role: 'photographer', verified: true,  banned: false, avatar_url: null },
+  { id: 'u-2', name: 'Eben Mensah', username: 'eben', role: 'photographer', verified: false, banned: true,  avatar_url: null }
+];
+
+function queryChain(data = []) {
+  const settled = Promise.resolve({ data, error: null, count: 0 });
   const proxy = new Proxy({}, {
     get(_t, prop) {
       if (prop === 'then') return settled.then.bind(settled);
@@ -73,7 +83,7 @@ vi.mock('@/lib/supabaseClient', () => ({
   // component reading it throw at render.
   isSupabaseConfigured: true,
   supabase: {
-    from: () => queryChain(),
+    from: (table) => queryChain(table === 'profiles' ? PROFILES : []),
     channel: () => channel,
     removeChannel: () => {},
     storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
@@ -186,5 +196,19 @@ describe('AdminPage', () => {
     await screen.findByText('Eben');
     expect(screen.queryByRole('button', { name: /remove photograph/i })).not.toBeInTheDocument();
     expect(screen.getByText(/use the people tab/i)).toBeInTheDocument();
+  });
+
+  it('RENDERS THE PEOPLE TAB WITHOUT CRASHING', async () => {
+    const user = userEvent.setup();
+    renderConsole();
+    await screen.findByText('Harmattan morning');
+
+    await user.click(screen.getByRole('tab', { name: /people/i }));
+
+    // The crash was a TypeError inside Array.map, so the assertion is simply
+    // that a row exists. If the page throws, nothing is found.
+    expect(await screen.findByText('Ama Owusu')).toBeInTheDocument();
+    expect(screen.getByText('Eben Mensah')).toBeInTheDocument();
+    expect(screen.getByText('Suspended')).toBeInTheDocument();
   });
 });

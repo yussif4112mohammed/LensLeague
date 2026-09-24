@@ -51,7 +51,11 @@ export function avatarUrlOf(...candidates) {
  * reading "E" is no more useful than a wall of blanks.
  */
 export function initialsOf(name) {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  // Typed rather than assumed. Passing the whole profile row instead of its
+  // name took the admin console down with "(t || '').trim is not a function" -
+  // a crash, on a page, because of an argument. The call site was fixed; this
+  // makes the next one a missing initial rather than a white screen.
+  const parts = (typeof name === 'string' ? name : '').trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();

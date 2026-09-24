@@ -52,3 +52,14 @@ describe('initialsOf', () => {
     expect(initialsOf('   ')).toBe('?');
   });
 });
+
+describe('initialsOf, given the wrong thing entirely', () => {
+  // This is not hypothetical. AdminPage passed the whole profile row, and the
+  // console crashed on load for every operator.
+  it('does not throw when handed an object, and says nothing rather than lying', () => {
+    expect(initialsOf({ name: 'Ama Owusu' })).toBe('?');
+    expect(initialsOf(42)).toBe('?');
+    expect(initialsOf([])).toBe('?');
+    expect(initialsOf(true)).toBe('?');
+  });
+});

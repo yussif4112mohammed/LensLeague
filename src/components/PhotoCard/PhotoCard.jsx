@@ -24,7 +24,7 @@ function getPhotoTitle(caption) {
 }
 
 export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
-  const { follows, followUser, unfollowUser, currentUser, comments, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, likeCountFor, users, submitReport } = useApp();
+  const { follows, followUser, unfollowUser, currentUser, toggleLikePost, toggleSavedItem, savedItemIds, likedItemIds, likeCountFor, users, submitReport } = useApp();
   const ownerProfile = users?.find(u => u.id === photo.ownerId) || {};
   // One shared source, same as the feed. This was seeded from localStorage,
   // which meant a like looked present on the browser that made it and absent
@@ -45,7 +45,12 @@ export default function PhotoCard({ photo, compact = false, onPhotoClick }) {
 
   const isFollowing = currentUser && follows.some(f => f.follower_id === currentUser.id && f.following_id === photo.ownerId);
   const isOwnPhoto = currentUser && photo.ownerId === currentUser.id;
-  const commentCount = comments.filter(c => c.photo_id === photo.id || c.item_id === photo.id).length;
+  // portfolio_items.comment_count, maintained by a trigger since v14, carried
+  // through as photo.comments. Counting the client-side array instead meant
+  // the number was capped by whatever had been prefetched - past 500 comments
+  // across the platform a card silently undercounted - and it made every card
+  // scan every comment in memory on every render.
+  const commentCount = photo.comments ?? 0;
 
 
 

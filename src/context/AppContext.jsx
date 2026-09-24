@@ -619,8 +619,10 @@ export function AppProvider({ children }) {
       const { data: challengesData } = await supabase.from('challenges').select('*');
       setChallenges(challengesData || []);
 
-      const { data: submissionsData } = await supabase.from('challenge_entries').select('*').limit(200);
-      setSubmissions(submissionsData || []);
+      // challenge_entries used to be fetched 200 rows at a time here. Nothing
+      // in src/ ever read `submissions` - not one component - so this was a
+      // request every visitor paid for and no screen used.
+      setSubmissions([]);
 
       // 4. PRIVATE DATA (Only fetch if logged in)
       if (currentUser) {
@@ -731,39 +733,53 @@ export function AppProvider({ children }) {
       // On error we keep FALLBACK_CATEGORIES, which mirrors the seeded rows, so
       // the pickers still work rather than rendering empty.
 
-      // 5. Comments - Limit to recent 500 across app
-      const { data: commentsData } = await supabase
-        .from('comments')
-        .select(`*, profiles:user_id(${PROFILE_COLUMNS})`)
-        .order('created_at', { ascending: false })
-        .limit(500);
-      if (commentsData) {
-        const mappedComments = commentsData.map(c => {
-          const user = c.profiles || { name: 'Unknown', avatar: '' };
-          return {
-            id: c.id,
-            photo_id: c.item_id,
-            user_id: c.user_id,
-            body: c.body,
-            created_at: c.created_at,
-            userName: user.name,
-            userAvatar: user.avatar_url || user.avatar
-          };
-        });
-        setComments(mappedComments);
-      }
+      // 5. Comments are NOT loaded here.
+      //
+      // This used to fetch the 500 most recent comments across the entire
+      // platform, each with a joined profile, into every visitor's browser on
+      // mount - so opening the feed downloaded other people's conversations
+      // about photographs you were never going to look at. It was also wrong
+      // on its own terms: PhotoCard counted that array to show a comment
+      // count, so past 500 comments the number silently undercounted.
+      //
+      // Comments now load per photograph, when somebody opens one, through
+      // loadCommentsFor below. The count on a card comes from
+      // portfolio_items.comment_count, which v14 maintains with a trigger.
+
     };
 
     syncFromSupabase();
 
-    // Real-time chat messaging subscription channel
-    const msgChannel = supabase
-      .channel('messages_realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        const newMsg = payload.new;
-        appendRealtimeMessage(newMsg);
-      })
-      .subscribe();
+    // Real-time chat.
+    //
+    // WHAT WAS WRONG: this subscribed unconditionally, so every visitor to the
+    // landing page - signed out, with no threads and nothing to receive - held
+    // an open realtime subscription against the whole messages table. Row-level
+    // security means nobody is ever SENT a message they could not already read,
+    // so this was never a leak. It was a cost: one subscription per open tab
+    // that the server evaluates against every message inserted anywhere on the
+    // platform, paid for by people who cannot have any.
+    //
+    // Now it exists only for someone signed in, alongside the notifications
+    // channel, and dies with the session.
+    //
+    // KNOWN LIMIT, recorded rather than hidden: postgres_changes filters take a
+    // single column comparison, and "messages in threads I am part of" is a
+    // join. So this is still a table-wide subscription for each signed-in
+    // person. Narrowing it properly needs a denormalised participant column on
+    // messages, or moving chat onto a per-thread broadcast channel. Neither is
+    // a five-minute change and neither is urgent at this size - but it is the
+    // next thing to do here, not a solved problem.
+    let msgChannel = null;
+    if (currentUser?.id) {
+      msgChannel = supabase
+        .channel('messages_realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+          const newMsg = payload.new;
+          appendRealtimeMessage(newMsg);
+        })
+        .subscribe();
+    }
 
     // Notifications arrive the same way messages do. RLS applies to realtime as
     // well as to selects, so the filter below is a bandwidth optimisation rather
@@ -798,7 +814,7 @@ export function AppProvider({ children }) {
     }
 
     return () => {
-      supabase.removeChannel(msgChannel);
+      if (msgChannel) supabase.removeChannel(msgChannel);
       if (notifChannel) supabase.removeChannel(notifChannel);
       clearTimeout(notifRefetch.current);
     };
@@ -2294,6 +2310,47 @@ export function AppProvider({ children }) {
     return { success: true, comment: data };
   };
 
+  /**
+   * Load the comments on one photograph.
+   *
+   * Replaces a platform-wide prefetch of 500 rows on mount. The `comments`
+   * array is now a cache of what somebody has actually opened, so it stays
+   * small no matter how large the platform gets, and a photograph with two
+   * thousand comments is paginated rather than silently truncated.
+   */
+  const loadCommentsFor = useCallback(async (itemId, { limit = 100 } = {}) => {
+    if (!itemId) return { success: true, comments: [] };
+
+    const { data, error } = await supabase
+      .from('comments')
+      .select(`id, item_id, user_id, body, created_at, profiles:user_id(${PROFILE_COLUMNS})`)
+      .eq('item_id', itemId)
+      .order('created_at', { ascending: true })
+      .limit(limit);
+
+    if (error) {
+      return { success: false, error: humaniseWriteError(error, 'Comments could not be loaded.') };
+    }
+
+    const mapped = (data || []).map(c => {
+      const user = c.profiles || { name: 'Unknown', avatar_url: '' };
+      return {
+        id: c.id,
+        photo_id: c.item_id,
+        user_id: c.user_id,
+        body: c.body,
+        created_at: c.created_at,
+        userName: user.name,
+        userAvatar: avatarUrlOf(user.avatar_url, user.avatar)
+      };
+    });
+
+    // Replace this photograph's slice rather than appending, so reopening a
+    // sheet shows what is there now instead of a doubled list.
+    setComments(prev => [...prev.filter(c => c.photo_id !== itemId), ...mapped]);
+    return { success: true, comments: mapped };
+  }, []);
+
   const logoutUser = async () => {
     setUserEmail('');
     setCurrentUser(null);
@@ -2425,6 +2482,7 @@ export function AppProvider({ children }) {
       logoutUser,
       follows,
       comments,
+      loadCommentsFor,
       savedItemIds,
       likedItemIds,
       likeCountFor,

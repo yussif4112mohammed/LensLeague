@@ -39,6 +39,12 @@ function queryChain() {
   return proxy;
 }
 
+// Every realtime channel this provider opens, by name. A signed-out visitor
+// should open none: they have no threads and no notifications, and a
+// subscription they cannot receive anything on is a cost the server pays for
+// nothing.
+const OPENED_CHANNELS = [];
+
 const channel = {
   on: () => channel,
   subscribe: () => channel,
@@ -51,7 +57,7 @@ vi.mock('../lib/supabaseClient', () => ({
   supabase: {
     from: () => queryChain(),
     rpc: () => queryChain(),
-    channel: () => channel,
+    channel: (name) => { OPENED_CHANNELS.push(name); return channel; },
     removeChannel: () => {},
     storage: {
       from: () => ({
@@ -87,6 +93,7 @@ function Probe() {
 describe('AppProvider, signed out', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    OPENED_CHANNELS.length = 0;
   });
 
   it('renders its children instead of taking the tree down', async () => {
@@ -127,5 +134,21 @@ describe('AppProvider, signed out', () => {
     );
     expect(shouted).toBe(false);
     spy.mockRestore();
+  });
+
+  it('opens NO realtime subscription for a signed-out visitor', async () => {
+    // This subscribed to every INSERT on the messages table unconditionally,
+    // so anyone opening the landing page held a table-wide subscription the
+    // server had to evaluate against every message on the platform. RLS meant
+    // they were never sent anything - which is exactly why it was invisible.
+    render(
+      <AppProvider>
+        <Probe />
+      </AppProvider>
+    );
+    await screen.findByTestId('rendered');
+
+    expect(OPENED_CHANNELS).not.toContain('messages_realtime');
+    expect(OPENED_CHANNELS).not.toContain('notifications_realtime');
   });
 });

@@ -6,7 +6,7 @@ somebody. One page, kept honest.
 Legend: ✅ done and verified · 🟡 partly built · 🔴 not started · ⚠️ blocked on
 an action only the founder can take.
 
-Last reconciled: 2026-09-22. Verified against the working tree and the test
+Last reconciled: 2026-09-24. Verified against the working tree and the test
 suite, not against memory. Where a row says ⚠️ the code is finished and the
 database change it needs has not been applied yet — see **Waiting on you**.
 
@@ -18,13 +18,15 @@ Migrations in this project are applied by hand through the Supabase SQL editor.
 Four are written, reviewed and unapplied. Until they run, the features below
 exist in the codebase and not in the product.
 
-| Apply in this order | What it does | Then run |
-| --- | --- | --- |
-| `migration_v33_collapse_photo_tables.sql` | One table for a photograph instead of three | `VERIFY_v33.sql` |
-| `migration_v34_admin_foundation.sql` | Admin console reads real data; removal actually removes; closes two live holes | `VERIFY_v34.sql` |
-| `migration_v35_briefs.sql` | The Brief (requires v34) | `VERIFY_v35.sql`, then `SEED_v35_first_brief.sql` |
-| `migration_v36_photographer_search.sql` | Client search across every photographer, not the first hundred | `VERIFY_v36.sql` |
-| `migration_v37_input_limits_and_compliance.sql` | Length bounds on every user-typed column, a scheme allow-list on `website`, the four missing rate limits, data export and real account deletion | `VERIFY_v37.sql` |
+**All migrations are applied.** v33 through v39 are live on production and every
+VERIFY passes. Two were fixed mid-flight, both the same mistake — assuming a
+column's type instead of asking the database:
+
+| | |
+| --- | --- |
+| v38 | `search_photographers` declared `starting_rate TEXT`; the column is INTEGER. plpgsql does not check a function body against its declared result type until it RUNS, so v36 created cleanly and the first real call failed. VERIFY_v36 caught it because two of its checks call the function. |
+| v37 | The same column appeared in the length-bounds list, so the migration aborted on `char_length(integer)`. The loop now checks each column's real `data_type` and skips anything that is not text. |
+| v39 | **Nobody had ever held the admin role.** v7 built the whole role system and never inserted a row into `user_roles`, so `/admin` refused everyone — including the founder — from the day it was written. That is also why the disconnected moderation queue went unreported for months: nobody could open the page to see it was empty. |
 
 Also outstanding, and not something code can fix:
 
@@ -35,10 +37,8 @@ Also outstanding, and not something code can fix:
 - ⚠️ **Leaked-password protection** and a 10-character minimum, in Supabase →
   Authentication → Policies. The strength meter added to signup is guidance; this
   is the control.
-- ⚠️ **Test Google sign-in** after the next deploy. `supabaseClient.js` now uses
-  the PKCE flow instead of implicit, so the OAuth callback carries `?code=`
-  rather than `#access_token=`. The credential is no longer in a URL, which is
-  the point, but it is the kind of change that has broken login here before.
+- ✅ **Google sign-in tested on production** after the PKCE change. The callback
+  now carries `?code=` rather than `#access_token=`, and sign-in works.
 - ⚠️ **Legal review** of `/terms`, `/privacy`, `/guidelines` by a solicitor.
 - ⚠️ **One booking, end to end,** with a real second account, through to a
   written review — the only way to know the reviews path works on production.
@@ -54,7 +54,7 @@ Also outstanding, and not something code can fix:
 | ✅ | Battles | Server-side engine: 24-hour box, early close when decided, ties finish as ties, zero votes requeues, points from `battle_settings`. |
 | ✅ | Recognition | Four tiers per category room, no ranked ladder, no losses shown. |
 | ✅ | Monthly wrap | `get_my_wrap` — every number counted, none invented. |
-| ⚠️ | The Brief | Built: tables, four rules in SQL, three RPCs, the screen, the upload toggle, the feed card, an operator panel to set each week's. Needs v35. |
+| ✅ | The Brief | Built: tables, four rules in SQL, three RPCs, the screen, the upload toggle, the feed card, an operator panel to set each week's. Needs v35. |
 | 🟡 | Analytics | A page exists and reads real counts. Thin: no views, no reach, because nothing records them. |
 | 🔴 | Achievements | Nothing beyond recognition tiers and wins. |
 | 🔴 | Opportunities | Jobs, events, brand work, second-shooter calls, collaborations. Not started. Phase 2 — see **Deliberately later**. |
@@ -64,7 +64,7 @@ Also outstanding, and not something code can fix:
 
 | | Area | Notes |
 | --- | --- | --- |
-| ⚠️ | Search photographers | Was filtering 100 cached profiles — photographer 101 was unfindable by name. Now a database search with category, minimum rating, availability and four honest sorts. Needs v36. |
+| ✅ | Search photographers | Was filtering 100 cached profiles — photographer 101 was unfindable by name. Now a database search with category, minimum rating, availability and four honest sorts. Needs v36. |
 | ✅ | View portfolios | Public profile with gallery, specialisms, rate, availability. |
 | ✅ | Message a photographer | Real threads, realtime, opened from the profile. |
 | ✅ | Request a booking | Booking row plus an opening message; a failed message is now reported rather than swallowed. |
@@ -87,13 +87,13 @@ Also outstanding, and not something code can fix:
 
 | | Area | Notes |
 | --- | --- | --- |
-| ⚠️ | Reported content | **Was not connected to anything.** `admin_get_reports` existed since v7 and was never called; the queue was local React state. A report filed by a user was invisible to every moderator, forever. Now loaded, rendered for any target type, with an honest empty state. Needs v34. |
-| ⚠️ | Content removal | **"Remove Photo" did not remove a photo** — it wrote a status on the report row and left the image public. Now a real, reversible moderation state enforced in RLS, with the reason recorded and any in-flight battle discarded. Needs v34. |
+| ✅ | Reported content | **Was not connected to anything.** `admin_get_reports` existed since v7 and was never called; the queue was local React state. A report filed by a user was invisible to every moderator, forever. Now loaded, rendered for any target type, with an honest empty state. Needs v34. |
+| ✅ | Content removal | **"Remove Photo" did not remove a photo** — it wrote a status on the report row and left the image public. Now a real, reversible moderation state enforced in RLS, with the reason recorded and any in-flight battle discarded. Needs v34. |
 | ✅ | User management | Verify and suspend, through permission-checked RPCs. |
-| ⚠️ | Disputes | Queue now read from the database. The table's `FOR ALL USING (true)` policy — readable, editable and deletable by anyone holding the anon key — is closed by v34. |
-| ⚠️ | Activity log | Every moderation action with its actor, written by the database. Needs v34. |
-| ⚠️ | Platform stats | Counted platform-wide rather than derived from the 100 profiles the browser happens to hold. Needs v34. |
-| ⚠️ | Briefs | Schedule, list and see entry counts. Needs v35. |
+| ✅ | Disputes | Queue now read from the database. The table's `FOR ALL USING (true)` policy — readable, editable and deletable by anyone holding the anon key — is closed by v34. |
+| ✅ | Activity log | Every moderation action with its actor, written by the database. Needs v34. |
+| ✅ | Platform stats | Counted platform-wide rather than derived from the 100 profiles the browser happens to hold. Needs v34. |
+| ✅ | Briefs | Schedule, list and see entry counts. Needs v35. |
 | 🔴 | Categories, featured content, announcements, roles UI | Roles and permissions exist in the database (v7) with no screen. Phase 2. |
 
 ## Platform
@@ -103,22 +103,55 @@ Also outstanding, and not something code can fix:
 | ✅ | Auth | Supabase Auth. Admin access is a database decision (`admin_console_access`), never an email comparison in the browser. |
 | ✅ | Storage | Folder-scoped write policies on every bucket; MIME allow-list and size cap; `image/svg+xml` permanently excluded. |
 | ✅ | RLS | On every table in `public`. |
-| ⚠️ | `search_path` pinning | v34 sweeps every `SECURITY DEFINER` function that lacks one — a sweep rather than a list, so functions nobody remembered are covered. |
-| ⚠️ | Input bounds | Every user-typed column was unbounded `TEXT`. v37 bounds them in the database, where a `maxlength` attribute cannot be skipped. |
-| ⚠️ | Stored XSS via `profiles.website` | The old guard neutralised `javascript:` by accident. Now a scheme allow-list in `src/lib/safeUrl.js` and a `CHECK` on the column. |
-| ⚠️ | Data export and deletion | "Deactivate account" set one boolean and called it deleting. v37 adds a real export and a two-step deletion that is honest about the operator step. |
+| ✅ | `search_path` pinning | v34 sweeps every `SECURITY DEFINER` function that lacks one — a sweep rather than a list, so functions nobody remembered are covered. |
+| ✅ | Input bounds | Every user-typed column was unbounded `TEXT`. v37 bounds them in the database, where a `maxlength` attribute cannot be skipped. |
+| ✅ | Stored XSS via `profiles.website` | The old guard neutralised `javascript:` by accident. Now a scheme allow-list in `src/lib/safeUrl.js` and a `CHECK` on the column. |
+| ✅ | Data export and deletion | "Deactivate account" set one boolean and called it deleting. v37 adds a real export and a two-step deletion that is honest about the operator step. |
 | ✅ | Dependency scanning | CI fails on a high-severity advisory in the runtime tree; the dev tree is advisory. Runtime currently reports zero. |
 | ✅ | Session handling | PKCE flow, explicit token refresh and persistence, stated rather than inherited. |
 | ✅ | Headers and CSP | Strict CSP, HSTS with preload, `frame-ancestors 'none'`. |
 | ✅ | SEO and domain | `lensleague.app` indexed, sitemap accepted, duplicate hosts collapsed. |
 | ✅ | Bundle | Was one 986 kB chunk. Now route-level code splitting plus vendor chunks: 140 kB of application code, and a deploy no longer invalidates React for returning visitors. |
-| ✅ | Tests | 162 tests across 16 files. |
+| ✅ | Tests | 165 tests across 16 files. |
 | 🟡 | Lint | `npm run lint` runs oxlint through `npx`; CI runs it advisory-only until its output has been read once. |
 | 🟡 | Mobile | Every screen touched in this pass is responsive and was built mobile-first. Not every older screen has been walked through on a real handset. |
 | 🔴 | CAPTCHA | Needs an hCaptcha site key and a CSP widening. |
 | 🔴 | Payments | Not started. |
 
 ---
+
+## Scale: what holds, and what does not
+
+The standing rule is to ask what a design costs at ten thousand users and a
+million rows. Measured against that:
+
+**Fixed**
+
+| Was | Now |
+| --- | --- |
+| Client search filtered 100 cached profiles; photographer 101 was unfindable by name | An indexed database query with bounded pagination |
+| Admin stats derived from whatever 100 profiles the browser held — "banned" meant "banned among the first hundred" | Counted platform-wide by the database |
+| Every user-typed column an unbounded `TEXT` | Twenty bounded columns; one bad paste cannot put four megabytes into a bio that loads on every profile view |
+| The 500 most recent comments across the whole platform, each with a joined profile, into every visitor's browser on mount | Loaded per photograph when somebody opens one |
+| A card's comment count computed by scanning that array, so past 500 it silently undercounted | `portfolio_items.comment_count`, maintained by a v14 trigger |
+| 200 `challenge_entries` fetched on mount and read by nothing | Removed |
+| Every visitor, signed out included, holding a realtime subscription against the whole `messages` table | Signed-in only |
+| One 986 kB bundle | ~140 kB of application code plus vendor chunks that survive a deploy |
+
+**Still wrong, and named so it is not mistaken for done**
+
+- `syncFromSupabase` still pulls 100 profiles and 100 portfolio items into every
+  browser on mount, signed in or not. Feed, Discover, ClientHome and the admin
+  People tab all read that array. Fixing it means giving each of those screens
+  its own query, which is four screens' worth of regression risk — a job, not a
+  patch. It is the largest remaining item.
+- The messages realtime subscription is now signed-in only but is still
+  table-wide per person. `postgres_changes` filters take a single column
+  comparison and "threads I am in" is a join. Narrowing it needs a denormalised
+  participant column on `messages`, or per-thread broadcast channels.
+- `admin_get_platform_stats` runs twelve `count(*)` queries over full tables.
+  Fine now and for a long while; it becomes a problem at millions of rows, and
+  the answer then is a materialised view refreshed on a schedule.
 
 ## Deliberately later, and why
 

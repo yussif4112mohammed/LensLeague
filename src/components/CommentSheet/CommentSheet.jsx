@@ -3,15 +3,28 @@ import { useApp } from '../../context/AppContext';
 import { cn } from '@/lib/utils';
 import { avatarUrlOf, initialsOf } from '@/lib/avatars';
 export default function CommentSheet({ photo, onClose }) {
-  const { comments: allComments, addPhotoComment, currentUser } = useApp();
+  const { comments: allComments, addPhotoComment, loadCommentsFor, currentUser } = useApp();
   const [newComment, setNewComment] = useState('');
   const [likedComments, setLikedComments] = useState(new Set());
+  const [loading, setLoading] = useState(true);
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
   // Filter comments for this specific photo
   const photoComments = allComments.filter(c => c.photo_id === photo.id);
   const activeComments = photoComments;
+
+  // Fetched when the sheet opens, rather than taken from a platform-wide
+  // prefetch every visitor paid for on page load. A photograph nobody opens
+  // costs nothing now.
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    loadCommentsFor(photo.id).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [photo.id, loadCommentsFor]);
 
   useEffect(() => {
     // Auto-focus input and prevent body scroll

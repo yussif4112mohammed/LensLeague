@@ -234,10 +234,28 @@ function ReportCard({ report, onDismiss, onRemove, onRestore }) {
  * form does not duplicate it; it reports what the database said.
  */
 function BriefsPanel({ briefs, onCreate, onRefresh }) {
+  /**
+   * A datetime-local value for `d`, in the operator's own timezone.
+   *
+   * toISOString() would give UTC and the field would show the wrong hour to
+   * anyone not on UTC, which is how a window gets set in the past by accident.
+   */
+  const localInputValue = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+         + `T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   const [title, setTitle] = useState('');
   const [prompt, setPrompt] = useState('');
-  const [opensAt, setOpensAt] = useState('');
-  const [closesAt, setClosesAt] = useState('');
+  // Defaulted to a week starting now. The first brief set through this form was
+  // given a window that had already elapsed, so it was created, accepted, and
+  // closed before anyone could enter it - and the screen had no way to say so.
+  // An empty date field invites that; a sensible default does not.
+  const [opensAt, setOpensAt] = useState(() => localInputValue(new Date()));
+  const [closesAt, setClosesAt] = useState(
+    () => localInputValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
@@ -257,15 +275,20 @@ function BriefsPanel({ briefs, onCreate, onRefresh }) {
     });
     if (result.success) {
       setDone(`"${title.trim()}" is scheduled.`);
-      setTitle(''); setPrompt(''); setOpensAt(''); setClosesAt('');
+      setTitle('');
+      setPrompt('');
+      setOpensAt(localInputValue(new Date()));
+      setClosesAt(localInputValue(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)));
     } else {
       setError(result.error);
     }
     setBusy(false);
   };
 
+  const endsInThePast = Boolean(closesAt) && new Date(closesAt) <= new Date();
   const valid = title.trim() && prompt.trim() && opensAt && closesAt
-    && new Date(closesAt) > new Date(opensAt);
+    && new Date(closesAt) > new Date(opensAt)
+    && !endsInThePast;
 
   return (
     <div className="space-y-8">
@@ -312,6 +335,12 @@ function BriefsPanel({ briefs, onCreate, onRefresh }) {
           </div>
         </div>
 
+        {endsInThePast && (
+          <div className="text-sm text-yellow-500" role="alert">
+            That window has already ended. A brief created in the past closes immediately
+            and nobody can enter it.
+          </div>
+        )}
         {error && <div className="text-sm text-red-400" role="alert">{error}</div>}
         {done && <div className="text-sm text-emerald-400">{done}</div>}
 

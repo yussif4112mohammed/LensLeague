@@ -13,6 +13,7 @@ import { MemoryRouter } from 'react-router-dom';
  */
 
 let BRIEF_ROW = null;
+let BRIEF_ERROR = null;
 let ENTRY_ROWS = [];
 const RPC_CALLS = [];
 
@@ -45,7 +46,11 @@ vi.mock('@/lib/supabaseClient', () => ({
     },
     rpc: (name, args) => {
       RPC_CALLS.push({ name, args });
-      if (name === 'get_current_brief')  return Promise.resolve({ data: BRIEF_ROW ? [BRIEF_ROW] : [], error: null });
+      if (name === 'get_current_brief') {
+        return Promise.resolve(BRIEF_ERROR
+          ? { data: null, error: { message: BRIEF_ERROR } }
+          : { data: BRIEF_ROW ? [BRIEF_ROW] : [], error: null });
+      }
       if (name === 'get_brief_entries')  return Promise.resolve({ data: ENTRY_ROWS, error: null });
       return Promise.resolve({ data: null, error: null });
     }
@@ -96,6 +101,7 @@ describe('BriefPage', () => {
   beforeEach(() => {
     RPC_CALLS.length = 0;
     BRIEF_ROW = { ...OPEN_BRIEF };
+    BRIEF_ERROR = null;
     ENTRY_ROWS = [ENTRY];
   });
 
@@ -150,5 +156,21 @@ describe('BriefPage', () => {
   it('renders the entries that came back, attributed', async () => {
     renderPage();
     expect(await screen.findByText('Eben')).toBeInTheDocument();
+  });
+
+  it('SAYS THE CALL FAILED RATHER THAN PRETENDING NO BRIEF EXISTS', async () => {
+    // get_current_brief raised on every call from the day it shipped - its
+    // RETURNS TABLE columns collided with bare column references in its own
+    // WHERE clauses. The client swallowed that and rendered "No brief yet",
+    // which is what a healthy platform with no briefs looks like. The bug was
+    // invisible because the failure had a friendly face.
+    BRIEF_ERROR = 'column reference "opens_at" is ambiguous';
+    BRIEF_ROW = null;
+
+    renderPage();
+
+    expect(await screen.findByRole('heading', { name: /could not load/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /no brief yet/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/opens_at" is ambiguous/)).toBeInTheDocument();
   });
 });

@@ -84,6 +84,7 @@ export function AppProvider({ children }) {
   const [currentBrief, setCurrentBrief] = useState(null);
   const [briefEntries, setBriefEntries] = useState([]);
   const [briefLoading, setBriefLoading] = useState(false);
+  const [briefError, setBriefError] = useState(null);
   const [allBriefs, setAllBriefs] = useState([]);
   const [platformStats, setPlatformStats] = useState(null);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -1408,15 +1409,23 @@ export function AppProvider({ children }) {
    */
   const loadCurrentBrief = useCallback(async () => {
     setBriefLoading(true);
+    setBriefError(null);
     const { data, error } = await supabase.rpc('get_current_brief');
+
     if (error) {
-      // A missing function means v35 has not been applied. That is a deployment
-      // state, not a runtime error worth shouting about; the screens that use
-      // this handle a null brief by saying nothing is running.
+      // WHAT WAS WRONG HERE: this swallowed the error and set the brief to
+      // null, so a function that could not execute a single statement rendered
+      // as "No brief yet" - indistinguishable from a platform where nobody has
+      // ever set one. get_current_brief raised on every call for as long as it
+      // existed and the screen said everything was fine.
+      //
+      // A failure and an absence are different facts and now look different.
       setCurrentBrief(null);
+      setBriefError(error.message);
       setBriefLoading(false);
       return { success: false, error: error.message };
     }
+
     const brief = (data && data[0]) || null;
     setCurrentBrief(brief);
     setBriefLoading(false);
@@ -2452,6 +2461,7 @@ export function AppProvider({ children }) {
       currentBrief,
       briefEntries,
       briefLoading,
+      briefError,
       loadCurrentBrief,
       loadAllBriefs,
       searchPhotographers,

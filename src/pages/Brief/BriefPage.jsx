@@ -35,6 +35,7 @@ export default function BriefPage() {
     currentBrief,
     briefEntries,
     briefLoading,
+    briefError,
     loadCurrentBrief,
     loadBriefEntries
   } = useApp();
@@ -77,6 +78,25 @@ export default function BriefPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // A call that failed is not the same as a platform with no briefs, and
+  // showing the friendly empty state for both is how a broken function went
+  // unnoticed.
+  if (briefError) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center space-y-4">
+        <Camera className="w-10 h-10 mx-auto text-red-400" />
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">The Brief could not load</h1>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Something went wrong asking the server for this week&rsquo;s constraint. This is our
+          problem, not yours &mdash; try again shortly.
+        </p>
+        <p className="text-[12px] text-muted-foreground/70 font-mono break-words max-w-lg mx-auto">
+          {briefError}
+        </p>
       </div>
     );
   }
